@@ -13,7 +13,7 @@ import org.json4s.jackson.JsonMethods._
 sealed trait Operation
 
 case class VertexOperation(vertex: String) extends Operation {
-  def operate(input: Graph): GremlinScala[Vertex, HNil] = {
+  def operate(input: ScalaGraph): GremlinScala[Vertex, HNil] = {
     input.V.hasLabel(vertex)
   }
 }
@@ -68,11 +68,12 @@ case class OutVertexOperation(outVertex: String) extends Operation {
 }
 
 case class Query(query: List[Operation]) {
-  def operate[R, In <: HList, G](graph: Graph) (implicit p: Prepend[In, ::[G, HNil]]): R = {
+  def operate[R, In <: HList, G](graph: ScalaGraph) (implicit p: Prepend[In, ::[G, HNil]]): R = {
+  // def operate[R](graph: ScalaGraph): R = {
     var anvil: Any = graph
     def op[M](operation: Operation) {
       operation match {
-        case VertexOperation(vertex) => anvil = anvil.asInstanceOf[Graph].V.hasLabel(vertex)
+        case VertexOperation(vertex) => anvil = anvil.asInstanceOf[ScalaGraph].V.hasLabel(vertex)
         case HasOperation(has, within: List[M]) => anvil = {
           val gid = Key[M](has)
           anvil.asInstanceOf[GremlinScala[Vertex, HList]].has(gid, P.within(within:_*))
@@ -95,7 +96,14 @@ case class Query(query: List[Operation]) {
 object Query {
   class OperationSerializer extends CustomSerializer[Operation](format => ({
     case JObject(List(JField("vertex", JString(vertex)))) => VertexOperation(vertex)
+    case JObject(List(JField("has", JString(has)), JField("within", within))) => HasOperation(has, within.extract[List[String]])
+    case JObject(List(JField("as", JString(as)))) => AsOperation(as)
     case JObject(List(JField("in", JString(in)))) => InOperation(in)
+    case JObject(List(JField("out", JString(out)))) => OutOperation(out)
+    case JObject(List(JField("inVertex", JString(inVertex)))) => InVertexOperation(inVertex)
+    case JObject(List(JField("outVertex", JString(outVertex)))) => OutVertexOperation(outVertex)
+    case JObject(List(JField("inEdge", JString(inEdge)))) => InEdgeOperation(inEdge)
+    case JObject(List(JField("outEdge", JString(outEdge)))) => OutEdgeOperation(outEdge)
   }, {
     case VertexOperation(vertex) => JObject(JField("vertex", JString(vertex)))
     case InOperation(in) => JObject(JField("in", JString(in)))
@@ -118,7 +126,7 @@ trait ApplyOperationDefault extends Poly2 {
 }
 
 object ApplyOperation extends ApplyOperationDefault {
-  implicit def vertex[T, L <: HList, S <: HList] = at[VertexOperation, Graph] ((t, acc) => t.operate(acc))
+  implicit def vertex[T, L <: HList, S <: HList] = at[VertexOperation, ScalaGraph] ((t, acc) => t.operate(acc))
   implicit def has[M, T, L <: HList, S <: HList] = at[HasOperation[M], GremlinScala[Vertex, S]] ((t, acc) => t.operate(acc))
   implicit def as[A, T, L <: HList, In <: HList](implicit p: Prepend[In, ::[A, HNil]]) = at[AsOperation, GremlinScala[A, In]] ((t, acc) => t.operate(acc))
   implicit def in[T, L <: HList, S <: HList] = at[InOperation, GremlinScala[Vertex, S]] ((t, acc) => t.operate(acc))

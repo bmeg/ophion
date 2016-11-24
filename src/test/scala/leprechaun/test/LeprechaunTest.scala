@@ -7,7 +7,7 @@ import org.apache.tinkerpop.gremlin.tinkergraph.structure.TinkerFactory
 import org.scalatest._
 
 class LeprechaunTest extends FunSuite {
-  def graph: Graph = TinkerFactory.createModern.asScala.asInstanceOf[Graph]
+  def graph = TinkerFactory.createModern.asScala
 
   test("construction") {
     val operations = OutOperation("created") :: VertexOperation("person") :: HNil
@@ -18,7 +18,7 @@ class LeprechaunTest extends FunSuite {
   test("has") {
     val operations = HasOperation("name", List("marko", "vadas")) :: InOperation("created") :: VertexOperation("software") :: HNil
     val result = Operation.process(operations, graph).toList
-    assert(result.size == 2)
+    assert(result.size == 1)
   }
 
   test("as") {
@@ -31,6 +31,6 @@ class LeprechaunTest extends FunSuite {
     val raw = """{"query": [{"vertex": "person"},{"out": "created"}]}"""
     val query = Query.fromString(raw)
     val result: GremlinScala[Vertex, HList] = query.operate(graph)
-    assert(result.toList.size == 2)
+    assert(result.toList.size == 4)
   }
 }

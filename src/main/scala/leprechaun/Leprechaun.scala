@@ -68,8 +68,8 @@ case class OutVertexOperation(outVertex: String) extends Operation {
 }
 
 case class Query(query: List[Operation]) {
-  def operate[R, In <: HList, G](graph: ScalaGraph) (implicit p: Prepend[In, ::[G, HNil]]): R = {
-  // def operate[R](graph: ScalaGraph): R = {
+  // def operate[R, In <: HList, G](graph: ScalaGraph) (implicit p: Prepend[In, ::[G, HNil]]): R = {
+  def operate[R](graph: ScalaGraph): R = {
     var anvil: Any = graph
     def op[M](operation: Operation) {
       operation match {
@@ -78,7 +78,7 @@ case class Query(query: List[Operation]) {
           val gid = Key[M](has)
           anvil.asInstanceOf[GremlinScala[Vertex, HList]].has(gid, P.within(within:_*))
         }
-        case AsOperation(as) => anvil = anvil.asInstanceOf[GremlinScala[G, In]].as(as)
+        // case AsOperation(as) => anvil = anvil.asInstanceOf[GremlinScala[G, In]].as(as)
         case InOperation(in) => anvil = anvil.asInstanceOf[GremlinScala[Vertex, HList]].in(in)
         case OutOperation(out) => anvil = anvil.asInstanceOf[GremlinScala[Vertex, HList]].out(out)
         case InVertexOperation(inVertex) => anvil = anvil.asInstanceOf[GremlinScala[Edge, HList]].inV()

@@ -12,25 +12,29 @@ class LeprechaunTest extends FunSuite {
   test("construction") {
     val operations = OutOperation("created") :: VertexOperation("person") :: HNil
     val result = Operation.process(operations, graph).toList
+    println(result)
     assert(result.size == 4)
   }
 
   test("has") {
     val operations = HasOperation("name", List("marko", "vadas")) :: InOperation("created") :: VertexOperation("software") :: HNil
     val result = Operation.process(operations, graph).toList
+    println(result)
     assert(result.size == 1)
   }
 
   test("as") {
-    val operations = AsOperation("yellow") :: HasOperation("name", List("peter", "lop")) :: InOperation("created") :: VertexOperation("person") :: HNil
+    val operations = AsOperation("yellow") :: HasOperation("name", List("ripple", "lop")) :: OutOperation("created") :: VertexOperation("person") :: HNil
     val result = Operation.process(operations, graph).toList
-    assert(result.size == 2)
+    println(result)
+    assert(result.size == 4)
   }
 
   test("operation") {
-    val raw = """{"query": [{"vertex": "person"},{"out": "created"}]}"""
+    val raw = """{"query": [{"vertex": "person"},{"has": "name", "within": ["marko", "vadas"]},{"out": "created"}]}"""
     val query = Query.fromString(raw)
     val result: GremlinScala[Vertex, HList] = query.operate(graph)
-    assert(result.toList.size == 4)
+    println(result)
+    assert(result.toList.size == 1)
   }
 }

@@ -5,62 +5,111 @@ import shapeless.ops.hlist.RightFolder
 import shapeless.ops.hlist.Prepend
 
 import gremlin.scala._
-import org.apache.tinkerpop.gremlin.process.traversal.P._
+import org.apache.tinkerpop.gremlin.process.traversal.P
+import org.json4s._
+import org.json4s.jackson._
+import org.json4s.jackson.JsonMethods._
 
 sealed trait Operation
 
-case class VertexOperation[Labels <: HList](vertex: String) extends Operation {
-  def operate(graph: Graph): GremlinScala[Vertex, Labels] = {
-    graph.V.hasLabel(vertex).asInstanceOf[GremlinScala[Vertex, Labels]]
+case class VertexOperation(vertex: String) extends Operation {
+  def operate(input: Graph): GremlinScala[Vertex, HNil] = {
+    input.V.hasLabel(vertex)
   }
 }
 
-case class HasOperation[M, Labels <: HList](key: String, values: List[M]) extends Operation {
-  def operate(vertex: GremlinScala[Vertex, Labels]): GremlinScala[Vertex, Labels] = {
-    val gid = Key[M](key)
-    vertex.has(gid, within(values:_*))
+case class HasOperation[M](has: String, within: List[M]) extends Operation {
+  def operate[Labels <: HList](input: GremlinScala[Vertex, Labels]): GremlinScala[Vertex, Labels] = {
+    val gid = Key[M](has)
+    input.has(gid, P.within(within:_*))
   }
 }
 
-case class AsOperation[A, In <: HList](step: String) extends Operation {
-  def operate(g: GremlinScala[A, In]) (implicit p: Prepend[In, ::[A, HNil]]): GremlinScala[A, p.Out] = {
-    g.as(step)
+case class AsOperation(as: String) extends Operation {
+  def operate[A, In <: HList](input: GremlinScala[A, In]) (implicit p: Prepend[In, ::[A, HNil]]): GremlinScala[A, p.Out] = {
+    input.as(as)
   }
 }
 
-case class InOperation[Labels <: HList](in: String) extends Operation {
-  def operate(vertex: GremlinScala[Vertex, Labels]): GremlinScala[Vertex, Labels] = {
-    vertex.in(in)
+case class InOperation(in: String) extends Operation {
+  def operate[Labels <: HList](input: GremlinScala[Vertex, Labels]): GremlinScala[Vertex, Labels] = {
+    input.in(in)
   }
 }
 
-case class OutOperation[Labels <: HList](out: String) extends Operation {
-  def operate(vertex: GremlinScala[Vertex, Labels]): GremlinScala[Vertex, Labels] = {
-    vertex.out(out)
+case class OutOperation(out: String) extends Operation {
+  def operate[Labels <: HList](input: GremlinScala[Vertex, Labels]): GremlinScala[Vertex, Labels] = {
+    input.out(out)
   }
 }
 
-case class InEdgeOperation[Labels <: HList](edge: String) extends Operation {
-  def operate(vertex: GremlinScala[Vertex, Labels]): GremlinScala[Edge, Labels] = {
-    vertex.inE(edge)
+case class InEdgeOperation(inEdge: String) extends Operation {
+  def operate[Labels <: HList](input: GremlinScala[Vertex, Labels]): GremlinScala[Edge, Labels] = {
+    input.inE(inEdge)
   }
 }
 
-case class OutEdgeOperation[Labels <: HList](edge: String) extends Operation {
-  def operate(vertex: GremlinScala[Vertex, Labels]): GremlinScala[Edge, Labels] = {
-    vertex.outE(edge)
+case class OutEdgeOperation(outEdge: String) extends Operation {
+  def operate[Labels <: HList](input: GremlinScala[Vertex, Labels]): GremlinScala[Edge, Labels] = {
+    input.outE(outEdge)
   }
 }
 
-case class InVertexOperation[Labels <: HList](note: String) extends Operation {
-  def operate(edge: GremlinScala[Edge, Labels]): GremlinScala[Vertex, Labels] = {
-    edge.inV()
+case class InVertexOperation(inVertex: String) extends Operation {
+  def operate[Labels <: HList](input: GremlinScala[Edge, Labels]): GremlinScala[Vertex, Labels] = {
+    input.inV()
   }
 }
 
-case class OutVertexOperation[Labels <: HList](note: String) extends Operation {
-  def operate(edge: GremlinScala[Edge, Labels]): GremlinScala[Vertex, Labels] = {
-    edge.outV()
+case class OutVertexOperation(outVertex: String) extends Operation {
+  def operate[Labels <: HList](input: GremlinScala[Edge, Labels]): GremlinScala[Vertex, Labels] = {
+    input.outV()
+  }
+}
+
+case class Query(query: List[Operation]) {
+  def operate[R, In <: HList, G](graph: Graph) (implicit p: Prepend[In, ::[G, HNil]]): R = {
+    var anvil: Any = graph
+    def op[M](operation: Operation) {
+      operation match {
+        case VertexOperation(vertex) => anvil = anvil.asInstanceOf[Graph].V.hasLabel(vertex)
+        case HasOperation(has, within: List[M]) => anvil = {
+          val gid = Key[M](has)
+          anvil.asInstanceOf[GremlinScala[Vertex, HList]].has(gid, P.within(within:_*))
+        }
+        case AsOperation(as) => anvil = anvil.asInstanceOf[GremlinScala[G, In]].as(as)
+        case InOperation(in) => anvil = anvil.asInstanceOf[GremlinScala[Vertex, HList]].in(in)
+        case OutOperation(out) => anvil = anvil.asInstanceOf[GremlinScala[Vertex, HList]].out(out)
+        case InVertexOperation(inVertex) => anvil = anvil.asInstanceOf[GremlinScala[Edge, HList]].inV()
+        case OutVertexOperation(outVertex) => anvil = anvil.asInstanceOf[GremlinScala[Edge, HList]].outV()
+        case InEdgeOperation(inEdge) => anvil = anvil.asInstanceOf[GremlinScala[Vertex, HList]].inE()
+        case OutEdgeOperation(outEdge) => anvil = anvil.asInstanceOf[GremlinScala[Vertex, HList]].outE()
+      }
+    }
+
+    query.foreach(x => op(x))
+    anvil.asInstanceOf[R]
+  }
+}
+
+object Query {
+  class OperationSerializer extends CustomSerializer[Operation](format => ({
+    case JObject(List(JField("vertex", JString(vertex)))) => VertexOperation(vertex)
+    case JObject(List(JField("in", JString(in)))) => InOperation(in)
+  }, {
+    case VertexOperation(vertex) => JObject(JField("vertex", JString(vertex)))
+    case InOperation(in) => JObject(JField("in", JString(in)))
+  }))
+
+  implicit val formats = Serialization.formats(NoTypeHints) + new OperationSerializer()
+
+  def fromJson(json: JValue): Query = {
+    json.extract[Query]
+  }
+
+  def fromString(raw: String): Query = {
+    val json = parse(raw)
+    fromJson(json)
   }
 }
 
@@ -69,15 +118,15 @@ trait ApplyOperationDefault extends Poly2 {
 }
 
 object ApplyOperation extends ApplyOperationDefault {
-  implicit def vertex[T, L <: HList, S <: HList] = at[VertexOperation[S], Graph] ((t, acc) => t.operate(acc))
-  implicit def has[T, L <: HList, M, S <: HList] = at[HasOperation[M, S], GremlinScala[Vertex, S]] ((t, acc) => t.operate(acc))
-  implicit def as[T, L <: HList, A, In <: HList](implicit p: Prepend[In, A :: HNil]) = at[AsOperation[A, In], GremlinScala[A, In]] {(t, acc) => t.operate(acc)}
-  implicit def in[T, L <: HList, S <: HList] = at[InOperation[S], GremlinScala[Vertex, S]] ((t, acc) => t.operate(acc))
-  implicit def out[T, L <: HList, S <: HList] = at[OutOperation[S], GremlinScala[Vertex, S]] ((t, acc) => t.operate(acc))
-  implicit def inEdge[T, L <: HList, S <: HList] = at[InEdgeOperation[S], GremlinScala[Vertex, S]] ((t, acc) => t.operate(acc))
-  implicit def outEdge[T, L <: HList, S <: HList] = at[OutEdgeOperation[S], GremlinScala[Vertex, S]] ((t, acc) => t.operate(acc))
-  implicit def inVertex[T, L <: HList, S <: HList] = at[InVertexOperation[S], GremlinScala[Edge, S]] ((t, acc) => t.operate(acc))
-  implicit def outVertex[T, L <: HList, S <: HList] = at[OutVertexOperation[S], GremlinScala[Edge, S]] ((t, acc) => t.operate(acc))
+  implicit def vertex[T, L <: HList, S <: HList] = at[VertexOperation, Graph] ((t, acc) => t.operate(acc))
+  implicit def has[M, T, L <: HList, S <: HList] = at[HasOperation[M], GremlinScala[Vertex, S]] ((t, acc) => t.operate(acc))
+  implicit def as[A, T, L <: HList, In <: HList](implicit p: Prepend[In, ::[A, HNil]]) = at[AsOperation, GremlinScala[A, In]] ((t, acc) => t.operate(acc))
+  implicit def in[T, L <: HList, S <: HList] = at[InOperation, GremlinScala[Vertex, S]] ((t, acc) => t.operate(acc))
+  implicit def out[T, L <: HList, S <: HList] = at[OutOperation, GremlinScala[Vertex, S]] ((t, acc) => t.operate(acc))
+  implicit def inEdge[T, L <: HList, S <: HList] = at[InEdgeOperation, GremlinScala[Vertex, S]] ((t, acc) => t.operate(acc))
+  implicit def outEdge[T, L <: HList, S <: HList] = at[OutEdgeOperation, GremlinScala[Vertex, S]] ((t, acc) => t.operate(acc))
+  implicit def inVertex[T, L <: HList, S <: HList] = at[InVertexOperation, GremlinScala[Edge, S]] ((t, acc) => t.operate(acc))
+  implicit def outVertex[T, L <: HList, S <: HList] = at[OutVertexOperation, GremlinScala[Edge, S]] ((t, acc) => t.operate(acc))
 }
 
 object Operation {
@@ -85,3 +134,4 @@ object Operation {
     operations.foldRight(input) (ApplyOperation)
   }
 }
+

@@ -71,7 +71,7 @@ trait ApplyOperationDefault extends Poly2 {
 object ApplyOperation extends ApplyOperationDefault {
   implicit def vertex[T, L <: HList, S <: HList] = at[VertexOperation[S], Graph] ((t, acc) => t.operate(acc))
   implicit def has[T, L <: HList, M, S <: HList] = at[HasOperation[M, S], GremlinScala[Vertex, S]] ((t, acc) => t.operate(acc))
-  implicit def as[T, L <: HList, A, In <: HList] = at[AsOperation[A, In], GremlinScala[A, In]] {(t, acc) => t.operate(acc)}
+  implicit def as[T, L <: HList, A, In <: HList](implicit p: Prepend[In, A :: HNil]) = at[AsOperation[A, In], GremlinScala[A, In]] {(t, acc) => t.operate(acc)}
   implicit def in[T, L <: HList, S <: HList] = at[InOperation[S], GremlinScala[Vertex, S]] ((t, acc) => t.operate(acc))
   implicit def out[T, L <: HList, S <: HList] = at[OutOperation[S], GremlinScala[Vertex, S]] ((t, acc) => t.operate(acc))
   implicit def inEdge[T, L <: HList, S <: HList] = at[InEdgeOperation[S], GremlinScala[Vertex, S]] ((t, acc) => t.operate(acc))

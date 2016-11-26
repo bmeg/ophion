@@ -37,4 +37,16 @@ class LeprechaunTest extends FunSuite {
     println(result)
     assert(result.toList.size == 1)
   }
+
+  // trying to get hlist to work
+  // -------------------------
+
+  // test("hlist") {
+  //   val raw = """{"query": [{"vertex": "person"},{"has": "name", "within": ["marko", "vadas"]},{"out": "created"}]}"""
+  //   val query = Query.fromString(raw)
+  //   val operations = Generic[Query].to(query)
+  //   val result = Operation.process(operations, graph).toList
+  //   println(result)
+  //   assert(result.toList.size == 1)
+  // }
 }

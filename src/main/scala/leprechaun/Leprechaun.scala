@@ -68,8 +68,10 @@ case class OutVertexOperation(outVertex: String) extends Operation {
 }
 
 case class Query(query: List[Operation]) {
-  def operate[R, In <: HList, G](graph: ScalaGraph) (implicit p: Prepend[In, ::[G, HNil]]): R = {
+  // def operate[R](graph: ScalaGraph) (implicit p: Prepend[In, ::[G, HNil]]): R = {
   // def operate[R](graph: ScalaGraph): R = {
+
+  def operate[R, In <: HList, G](graph: ScalaGraph) (implicit p: Prepend[In, ::[G, HNil]]): R = {
     var anvil: Any = graph
     def op[M](operation: Operation) {
       operation match {

@@ -67,32 +67,6 @@ case class OutVertexOperation(outVertex: String) extends Operation {
   }
 }
 
-case class Query(query: List[Operation]) {
-  // def operate[R, In <: HList, G](graph: ScalaGraph) (implicit p: Prepend[In, ::[G, HNil]]): R = {
-  def operate[R](graph: ScalaGraph): R = {
-    var anvil: Any = graph
-    def op[M](operation: Operation) {
-      operation match {
-        case VertexOperation(vertex) => anvil = anvil.asInstanceOf[ScalaGraph].V.hasLabel(vertex)
-        case HasOperation(has, within: List[M]) => anvil = {
-          val gid = Key[M](has)
-          anvil.asInstanceOf[GremlinScala[Vertex, HList]].has(gid, P.within(within:_*))
-        }
-        // case AsOperation(as) => anvil = anvil.asInstanceOf[GremlinScala[G, In]].as(as)
-        case InOperation(in) => anvil = anvil.asInstanceOf[GremlinScala[Vertex, HList]].in(in)
-        case OutOperation(out) => anvil = anvil.asInstanceOf[GremlinScala[Vertex, HList]].out(out)
-        case InVertexOperation(inVertex) => anvil = anvil.asInstanceOf[GremlinScala[Edge, HList]].inV()
-        case OutVertexOperation(outVertex) => anvil = anvil.asInstanceOf[GremlinScala[Edge, HList]].outV()
-        case InEdgeOperation(inEdge) => anvil = anvil.asInstanceOf[GremlinScala[Vertex, HList]].inE()
-        case OutEdgeOperation(outEdge) => anvil = anvil.asInstanceOf[GremlinScala[Vertex, HList]].outE()
-      }
-    }
-
-    query.foreach(x => op(x))
-    anvil.asInstanceOf[R]
-  }
-}
-
 object Query {
   class OperationSerializer extends CustomSerializer[Operation](format => ({
     case JObject(List(JField("vertex", JString(vertex)))) => VertexOperation(vertex)
@@ -118,6 +92,32 @@ object Query {
   def fromString(raw: String): Query = {
     val json = parse(raw)
     fromJson(json)
+  }
+}
+
+case class Query(query: List[Operation]) {
+  // def operate[R, In <: HList, G](graph: ScalaGraph) (implicit p: Prepend[In, ::[G, HNil]]): R = {
+  def operate[R](graph: ScalaGraph): R = {
+    var anvil: Any = graph
+    def op[M](operation: Operation) {
+      operation match {
+        case VertexOperation(vertex) => anvil = operation.asInstanceOf[VertexOperation].operate(anvil.asInstanceOf[ScalaGraph])
+        case HasOperation(has, within: List[M]) => anvil = {
+          val gid = Key[M](has)
+          operation.asInstanceOf[HasOperation[M]].operate(anvil.asInstanceOf[GremlinScala[Vertex, HList]].has(gid, P.within(within:_*)))
+        }
+        // case AsOperation(as) => anvil = operation.asInstanceOf[AsOperation].operate(anvil.asInstanceOf[GremlinScala[M, HList]])
+        case InOperation(in) => anvil = operation.asInstanceOf[InOperation].operate(anvil.asInstanceOf[GremlinScala[Vertex, HList]])
+        case OutOperation(out) => anvil = operation.asInstanceOf[OutOperation].operate(anvil.asInstanceOf[GremlinScala[Vertex, HList]])
+        case InVertexOperation(inVertex) => anvil = operation.asInstanceOf[InVertexOperation].operate(anvil.asInstanceOf[GremlinScala[Edge, HList]])
+        case OutVertexOperation(outVertex) => anvil = operation.asInstanceOf[OutVertexOperation].operate(anvil.asInstanceOf[GremlinScala[Edge, HList]])
+        case InEdgeOperation(inEdge) => anvil = operation.asInstanceOf[InEdgeOperation].operate(anvil.asInstanceOf[GremlinScala[Vertex, HList]])
+        case OutEdgeOperation(outEdge) => anvil = operation.asInstanceOf[OutEdgeOperation].operate(anvil.asInstanceOf[GremlinScala[Vertex, HList]])
+      }
+    }
+
+    query.foreach(x => op(x))
+    anvil.asInstanceOf[R]
   }
 }
 

@@ -96,8 +96,8 @@ object Query {
 }
 
 case class Query(query: List[Operation]) {
-  // def operate[R, In <: HList, G](graph: ScalaGraph) (implicit p: Prepend[In, ::[G, HNil]]): R = {
-  def operate[R](graph: ScalaGraph): R = {
+  def operate[R, In <: HList, G](graph: ScalaGraph) (implicit p: Prepend[In, ::[G, HNil]]): R = {
+  // def operate[R](graph: ScalaGraph): R = {
     var anvil: Any = graph
     def op[M](operation: Operation) {
       operation match {
@@ -106,7 +106,7 @@ case class Query(query: List[Operation]) {
           val gid = Key[M](has)
           operation.asInstanceOf[HasOperation[M]].operate(anvil.asInstanceOf[GremlinScala[Vertex, HList]].has(gid, P.within(within:_*)))
         }
-        // case AsOperation(as) => anvil = operation.asInstanceOf[AsOperation].operate(anvil.asInstanceOf[GremlinScala[M, HList]])
+        case AsOperation(as) => anvil = operation.asInstanceOf[AsOperation].operate(anvil.asInstanceOf[GremlinScala[M, HList]])
         case InOperation(in) => anvil = operation.asInstanceOf[InOperation].operate(anvil.asInstanceOf[GremlinScala[Vertex, HList]])
         case OutOperation(out) => anvil = operation.asInstanceOf[OutOperation].operate(anvil.asInstanceOf[GremlinScala[Vertex, HList]])
         case InVertexOperation(inVertex) => anvil = operation.asInstanceOf[InVertexOperation].operate(anvil.asInstanceOf[GremlinScala[Edge, HList]])

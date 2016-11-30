@@ -1,14 +1,17 @@
 package leprechaun
 
-import shapeless.{::,HNil,HList}
+// import shapeless.{::,HNil,HList}
 // import shapeless.ops.hlist.RightFolder
 // import shapeless.ops.hlist.Prepend
 
 import cats.free.Free
 import cats.{~>,Id}
 
-import gremlin.scala._
+// import gremlin.scala._
+import org.apache.tinkerpop.gremlin.structure.{Vertex, Edge}
 import org.apache.tinkerpop.gremlin.process.traversal.P
+import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal
+
 import org.json4s._
 import org.json4s.jackson._
 import org.json4s.jackson.JsonMethods._
@@ -48,31 +51,30 @@ import org.json4s.jackson.JsonMethods._
 // case class Return[F[_], A](a: A) extends Free[F, A]
 // case class Bind[F[_], I, A](i: F[I], k: I => Free[F, A]) extends Free[F, A]
 
-object Operation {
-  type OperationFree[F] = Free[Operation, F]
+object OperationCoproduct {
+  type FreeOperation[F] = Free[Operation, F]
 
   sealed trait Operation[O]
-  final case class VertexOperation(vertex: String) extends Operation[GremlinScala[Vertex, HNil]]
-  // final case class HasOperation[M](has: String, within: List[M], graph: GremlinScala[Vertex, HList]) extends Operation[GremlinScala[Vertex, HList]]
-  final case class InOperation(in: String) extends Operation[GremlinScala[Vertex, HNil]]
+  case class LabelOperation(label: String) extends Operation[GraphTraversal[_, Vertex]]
+  case class InOperation(in: String) extends Operation[GraphTraversal[_, Vertex]]
+  case class OutOperation(out: String) extends Operation[GraphTraversal[_, Vertex]]
+  case class HasOperation(has: String, within: List[_]) extends Operation[GraphTraversal[_, Vertex]]
 
   object Operation {
-    def vertex(v: String): OperationFree[GremlinScala[Vertex, HNil]] = Free.liftF(VertexOperation(v))
-    // def has[M](h: String, w: List[M]): Free[Operation, GremlinScala[Vertex, HList]] = Free.liftF(HasOperation(h, w))
-    def in(i: String): OperationFree[GremlinScala[Vertex, HNil]] = Free.liftF(InOperation(i))
+    def label(v: String): FreeOperation[GraphTraversal[_, Vertex]] = Free.liftF(LabelOperation(v))
+    def in(i: String): FreeOperation[GraphTraversal[_, Vertex]] = Free.liftF(InOperation(i))
+    def out(o: String): FreeOperation[GraphTraversal[_, Vertex]] = Free.liftF(OutOperation(o))
+    def has(h: String, w: List[_]): FreeOperation[GraphTraversal[_, Vertex]] = Free.liftF(HasOperation(h, w))
   }
 
-  def operationInterpreter(graph: GremlinScala[Vertex, HNil]): (Operation ~> Id) =
+  def operationInterpreter(traversal: GraphTraversal[_, _]): (Operation ~> Id) =
     new (Operation ~> Id) {
-      // import Operation._
       def apply[A](input: Operation[A]): Id[A] =
         input match {
-          case VertexOperation(vertex) => graph.hasLabel(vertex).asInstanceOf[A]
-          // case HasOperation(has, within, graph) => {
-          //   val gid = Key[M](has)
-          //   IO(graph.has(gid, P.within(within:_*)))
-          // }
-          case InOperation(in) => graph.in(in).asInstanceOf[A]
+          case LabelOperation(label) => traversal.hasLabel(label).asInstanceOf[A]
+          case InOperation(in) => traversal.in(in).asInstanceOf[A]
+          case OutOperation(out) => traversal.out(out).asInstanceOf[A]
+          case HasOperation(has, within) => traversal.has(has, P.within(within: _*)).asInstanceOf[A]
         }
     }
 }

@@ -1,23 +1,35 @@
 package leprechaun.test
 
-import shapeless.{::,HNil,HList}
-import gremlin.scala._
+// import shapeless.{::,HNil,HList}
+import cats.free.Free
+
+// import gremlin.scala._
+import org.apache.tinkerpop.gremlin.structure.{Vertex, Edge}
+import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal
 import org.apache.tinkerpop.gremlin.tinkergraph.structure.TinkerFactory
+
 import org.scalatest._
-import leprechaun.Operation._
-import leprechaun.Operation.Operation._
+
+import leprechaun.OperationCoproduct._
+import leprechaun.OperationCoproduct.Operation._
+
+import scala.collection.JavaConversions._
 
 class LeprechaunTest extends FunSuite {
-  def graph = TinkerFactory.createModern.asScala.V
-  def program: OperationFree[GremlinScala[Vertex, HNil]] =
+  def graph = TinkerFactory.createModern
+  def code = List()
+  def program: Free[Operation, GraphTraversal[_, Vertex]] =
     for {
-      a <- vertex("software")
+      a <- label("software")
       b <- in("created")
     } yield b
 
   test("free monadic coproduct") {
-    val result: GremlinScala[Vertex, HNil] = program.foldMap(operationInterpreter(graph))
-    val values = result.toList.map(_.valueMap) 
+    val traversal = graph.traversal.V()
+    val result = program.foldMap(operationInterpreter(traversal))
+    val values = result.toList.map(el => el.values(el.keys.toList: _*))
+    println(program)
+    println(program.getClass)
     println(values)
     assert(values.size == 4)
   }

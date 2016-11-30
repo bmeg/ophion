@@ -1,23 +1,20 @@
 package leprechaun.test
 
-// import shapeless.{::,HNil,HList}
 import cats.free.Free
 
-// import gremlin.scala._
 import org.apache.tinkerpop.gremlin.structure.{Vertex, Edge}
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal
 import org.apache.tinkerpop.gremlin.tinkergraph.structure.TinkerFactory
 
 import org.scalatest._
 
-import leprechaun.OperationCoproduct._
-import leprechaun.OperationCoproduct.Operation._
+import leprechaun.Leprechaun._
+import leprechaun.Leprechaun.Operation._
 
 import scala.collection.JavaConversions._
 
 class LeprechaunTest extends FunSuite {
   def graph = TinkerFactory.createModern
-  def code = List()
 
   def simpleQuery: Free[Operation, GraphTraversal[_, Vertex]] =
     for {
@@ -36,6 +33,15 @@ class LeprechaunTest extends FunSuite {
       x <- select(List("people", "software"))
     } yield x
 
+  val example = """{"query":
+ [{"label": "person"},
+  {"as": "people"},
+  {"outEdge": "created"},
+  {"has": "weight", "within": [1.0]},
+  {"inVertex": "software"},
+  {"as": "software"},
+  {"select": ["people", "software"]}]}"""
+
   test("free monadic coproduct") {
     val traversal = graph.traversal.V()
     val result = simpleQuery.foldMap(operationInterpreter(traversal))
@@ -53,35 +59,11 @@ class LeprechaunTest extends FunSuite {
   }
 
   test("json parsing") {
-
+    val traversal = graph.traversal.V()
+    val query = Query.fromString(example)
+    val result = query.compose.foldMap(operationInterpreter(traversal)).head.toList
+    println(result)
+    assert(query.query.size == 7)
+    assert(result.size == 1)
   }
-
-  // test("construction") {
-  //   val operations = OutOperation("created") :: VertexOperation("person") :: HNil
-  //   val result = Operation.process(operations, graph).toList
-  //   println(result)
-  //   assert(result.size == 4)
-  // }
-
-  // test("has") {
-  //   val operations = HasOperation("name", List("marko", "vadas")) :: InOperation("created") :: VertexOperation("software") :: HNil
-  //   val result = Operation.process(operations, graph).toList
-  //   println(result)
-  //   assert(result.size == 1)
-  // }
-
-  // test("as") {
-  //   val operations = AsOperation("yellow") :: HasOperation("name", List("ripple", "lop")) :: OutOperation("created") :: VertexOperation("person") :: HNil
-  //   val result = Operation.process(operations, graph).toList
-  //   println(result)
-  //   assert(result.size == 4)
-  // }
-
-  // test("operation") {
-  //   val raw = """{"query": [{"vertex": "person"},{"has": "name", "within": ["marko", "vadas"]},{"out": "created"}]}"""
-  //   val query = Query.fromString(raw)
-  //   val result: GremlinScala[Vertex, HList] = query.operate(graph)
-  //   println(result)
-  //   assert(result.toList.size == 1)
-  // }
 }

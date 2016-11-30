@@ -10,8 +10,6 @@ libraryDependencies ++= Seq(
 
   "org.typelevel"              %% "cats"                     % "0.8.1",
   "org.http4s"                 %% "http4s-core"              % "0.14.11a",
-  "com.michaelpollmeier"       %% "gremlin-scala"            % "3.1.2-incubating.0",
-  // "com.michaelpollmeier"       %% "gremlin-scala"            % "3.2.3.2",
 
   "org.json4s"                 %% "json4s-native"            % "3.3.0",
   "org.json4s"                 %% "json4s-jackson"           % "3.3.0",

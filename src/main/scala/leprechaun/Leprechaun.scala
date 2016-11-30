@@ -1,6 +1,5 @@
 package leprechaun
 
-// import cats.{~>,Id}
 import cats._
 import cats.implicits._
 import cats.free.Free

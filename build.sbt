@@ -7,6 +7,9 @@ conflictManager := ConflictManager.strict.copy(organization = "com.esotericsoftw
 libraryDependencies ++= Seq(
   "org.scala-lang"             %  "scala-compiler"           % "2.11.8",
   "org.apache.tinkerpop"       %  "tinkergraph-gremlin"      % "3.1.1-incubating",
+
+  "org.typelevel"              %% "cats"                     % "0.8.1",
+  "org.http4s"                 %% "http4s-core"              % "0.14.11a",
   "com.michaelpollmeier"       %% "gremlin-scala"            % "3.1.2-incubating.0",
   // "com.michaelpollmeier"       %% "gremlin-scala"            % "3.2.3.2",
 

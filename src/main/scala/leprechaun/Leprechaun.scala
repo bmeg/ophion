@@ -56,15 +56,27 @@ object OperationCoproduct {
 
   sealed trait Operation[O]
   case class LabelOperation(label: String) extends Operation[GraphTraversal[_, Vertex]]
+  case class HasOperation(has: String, within: List[_]) extends Operation[GraphTraversal[_, Vertex]]
   case class InOperation(in: String) extends Operation[GraphTraversal[_, Vertex]]
   case class OutOperation(out: String) extends Operation[GraphTraversal[_, Vertex]]
-  case class HasOperation(has: String, within: List[_]) extends Operation[GraphTraversal[_, Vertex]]
+  case class InEdgeOperation(inEdge: String) extends Operation[GraphTraversal[_, Edge]]
+  case class OutEdgeOperation(outEdge: String) extends Operation[GraphTraversal[_, Edge]]
+  case class InVertexOperation(inVertex: String) extends Operation[GraphTraversal[_, Vertex]]
+  case class OutVertexOperation(outVertex: String) extends Operation[GraphTraversal[_, Vertex]]
+  case class AsOperation(as: String) extends Operation[GraphTraversal[_, _]]
+  case class SelectOperation(select: List[String]) extends Operation[GraphTraversal[_, _]]
 
   object Operation {
     def label(v: String): FreeOperation[GraphTraversal[_, Vertex]] = Free.liftF(LabelOperation(v))
+    def has(h: String, w: List[_]): FreeOperation[GraphTraversal[_, Vertex]] = Free.liftF(HasOperation(h, w))
     def in(i: String): FreeOperation[GraphTraversal[_, Vertex]] = Free.liftF(InOperation(i))
     def out(o: String): FreeOperation[GraphTraversal[_, Vertex]] = Free.liftF(OutOperation(o))
-    def has(h: String, w: List[_]): FreeOperation[GraphTraversal[_, Vertex]] = Free.liftF(HasOperation(h, w))
+    def inEdge(ie: String): FreeOperation[GraphTraversal[_, Edge]] = Free.liftF(InEdgeOperation(ie))
+    def outEdge(oe: String): FreeOperation[GraphTraversal[_, Edge]] = Free.liftF(OutEdgeOperation(oe))
+    def inVertex(iv: String): FreeOperation[GraphTraversal[_, Vertex]] = Free.liftF(InVertexOperation(iv))
+    def outVertex(ov: String): FreeOperation[GraphTraversal[_, Vertex]] = Free.liftF(OutVertexOperation(ov))
+    def as(a: String): FreeOperation[GraphTraversal[_, _]] = Free.liftF(AsOperation(a))
+    def select(s: List[String]): FreeOperation[GraphTraversal[_, _]] = Free.liftF(SelectOperation(s))
   }
 
   def operationInterpreter(traversal: GraphTraversal[_, _]): (Operation ~> Id) =
@@ -72,9 +84,23 @@ object OperationCoproduct {
       def apply[A](input: Operation[A]): Id[A] =
         input match {
           case LabelOperation(label) => traversal.hasLabel(label).asInstanceOf[A]
+          case HasOperation(has, within) => traversal.has(has, P.within(within: _*)).asInstanceOf[A]
           case InOperation(in) => traversal.in(in).asInstanceOf[A]
           case OutOperation(out) => traversal.out(out).asInstanceOf[A]
-          case HasOperation(has, within) => traversal.has(has, P.within(within: _*)).asInstanceOf[A]
+          case InEdgeOperation(inEdge) => traversal.inE(inEdge).asInstanceOf[A]
+          case OutEdgeOperation(outEdge) => traversal.outE(outEdge).asInstanceOf[A]
+          case InVertexOperation(inVertex) => traversal.inV().asInstanceOf[A]
+          case OutVertexOperation(outVertex) => traversal.outV().asInstanceOf[A]
+          case AsOperation(as) => traversal.as(as).asInstanceOf[A]
+          case SelectOperation(select) => {
+            if (select.isEmpty) {
+              traversal
+            } else if (select.size == 1) {
+              traversal.select[Any](select.head).asInstanceOf[A]
+            } else {
+              traversal.select[Any](select.head, select.tail.head, select.tail.tail: _*)
+            }
+          }
         }
     }
 }

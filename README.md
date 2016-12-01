@@ -6,7 +6,7 @@ Language for making graph queries from data
 
 ## Usage
 
-Given a graph adhering to the tinkerpop interface, we want to make remote queries against it without exposing a gremlin console. To this end, Ophion provides a json-encoded schema for making graph queries as data:
+Given a graph adhering to the [tinkerpop](https://tinkerpop.apache.org/) interface, we want to make remote queries against it without exposing a gremlin console. To this end, **Ophion** provides a json-encoded schema for making graph queries as data:
 
 ```json
 {"query":
@@ -48,4 +48,4 @@ Gremlin functionality currently supported:
 * traversing from and to edges and vertexes
 * marking a point in a traversal with `as` and `select`ing those points at the end of the traversal.
 
-`Ophion` hopes to support the entire gremlin spec in the future, but for now these features already enable all of our current graph query use cases.
+**Ophion** hopes to support the entire gremlin spec in the future, but for now these features already enable all of our current graph query use cases.

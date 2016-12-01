@@ -1,9 +1,51 @@
-This test currently fails to compile:
+# ophion
 
-    > sbt test
+Language for making graph queries from data
 
-    [error] leprechaun/src/test/scala/leprechaun/test/LeprechaunTest.scala:33: could not find implicit value for parameter p: shapeless.ops.hlist.Prepend[In,shapeless.::[G,shapeless.HNil]]
-    [error]     val result: GremlinScala[Vertex, HList] = query.operate(graph)
+![OPHION](https://github.com/bmeg/ophion/blob/master/resources/ophion.jpg)
 
-    [error] src/main/scala/leprechaun/Leprechaun.scala:74: could not find implicit value for parameter p: shapeless.ops.hlist.Prepend[In,shapeless.::[A,shapeless.HNil]]
-    [error]   implicit def as[T, L <: HList, A, In <: HList] = at[AsOperation[A, In], GremlinScala[A, In]] {(t, acc) => t.operate(acc)}
+## Usage
+
+Given a graph adhering to the tinkerpop interface, we want to make remote queries against it without exposing a gremlin console. To this end, Ophion provides a json-encoded schema for making graph queries as data:
+
+```json
+{"query":
+ [{"label": "person"},
+  {"as": "people"},
+  {"outEdge": "created"},
+  {"has": "weight", "within": [1.0]},
+  {"inVertex": "software"},
+  {"as": "software"},
+  {"select": ["people", "software"]}]}
+```
+
+Given some json like this, you can parse it into a program that executes the given query when run:
+
+```scala
+import ophion.Ophion._
+import org.apache.tinkerpop.gremlin.tinkergraph.structure.TinkerFactory
+
+val graph = TinkerFactory.createModern
+val traversal = graph.traversal.V()
+
+val example = """{"query":
+ [{"label": "person"},
+  {"as": "people"},
+  {"outEdge": "created"},
+  {"has": "weight", "within": [1.0]},
+  {"inVertex": "software"},
+  {"as": "software"},
+  {"select": ["people", "software"]}]}"""
+
+val query = Query.fromString(example).compose
+val result = query.foldMap(operationInterpreter(traversal)).head.toList
+```
+
+Gremlin functionality currently supported:
+
+* selecting vertexes or edges by label
+* `has...within` predicates
+* traversing from and to edges and vertexes
+* marking a point in a traversal with `as` and `select`ing those points at the end of the traversal.
+
+`Ophion` hopes to support the entire gremlin spec in the future, but for now these features already enable all of our current graph query use cases.

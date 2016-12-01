@@ -1,4 +1,4 @@
-package leprechaun
+package ophion
 
 import cats._
 import cats.implicits._
@@ -12,7 +12,7 @@ import org.json4s._
 import org.json4s.jackson._
 import org.json4s.jackson.JsonMethods._
 
-object Leprechaun {
+object Ophion {
   type FreeOperation[F] = Free[Operation, F]
 
   sealed trait Operation[O]

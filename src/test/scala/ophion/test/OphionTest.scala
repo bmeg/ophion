@@ -1,4 +1,4 @@
-package leprechaun.test
+package ophion.test
 
 import cats.free.Free
 
@@ -8,12 +8,12 @@ import org.apache.tinkerpop.gremlin.tinkergraph.structure.TinkerFactory
 
 import org.scalatest._
 
-import leprechaun.Leprechaun._
-import leprechaun.Leprechaun.Operation._
+import ophion.Ophion._
+import ophion.Ophion.Operation._
 
 import scala.collection.JavaConversions._
 
-class LeprechaunTest extends FunSuite {
+class OphionTest extends FunSuite {
   def graph = TinkerFactory.createModern
 
   def simpleQuery: Free[Operation, GraphTraversal[_, Vertex]] =

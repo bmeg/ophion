@@ -66,4 +66,19 @@ class OphionTest extends FunSuite {
     assert(query.query.size == 7)
     assert(result.size == 1)
   }
+
+  test("interpretation") {
+    val traversal = graph.traversal.V()
+    val query = Query.fromString(example)
+    val result = query.interpret(traversal).toList
+    println(result)
+    assert(query.query.size == 7)
+    assert(result.size == 1)
+  }
+
+  test("running") {
+    val query = Query.fromString(example)
+    val result = query.run(graph)
+    assert(result.size == 1)
+  }
 }

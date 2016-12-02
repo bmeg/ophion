@@ -6,6 +6,10 @@ import org.apache.tinkerpop.gremlin.structure.{Vertex, Edge}
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal
 import org.apache.tinkerpop.gremlin.tinkergraph.structure.TinkerFactory
 
+import org.json4s._
+import org.json4s.jackson._
+import org.json4s.jackson.JsonMethods._
+
 import org.scalatest._
 
 import ophion.Ophion._
@@ -15,6 +19,7 @@ import scala.collection.JavaConversions._
 
 class OphionTest extends FunSuite {
   def graph = TinkerFactory.createModern
+  implicit val formats = Serialization.formats(NoTypeHints)
 
   def simpleQuery: Free[Operation, GraphTraversal[_, Vertex]] =
     for {
@@ -80,5 +85,19 @@ class OphionTest extends FunSuite {
     val query = Query.fromString(example)
     val result = query.run(graph)
     assert(result.size == 1)
+  }
+
+  test("conversion to vertex view") {
+    val traversal = graph.traversal.V()
+    val result = simpleQuery.foldMap(operationInterpreter(traversal)).toList.toList
+    val json = Query.resultJson(result)
+    println(compact(render(json)))
+  }
+
+  test("serializing a complex result") {
+    val traversal = graph.traversal.V()
+    val result = selectQuery.foldMap(operationInterpreter(traversal)).toList.toList
+    val json = Query.resultJson(result)
+    println(compact(render(json)))
   }
 }

@@ -4,7 +4,7 @@ import cats._
 import cats.implicits._
 import cats.free.Free
 
-import org.apache.tinkerpop.gremlin.structure.{Graph, Vertex, Edge, VertexProperty}
+import org.apache.tinkerpop.gremlin.structure.{Graph, Element, Property, Vertex, Edge, VertexProperty}
 import org.apache.tinkerpop.gremlin.process.traversal.P
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal
 
@@ -71,6 +71,46 @@ object Ophion {
         }
     }
 
+  def groupAs[A, B, C](items: Iterable[A]) (key: A => B) (value: A => C): Map[B, List[C]] = {
+    items.foldLeft(Map[B, List[C]]()) { (group, item) =>
+      val k = key(item)
+      group + (k -> (value(item) :: group.getOrElse(k, List[C]())))
+    }
+  }
+
+  type EdgeMap = Map[String, List[String]]
+
+  sealed trait GraphView
+  case class VertexDirect(`type`: String, properties: Map[String, Any]) extends GraphView
+  case class VertexFull(`type`: String, properties: Map[String, Any], in: EdgeMap, out: EdgeMap) extends GraphView
+  case class EdgeDirect(`type`: String, properties: Map[String, Any]) extends GraphView
+  case class EdgeFull(`type`: String, properties: Map[String, Any], in: String, out: String) extends GraphView
+
+  object GraphView {
+    def valueMap(vertex: Vertex): Map[String, Any] = {
+      val properties = vertex.properties[Any](vertex.keys.toList: _*)
+      properties.map((vp: VertexProperty[Any]) => (vp.key, vp.value)).toMap
+    }
+
+    def valueMap(edge: Edge): Map[String, Any] = {
+      val properties = edge.properties[Any](edge.keys.toList: _*)
+      properties.map((vp: Property[Any]) => (vp.key, vp.value)).toMap
+    }
+
+    def inMap(vertex: Vertex): EdgeMap = {
+      val edges = vertex.graph.traversal.V(vertex.id).inE().toList
+      groupAs[Edge, String, String](edges) (_.label) (_.outVertex.value[String]("gid"))
+    }
+
+    def outMap(vertex: Vertex): EdgeMap = {
+      val edges = vertex.graph.traversal.V(vertex.id).outE().toList
+      groupAs[Edge, String, String](edges) (_.label) (_.inVertex.value[String]("gid"))
+    }
+
+    def translateVertex(vertex: Vertex): GraphView = VertexDirect(vertex.label, valueMap(vertex))
+    def translateEdge(edge: Edge): GraphView = EdgeDirect(edge.label, valueMap(edge))
+  }
+
   case class Query(query: List[Operation[_]]) extends Operation[GraphTraversal[_, _]] {
     def compose: FreeOperation[List[GraphTraversal[_, _]]] = {
       query.map(operation => Free.liftF(operation).asInstanceOf[FreeOperation[GraphTraversal[_, _]]]).sequenceU
@@ -87,61 +127,6 @@ object Ophion {
   }
 
   object Query {
-    type EdgeMap = Map[String, List[String]]
-
-    def groupAs[A, B, C](items: Iterable[A]) (key: A => B) (value: A => C): Map[B, List[C]] = {
-      items.foldLeft(Map[B, List[C]]()) { (group, item) =>
-        val k = key(item)
-        group + (k -> (value(item) :: group.getOrElse(k, List[C]())))
-      }
-    }
-
-    case class VertexView(`type`: String, properties: Map[String, Any], in: EdgeMap, out: EdgeMap) // extends Vertex {
-    //   def graph: Graph = GraphView(List(), List())
-    //   def id: Object = "bottom"
-    //   def label: String = "view"
-    //   def remove: Unit
-    //   def addEdge(label: String, to: Vertex, objects: List[Object]): Edge = EdgeView(label, Map[String, Any]())
-    //   def edges(direction: Direction, labels: List[String]): Seq[Edge] = List()
-    // }
-
-    // case class EdgeView(`type`: String, properties: Map[String, Any]) // extends Edge
-    // case class GraphView(vertexes: List[VertexView], edges: List[EdgeView]) // extends Graph
-
-    object VertexView {
-      def valueMap(vertex: Vertex): Map[String, Any] = {
-        val properties = vertex.properties[Any](vertex.keys.toList: _*)
-        properties.map((vp: VertexProperty[Any]) => (vp.key, vp.value)).toMap
-      }
-
-      def inMap(vertex: Vertex): EdgeMap = {
-        val edges = vertex.graph.traversal.V(vertex.id).inE().toList
-        groupAs[Edge, String, String](edges) (_.label) (_.outVertex.value[String]("gid"))
-      }
-
-      def outMap(vertex: Vertex): EdgeMap = {
-        val edges = vertex.graph.traversal.V(vertex.id).outE().toList
-        groupAs[Edge, String, String](edges) (_.label) (_.inVertex.value[String]("gid"))
-      }
-
-      def translate(vertex: Vertex): VertexView = {
-        VertexView(vertex.label, valueMap(vertex), inMap(vertex), outMap(vertex))
-      }
-    }
-
-    // class VertexSerializer extends CustomSerializer[Vertex](format => ({
-    //   case JObject(List(
-    //     JField("type", JString(label)),
-    //     JField("properties", properties),
-    //     JField("in", inMap),
-    //     JField("out", outMap))) => {
-
-    //     VertexView(label, properties.extract[Map[String, Any]], inMap.extract[EdgeMap], outMap.extract[EdgeMap])
-    //   }
-    // },{
-    //   case vertex: Vertex => Extraction.decompose(VertexView.translate(vertex))
-    // }))
-
     class OperationSerializer extends CustomSerializer[Operation[_]](format => ({
       case JObject(List(JField("label", JString(label)))) => LabelOperation(label)
       case JObject(List(JField("has", JString(has)), JField("within", within))) => HasOperation(has, within.extract[List[_]])
@@ -161,6 +146,30 @@ object Ophion {
 
     implicit val formats = Serialization.formats(NoTypeHints) + new OperationSerializer()
 
+    def resultJson(result: List[Any]): JValue = {
+      val translation = result.map { item => 
+        item match {
+          case item: Vertex => GraphView.translateVertex(item)
+          case item: Edge => GraphView.translateEdge(item)
+          case item: java.util.LinkedHashMap[String, Any] => {
+            val map = item.toMap
+            map.mapValues { subitem =>
+              subitem match {
+                case item: Vertex => GraphView.translateVertex(item)
+                case item: Edge => GraphView.translateEdge(item)
+                case _ => item
+              }
+            }
+          }
+
+          case _ => item
+        }
+      }
+
+      val output = Map("result" -> translation)
+      Extraction.decompose(output)
+    }
+
     def fromJson(json: JValue): Query = {
       json.extract[Query]
     }
@@ -170,11 +179,10 @@ object Ophion {
       fromJson(json)
     }
 
-    def toJson(query: Query): Json = {
-      Extraction.decompose(query).asInstanceOf[Json]
+    def toJson(query: Query): JValue = {
+      Extraction.decompose(query)
     }
   }
-
 }
 
 // trait Monad[M[_]] {

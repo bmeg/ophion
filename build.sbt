@@ -1,6 +1,6 @@
 organization  := "io.bmeg"
 name := "ophion"
-version := "0.0.1-SNAPSHOT"
+version := "0.0.1"
 scalaVersion := "2.11.8"
 conflictManager := ConflictManager.strict.copy(organization = "com.esotericsoftware.*")
 

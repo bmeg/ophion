@@ -100,4 +100,52 @@ class OphionTest extends FunSuite {
     val json = Query.resultJson(result)
     println(compact(render(json)))
   }
+
+  test("string values") {
+    val values = """{"query":
+      [{"label": "person"},
+       {"values": ["name"]}]}"""
+
+    val query = Query.fromString(values)
+    val result = query.run(graph)
+    val json = Query.resultJson(result)
+    println(compact(render(json)))
+  }
+
+  test("number values") {
+    val values = """{"query":
+      [{"label": "person"},
+       {"values": ["age"]}]}"""
+
+    val query = Query.fromString(values)
+    val result = query.run(graph)
+    val json = Query.resultJson(result)
+    println(compact(render(json)))
+  }
+
+  test("limit") {
+    val values = """{"query":
+      [{"label": "person"},
+       {"values": ["age"]},
+       {"limit": 3}]}"""
+
+    val query = Query.fromString(values)
+    val result = query.run(graph)
+    val json = Query.resultJson(result)
+    assert(result.size == 3)
+    println(compact(render(json)))
+  }
+
+  test("range") {
+    val values = """{"query":
+      [{"label": "person"},
+       {"values": ["age"]},
+       {"begin": 1, "end": 2}]}"""
+
+    val query = Query.fromString(values)
+    val result = query.run(graph)
+    val json = Query.resultJson(result)
+    assert(result.size == 1)
+    println(compact(render(json)))
+  }
 }

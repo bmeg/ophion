@@ -136,6 +136,18 @@ class OphionTest extends FunSuite {
     println(compact(render(json)))
   }
 
+  test("count") {
+    val values = """{"query":
+      [{"label": "person"},
+       {"values": ["age"]},
+       {"count": null}]}"""
+
+    val query = Query.fromString(values)
+    val result = query.run(graph)
+    val json = Query.resultJson(result)
+    assert(result.get(0) == 4)
+    println(compact(render(json)))
+  }
   test("range") {
     val values = """{"query":
       [{"label": "person"},

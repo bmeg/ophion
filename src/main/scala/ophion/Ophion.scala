@@ -33,6 +33,7 @@ object Ophion {
   case class LimitOperation(limit: Long) extends Operation[GraphTraversal[_, _]]
   case class RangeOperation(begin: Long, end: Long) extends Operation[GraphTraversal[_, _]]
   case class SelectOperation(select: List[String]) extends Operation[GraphTraversal[_, _]]
+  case class CountOperation() extends Operation[GraphTraversal[_,Long]]
 
   object Operation {
     def identity: FreeOperation[GraphTraversal[_, _]] = Free.liftF(IdentityOperation)
@@ -49,6 +50,7 @@ object Ophion {
     def limit(l: Long): FreeOperation[GraphTraversal[_, _]] = Free.liftF(LimitOperation(l))
     def range(b: Long, e: Long): FreeOperation[GraphTraversal[_, _]] = Free.liftF(RangeOperation(b, e))
     def select(s: List[String]): FreeOperation[GraphTraversal[_, _]] = Free.liftF(SelectOperation(s))
+    def count() : FreeOperation[GraphTraversal[_,Long]] = Free.liftF(CountOperation())
   }
 
   def operationInterpreter(traversal: GraphTraversal[_, _]): (Operation ~> Id) =
@@ -68,6 +70,7 @@ object Ophion {
           case AsOperation(as) => traversal.as(as).asInstanceOf[A]
           case LimitOperation(limit) => traversal.limit(limit).asInstanceOf[A]
           case RangeOperation(begin, end) => traversal.range(begin, end).asInstanceOf[A]
+          case CountOperation() => traversal.count().asInstanceOf[A]
           case SelectOperation(select) => {
             if (select.isEmpty) {
               traversal
@@ -155,6 +158,7 @@ object Ophion {
       case JObject(List(JField("begin", JInt(begin)), JField("end", JInt(end)))) => RangeOperation(begin.toLong, end.toLong)
       case JObject(List(JField("end", JInt(end)), JField("begin", JInt(begin)))) => RangeOperation(begin.toLong, end.toLong)
       case JObject(List(JField("select", select))) => SelectOperation(select.extract[List[String]])
+      case JObject(List(JField("count", select))) => CountOperation()
     }, {
       case LabelOperation(label) => JObject(JField("label", JString(label)))
       // case HasOperation(has, within) => JObject(JField("has", JString(has)), JField("within", JArray(within)))

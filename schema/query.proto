@@ -1,0 +1,34 @@
+syntax = "proto3";
+
+package bmeg.gaea.schema.query;
+
+message GraphQuery {
+    repeated GraphStatement statements = 1;
+}
+
+message GraphStatement {
+    oneof statement {
+        string vertex = 1;
+        HasStatement has = 2;
+        string as = 3;
+        string in = 4;
+        string out = 5;
+        string inEdge = 6;
+        string outEdge = 7;
+        string inVertex = 8;
+        string outVertex = 9;
+        SelectStatement select = 10;
+    }
+}
+
+message HasStatement {
+    message WithinStatement {
+        repeated string within = 1;
+    }
+    
+    map<string, WithinStatement> properties = 1;
+}
+
+message SelectStatement {
+    repeated string steps = 1;
+}

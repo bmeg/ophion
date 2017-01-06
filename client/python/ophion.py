@@ -6,8 +6,8 @@ class Ophion:
         self.host = host
         self.url = host + "/gaia/vertex/query"
 
-    def query(self, label):
-        return OphionQuery(label, self)
+    def query(self):
+        return OphionQuery(self)
 
     def execute(self, query):
         payload = query.render()
@@ -18,10 +18,13 @@ class Ophion:
         return json.loads(result)
 
 class OphionQuery:
-    def __init__(self, label, parent=None):
-        self.label = label
-        self.query = [{'label': label}]
+    def __init__(self, parent=None):
+        self.query = []
         self.parent = parent
+
+    def label(self, label):
+        self.query.append({'label': label})
+        return self
 
     def has(self, prop, within):
         self.query.append({'has': prop, 'within': within})
@@ -68,7 +71,7 @@ class OphionQuery:
         return self
 
     def count(self):
-        self.query.append({'count': None})
+        self.query.append({'count': ''})
         return self
 
     def render(self):

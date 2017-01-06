@@ -140,7 +140,7 @@ class OphionTest extends FunSuite {
     val values = """{"query":
       [{"label": "person"},
        {"values": ["age"]},
-       {"count": null}]}"""
+       {"count": ""}]}"""
 
     val query = Query.fromString(values)
     val result = query.run(graph)

@@ -1,6 +1,6 @@
 organization  := "io.bmeg"
 name := "ophion"
-version := "0.0.2-SNAPSHOT"
+version := "0.0.4-SNAPSHOT"
 scalaVersion := "2.11.8"
 conflictManager := ConflictManager.strict.copy(organization = "com.esotericsoftware.*")
 
@@ -32,7 +32,7 @@ publishTo := {
   if (isSnapshot.value)
     Some("snapshots" at nexus + "content/repositories/snapshots")
   else
-    Some("releases"  at nexus + "content/repositories/releases")
+    Some("releases"  at nexus + "service/local/staging/deploy/maven2")
 }
 
 credentials += Credentials(Path.userHome / ".ivy2" / ".credentials")

@@ -66,6 +66,10 @@ class OphionQuery:
         self.query.append({'begin': begin, 'end': end})
         return self
 
+    def count(self):
+        self.query.append({'count': None})
+        return self
+
     def render(self):
         output = {'query': self.query}
         return json.dumps(output)

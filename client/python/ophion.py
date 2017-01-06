@@ -27,6 +27,8 @@ class OphionQuery:
         return self
 
     def has(self, prop, within):
+        if not isinstance(within, list):
+            within = [within]
         self.query.append({'has': prop, 'within': within})
         return self
 

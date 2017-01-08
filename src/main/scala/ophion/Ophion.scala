@@ -23,6 +23,7 @@ object Ophion {
   case class LabelOperation(label: String) extends Operation[GraphTraversal[_, Vertex]]
   case class HasOperation(has: String, within: List[_]) extends Operation[GraphTraversal[_, Vertex]]
   case class ValuesOperation(values: List[String]) extends Operation[GraphTraversal[_, _]]
+  case class CapOperation(cap: List[String]) extends Operation[GraphTraversal[_, _]]
   case class InOperation(in: String) extends Operation[GraphTraversal[_, Vertex]]
   case class OutOperation(out: String) extends Operation[GraphTraversal[_, Vertex]]
   case class InEdgeOperation(inEdge: String) extends Operation[GraphTraversal[_, Edge]]
@@ -30,6 +31,8 @@ object Ophion {
   case class InVertexOperation(inVertex: String) extends Operation[GraphTraversal[_, Vertex]]
   case class OutVertexOperation(outVertex: String) extends Operation[GraphTraversal[_, Vertex]]
   case class AsOperation(as: String) extends Operation[GraphTraversal[_, _]]
+  case class GroupCountOperation(groupCount: String) extends Operation[GraphTraversal[_, _]]
+  case class ByOperation(by: String) extends Operation[GraphTraversal[_, _]]
   case class LimitOperation(limit: Long) extends Operation[GraphTraversal[_, _]]
   case class RangeOperation(begin: Long, end: Long) extends Operation[GraphTraversal[_, _]]
   case class SelectOperation(select: List[String]) extends Operation[GraphTraversal[_, _]]
@@ -40,6 +43,7 @@ object Ophion {
     def label(v: String): FreeOperation[GraphTraversal[_, Vertex]] = Free.liftF(LabelOperation(v))
     def has(h: String, w: List[_]): FreeOperation[GraphTraversal[_, Vertex]] = Free.liftF(HasOperation(h, w))
     def values(v: List[String]): FreeOperation[GraphTraversal[_, _]] = Free.liftF(ValuesOperation(v))
+    def cap(c: List[String]): FreeOperation[GraphTraversal[_, _]] = Free.liftF(CapOperation(c))
     def in(i: String): FreeOperation[GraphTraversal[_, Vertex]] = Free.liftF(InOperation(i))
     def out(o: String): FreeOperation[GraphTraversal[_, Vertex]] = Free.liftF(OutOperation(o))
     def inEdge(ie: String): FreeOperation[GraphTraversal[_, Edge]] = Free.liftF(InEdgeOperation(ie))
@@ -47,6 +51,8 @@ object Ophion {
     def inVertex(iv: String): FreeOperation[GraphTraversal[_, Vertex]] = Free.liftF(InVertexOperation(iv))
     def outVertex(ov: String): FreeOperation[GraphTraversal[_, Vertex]] = Free.liftF(OutVertexOperation(ov))
     def as(a: String): FreeOperation[GraphTraversal[_, _]] = Free.liftF(AsOperation(a))
+    def groupCount(gc: String): FreeOperation[GraphTraversal[_, _]] = Free.liftF(GroupCountOperation(gc))
+    def by(b: String): FreeOperation[GraphTraversal[_, _]] = Free.liftF(ByOperation(b))
     def limit(l: Long): FreeOperation[GraphTraversal[_, _]] = Free.liftF(LimitOperation(l))
     def range(b: Long, e: Long): FreeOperation[GraphTraversal[_, _]] = Free.liftF(RangeOperation(b, e))
     def select(s: List[String]): FreeOperation[GraphTraversal[_, _]] = Free.liftF(SelectOperation(s))
@@ -61,6 +67,7 @@ object Ophion {
           case LabelOperation(label) => traversal.hasLabel(label).asInstanceOf[A]
           case HasOperation(has, within) => traversal.has(has, P.within(within: _*)).asInstanceOf[A]
           case ValuesOperation(values) => traversal.values(values: _*).asInstanceOf[A]
+          case CapOperation(cap) => traversal.cap(cap.head, cap.tail: _*).asInstanceOf[A]
           case InOperation(in) => traversal.in(in).asInstanceOf[A]
           case OutOperation(out) => traversal.out(out).asInstanceOf[A]
           case InEdgeOperation(inEdge) => traversal.inE(inEdge).asInstanceOf[A]
@@ -68,6 +75,14 @@ object Ophion {
           case InVertexOperation(inVertex) => traversal.inV().asInstanceOf[A]
           case OutVertexOperation(outVertex) => traversal.outV().asInstanceOf[A]
           case AsOperation(as) => traversal.as(as).asInstanceOf[A]
+          case GroupCountOperation(groupCount) => {
+            if (groupCount == "") {
+              traversal.groupCount().asInstanceOf[A]
+            } else {
+              traversal.groupCount(groupCount).asInstanceOf[A]
+            }
+          }
+          case ByOperation(by) => traversal.by(by).asInstanceOf[A]
           case LimitOperation(limit) => traversal.limit(limit).asInstanceOf[A]
           case RangeOperation(begin, end) => traversal.range(begin, end).asInstanceOf[A]
           case CountOperation(count) => traversal.count().asInstanceOf[A]
@@ -144,6 +159,7 @@ object Ophion {
       case JObject(List(JField("has", JString(has)), JField("within", within))) => HasOperation(has, within.extract[List[_]])
       case JObject(List(JField("within", within), JField("has", JString(has)))) => HasOperation(has, within.extract[List[_]])
       case JObject(List(JField("values", values))) => ValuesOperation(values.extract[List[String]])
+      case JObject(List(JField("cap", cap))) => CapOperation(cap.extract[List[String]])
       case JObject(List(JField("in", JString(in)))) => InOperation(in)
       case JObject(List(JField("out", JString(out)))) => OutOperation(out)
       case JObject(List(JField("inVertex", JString(inVertex)))) => InVertexOperation(inVertex)
@@ -151,6 +167,8 @@ object Ophion {
       case JObject(List(JField("inEdge", JString(inEdge)))) => InEdgeOperation(inEdge)
       case JObject(List(JField("outEdge", JString(outEdge)))) => OutEdgeOperation(outEdge)
       case JObject(List(JField("as", JString(as)))) => AsOperation(as)
+      case JObject(List(JField("groupCount", JString(groupCount)))) => GroupCountOperation(groupCount)
+      case JObject(List(JField("by", JString(by)))) => ByOperation(by)
       case JObject(List(JField("limit", JLong(limit)))) => LimitOperation(limit)
       case JObject(List(JField("limit", JInt(limit)))) => LimitOperation(limit.toLong)
       case JObject(List(JField("begin", JLong(begin)), JField("end", JLong(end)))) => RangeOperation(begin, end)

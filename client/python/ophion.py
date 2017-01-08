@@ -36,6 +36,12 @@ class OphionQuery:
         self.query.append({'values': v})
         return self
 
+    def cap(self, c):
+        if not isinstance(c, list):
+            c = [c]
+        self.query.append({'cap': c})
+        return self
+
     def incoming(self, label):
         self.query.append({'in': label})
         return self
@@ -74,6 +80,14 @@ class OphionQuery:
 
     def count(self):
         self.query.append({'count': ''})
+        return self
+
+    def groupCount(self, label):
+        self.query.append({'groupCount': label})
+        return self
+
+    def by(self, label):
+        self.query.append({'by': label})
         return self
 
     def render(self):

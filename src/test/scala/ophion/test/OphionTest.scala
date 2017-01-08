@@ -148,6 +148,40 @@ class OphionTest extends FunSuite {
     assert(result.get(0) == 4)
     println(compact(render(json)))
   }
+
+  test("groupCount") {
+    val values = """{"query":
+      [{"label": "person"},
+       {"groupCount": ""},
+       {"by": "name"}]}"""
+
+    val query = Query.fromString(values)
+    val result = query.run(graph)
+    val json = Query.resultJson(result)
+    println("groupCount result - " + result.toString())
+    val counts = result.head.asInstanceOf[java.util.HashMap[String, Long]].values.toSet
+    assert(counts.size == 1)
+    assert(counts.head == 1)
+    println(compact(render(json)))
+  }
+
+  test("cap") {
+    val values = """{"query":
+      [{"label": "person"},
+       {"groupCount": "a"},
+       {"by": "name"},
+       {"cap": ["a"]}]}"""
+
+    val query = Query.fromString(values)
+    val result = query.run(graph)
+    val json = Query.resultJson(result)
+    println("cap result - " + result.toString())
+    val counts = result.head.asInstanceOf[java.util.HashMap[String, Long]].values.toSet
+    assert(counts.size == 1)
+    assert(counts.head == 1)
+    println(compact(render(json)))
+  }
+
   test("range") {
     val values = """{"query":
       [{"label": "person"},

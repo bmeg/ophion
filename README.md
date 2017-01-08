@@ -69,6 +69,20 @@ val result = query.foldMap(operationInterpreter(traversal)).head.toList
     {"inVertex": "from an edge, go to the vertex at one end"}
     {"outVertex": "go to the vertex on the other end"}
 
+### count and counting by a property
+
+    {"count": ""}
+    ..., {"groupCount": ""}, {"by": "color"}, ...
+
+You can label different group counts and retrieve them with `cap`:
+
+    ..., 
+    {"groupCount": "color"},
+    {"by": "color"},
+    {"groupCount": "faces"},
+    {"by": "faces"},
+    {"cap", ["color", "faces"]}, ...
+
 ### marking a point in a traversal with `as` and `select`ing those points at the end of the traversal.
 
     {"as": "birth place"}

@@ -190,12 +190,14 @@ object Ophion {
         item match {
           case item: Vertex => GraphView.translateVertex(item)
           case item: Edge => GraphView.translateEdge(item)
+          case item: java.util.HashMap[String, Any] => item.toMap
           case item: java.util.LinkedHashMap[String, Any] => {
             val map = item.toMap
             map.mapValues { subitem =>
               subitem match {
                 case item: Vertex => GraphView.translateVertex(item)
                 case item: Edge => GraphView.translateEdge(item)
+                case item: java.util.HashMap[String, Any] => item.toMap
                 case _ => item
               }
             }

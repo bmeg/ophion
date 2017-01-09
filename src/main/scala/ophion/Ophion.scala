@@ -22,6 +22,7 @@ object Ophion {
   case object IdentityOperation extends Operation[GraphTraversal[_, _]]
   case class LabelOperation(label: String) extends Operation[GraphTraversal[_, Vertex]]
   case class HasOperation(has: String, within: List[_]) extends Operation[GraphTraversal[_, Vertex]]
+  case class HasNotOperation(hasNot: String) extends Operation[GraphTraversal[_, Vertex]]
   case class ValuesOperation(values: List[String]) extends Operation[GraphTraversal[_, _]]
   case class CapOperation(cap: List[String]) extends Operation[GraphTraversal[_, _]]
   case class InOperation(in: String) extends Operation[GraphTraversal[_, Vertex]]
@@ -42,6 +43,7 @@ object Ophion {
     def identity: FreeOperation[GraphTraversal[_, _]] = Free.liftF(IdentityOperation)
     def label(v: String): FreeOperation[GraphTraversal[_, Vertex]] = Free.liftF(LabelOperation(v))
     def has(h: String, w: List[_]): FreeOperation[GraphTraversal[_, Vertex]] = Free.liftF(HasOperation(h, w))
+    def hasNot(h: String): FreeOperation[GraphTraversal[_, Vertex]] = Free.liftF(HasNotOperation(h))
     def values(v: List[String]): FreeOperation[GraphTraversal[_, _]] = Free.liftF(ValuesOperation(v))
     def cap(c: List[String]): FreeOperation[GraphTraversal[_, _]] = Free.liftF(CapOperation(c))
     def in(i: String): FreeOperation[GraphTraversal[_, Vertex]] = Free.liftF(InOperation(i))
@@ -65,7 +67,15 @@ object Ophion {
         input match {
           case IdentityOperation => traversal.asInstanceOf[A]
           case LabelOperation(label) => traversal.hasLabel(label).asInstanceOf[A]
-          case HasOperation(has, within) => traversal.has(has, P.within(within: _*)).asInstanceOf[A]
+          case HasOperation(has, within) => {
+            if (within.isEmpty) {
+              traversal.has(has).asInstanceOf[A]
+            } else {
+              traversal.has(has, P.within(within: _*)).asInstanceOf[A]
+            }
+          }
+
+          case HasNotOperation(hasNot) => traversal.hasNot(hasNot).asInstanceOf[A]
           case ValuesOperation(values) => traversal.values(values: _*).asInstanceOf[A]
           case CapOperation(cap) => traversal.cap(cap.head, cap.tail: _*).asInstanceOf[A]
           case InOperation(in) => traversal.in(in).asInstanceOf[A]
@@ -82,6 +92,7 @@ object Ophion {
               traversal.groupCount(groupCount).asInstanceOf[A]
             }
           }
+
           case ByOperation(by) => traversal.by(by).asInstanceOf[A]
           case LimitOperation(limit) => traversal.limit(limit).asInstanceOf[A]
           case RangeOperation(begin, end) => traversal.range(begin, end).asInstanceOf[A]
@@ -156,8 +167,10 @@ object Ophion {
   object Query {
     class OperationSerializer extends CustomSerializer[Operation[_]](format => ({
       case JObject(List(JField("label", JString(label)))) => LabelOperation(label)
+      case JObject(List(JField("has", JString(has)))) => HasOperation(has, List())
       case JObject(List(JField("has", JString(has)), JField("within", within))) => HasOperation(has, within.extract[List[_]])
       case JObject(List(JField("within", within), JField("has", JString(has)))) => HasOperation(has, within.extract[List[_]])
+      case JObject(List(JField("hasNot", JString(hasNot)))) => HasNotOperation(hasNot)
       case JObject(List(JField("values", values))) => ValuesOperation(values.extract[List[String]])
       case JObject(List(JField("cap", cap))) => CapOperation(cap.extract[List[String]])
       case JObject(List(JField("in", JString(in)))) => InOperation(in)

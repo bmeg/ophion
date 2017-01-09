@@ -136,6 +136,24 @@ class OphionTest extends FunSuite {
     println(compact(render(json)))
   }
 
+  test("has property") {
+    val values = """{"query": [{"has": "age"}]}"""
+    val query = Query.fromString(values)
+    val result = query.run(graph)
+    val json = Query.resultJson(result)
+    assert(result.size == 4)
+    println(compact(render(json)))
+  }
+
+  test("has not property") {
+    val values = """{"query": [{"hasNot": "age"}]}"""
+    val query = Query.fromString(values)
+    val result = query.run(graph)
+    val json = Query.resultJson(result)
+    assert(result.size == 2)
+    println(compact(render(json)))
+  }
+
   test("count") {
     val values = """{"query":
       [{"label": "person"},

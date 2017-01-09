@@ -44,22 +44,34 @@ function OphionQuery(parent) {
     mark: function(label) {
        query.push({'as': label})
        return this
-     },
-     limit: function(l) {
+    },
+    limit: function(l) {
        query.push({'limit': l})
        return this
-     },
-     range: function(begin, end) {
+    },
+    range: function(begin, end) {
        query.push({'begin': begin, 'end': end})
        return this
-     },
-     count: function() {
+    },
+    count: function() {
        query.push({'count': ''})
        return this
-     },
-     execute: function(callback) {
-       parent.execute({query:query}, callback)
-     }
+    },
+    groupCount: function(label) {
+        query.push({'groupCount': label})
+        return this
+    },
+    by: function(label) {
+        query.push({'by': label})
+        return this
+    },
+    cap: function(c) {
+        query.push({'cap': c})
+        return this
+    },
+    execute: function(callback) {
+        parent.execute({query:query}, callback)
+    }
   };  
 }
 

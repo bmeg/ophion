@@ -8,6 +8,14 @@ class Ophion:
 
     def query(self):
         return OphionQuery(self)
+    
+    def vertex(self, gid):
+        url = self.host + "/gaia/vertex/find/" + gid
+        headers = {'Content-Type': 'application/json', 'Accept': 'application/json'}
+        request = urllib2.Request(url, headers=headers)
+        response = urllib2.urlopen(request)
+        result = response.read()
+        return json.loads(result)
 
     def execute(self, query):
         payload = query.render()

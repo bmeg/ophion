@@ -8,7 +8,7 @@ class Ophion:
 
     def query(self):
         return OphionQuery(self)
-    
+
     def vertex(self, gid):
         url = self.host + "/gaia/vertex/find/" + gid
         headers = {'Content-Type': 'application/json', 'Accept': 'application/json'}
@@ -78,6 +78,12 @@ class OphionQuery:
         self.query.append({'as': label})
         return self
 
+    def select(self, labels):
+        if not isinstance(labels, list):
+            labels = [labels]
+        self.query.append({'select' : labels})
+        return self
+
     def limit(self, l):
         self.query.append({'limit': l})
         return self
@@ -101,6 +107,6 @@ class OphionQuery:
     def render(self):
         output = {'query': self.query}
         return json.dumps(output)
-    
+
     def execute(self):
         return self.parent.execute(self)

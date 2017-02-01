@@ -1,3 +1,4 @@
+import sys
 import json
 import urllib2
 
@@ -18,12 +19,15 @@ class Ophion:
         return json.loads(result)
 
     def execute(self, query):
-        payload = query.render()
-        headers = {'Content-Type': 'application/json', 'Accept': 'application/json'}
-        request = urllib2.Request(self.url, payload, headers=headers)
-        response = urllib2.urlopen(request)
-        result = response.read()
-        return json.loads(result)
+        try:
+            payload = query.render()
+            headers = {'Content-Type': 'application/json', 'Accept': 'application/json'}
+            request = urllib2.Request(self.url, payload, headers=headers)
+            response = urllib2.urlopen(request)
+            result = response.read()
+            return json.loads(result)
+        except:
+            return {'error': sys.exc_info()[0]}
 
 class OphionQuery:
     def __init__(self, parent=None):

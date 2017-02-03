@@ -18,7 +18,8 @@ class Ophion:
         out = []
         for result in response.readlines():
             try:
-                out.append(json.loads(result))
+                d = json.loads(result)
+                out.append(d['result'])
             except ValueError, e:
                 print "Can't decode: %s" % result
                 raise e
@@ -118,9 +119,9 @@ class OphionQuery:
         return self
 
     def property(self, key, value):
-        self.query.append({"property" : {"key" : key, "value" : value}})
+        self.query.append({"property" : {key:value}})
         return self
-    
+
     def drop(self):
         self.query.append({"drop" : ''})
         return self
@@ -131,6 +132,6 @@ class OphionQuery:
 
     def execute(self):
         return self.parent.execute(self)
-    
+
     def first(self):
-        return self.execute()[0]['result']
+        return self.execute()[0]

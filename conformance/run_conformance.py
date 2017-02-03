@@ -5,6 +5,7 @@ import sys
 import imp
 import ophion
 from glob import glob
+import traceback
 
 BASE = os.path.dirname(__file__)
 TESTS = os.path.join(BASE, "tests")
@@ -20,12 +21,12 @@ def clear_db(O):
 
 if __name__ == "__main__":
     server = sys.argv[1]
-    
+
     O = ophion.Ophion(server)
     if int(O.query().V().count().first()['int_value']) != 0:
         print "Need to start with empty DB"
         sys.exit()
-    
+
     correct = 0
     total = 0
     for a in glob(os.path.join(TESTS, "ot_*.py")):
@@ -39,14 +40,15 @@ if __name__ == "__main__":
                         e = func(O)
                         if len(e) == 0:
                             correct += 1
+                            print "Passed: %s %s " % (name, f[5:])                            
                         else:
                             print "Failed: %s %s " % (name, f[5:])
                             for i in e:
                                 print "\t- %s" % (i)
                     except Exception, e:
-                        print "Failed: %s %s %s" % (name, f[5:], e)
+                        print "Crashed: %s %s %s" % (name, f[5:], e)
+                        traceback.print_exc()
                     total += 1
                     clear_db(O)
-    
+
     print "Passed %s out of %s" % (correct, total)
-    

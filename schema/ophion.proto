@@ -1,0 +1,83 @@
+syntax = "proto3";
+
+package ophion;
+
+import "google/api/annotations.proto";
+import "google/protobuf/struct.proto";
+//import "google/protobuf/any.proto";
+
+message GraphQuery {
+    repeated GraphStatement query = 1;
+}
+
+message GraphStatement {
+    oneof statement {
+        string V = 1;
+	      string E = 2;
+        string label = 3;
+        HasStatement has = 4;
+        string as = 5;
+        string in = 6;
+        string out = 7;
+        string inEdge = 8;
+        string outEdge = 9;
+        string inVertex = 10;
+        string outVertex = 11;
+        SelectStatement select = 12;
+        int64 limit = 13;
+        string count = 14;
+        //methods with side effects, these should be ignored for read-only graphs
+        string addV = 15;
+        google.protobuf.Struct property = 16;
+        string addE = 17;
+        string to = 18;
+        string drop = 19;
+    }
+}
+
+message HasStatement {
+    string key = 1;
+    repeated string within = 2;
+}
+
+message SelectStatement {
+    repeated string steps = 1;
+}
+
+message Vertex {
+  string gid = 1;
+  string label = 2;
+  //map<string, string> properties = 3;
+  google.protobuf.Struct properties = 3;
+}
+
+message Edge {
+  string gid = 1;
+  string label = 2;
+  string in = 3;
+  string out = 4;
+  //map<string, string> properties = 5;
+  google.protobuf.Struct properties = 5;
+}
+
+
+message QueryResult {
+    oneof result {
+      google.protobuf.Struct struct = 1;
+      Vertex vertex = 2;
+      Edge edge = 3;
+      int32 int_value = 4;
+      double float_value = 5;
+      string str_value = 6;
+    }
+}
+
+
+service Query {
+  rpc Traversal(GraphQuery) returns (stream QueryResult) {
+    option (google.api.http) = {
+      post: "/v1/graph-query"
+      body: "*"
+    };
+  }
+}

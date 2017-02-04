@@ -1,6 +1,6 @@
 
 
-def test_struct(O):
+def test_vertex_struct(O):
     errors = []
     #print O.query().addV("vertex1").property("field1", {"test" : 1, "value" : False}).render()
     O.query().addV("vertex1").property("field1", {"test" : 1, "value" : False}).execute()
@@ -20,5 +20,16 @@ def test_struct(O):
 
     if count != 1:
         errors.append("Vertex struct property count failed")
+
+    return errors
+
+def test_edge_struct(O):
+    errors = []
+    #print O.query().addV("vertex1").property("field1", {"test" : 1, "value" : False}).render()
+    O.query().addV("vertex1").property("field1", {"test" : 1, "value" : False}).execute()
+    O.query().addV("vertex2").property("field1", {"test" : 2, "value" : True}).execute()
+    O.query().V("vertex1").addE("friend").to("vertex2").property("edgevals", {"weight" : 3.14, "count" : 15}).execute()
+
+    print O.query().V("vertex1").outE()
 
     return errors

@@ -30,6 +30,13 @@ def test_edge_struct(O):
     O.query().addV("vertex2").property("field1", {"test" : 2, "value" : True}).execute()
     O.query().V("vertex1").addE("friend").to("vertex2").property("edgevals", {"weight" : 3.14, "count" : 15}).execute()
 
-    print O.query().V("vertex1").outE()
+    for i in O.query().V("vertex1").outEdge().execute():
+        if 'weight' not in i['edge']['properties']['edgevals'] or i['edge']['properties']['edgevals']['weight'] != 3.14:
+            errors.append("out edge properties not found")
 
+    for i in O.query().V("vertex2").inEdge().execute():
+        if 'weight' not in i['edge']['properties']['edgevals'] or i['edge']['properties']['edgevals']['weight'] != 3.14:
+            errors.append("in edge properties not found")
+
+ 
     return errors

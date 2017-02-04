@@ -66,11 +66,11 @@ class OphionQuery:
         self.query.append({'out': label})
         return self
 
-    def inEdge(self, label):
+    def inEdge(self, label=""):
         self.query.append({'inEdge': label})
         return self
 
-    def outEdge(self, label):
+    def outEdge(self, label=""):
         self.query.append({'outEdge': label})
         return self
 

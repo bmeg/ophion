@@ -89,6 +89,10 @@ class OphionQuery:
         self.query.append({'as': label})
         return self
 
+    def select(self, labels):
+        self.query.append({'select': {"steps" : labels}})
+        return self
+
     def limit(self, l):
         self.query.append({'limit': l})
         return self

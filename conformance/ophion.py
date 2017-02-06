@@ -19,7 +19,10 @@ class Ophion:
         for result in response.readlines():
             try:
                 d = json.loads(result)
-                out.append(d['result'])
+                if 'value' in d:
+                    out.append(d['value'])
+                elif 'row' in d:
+                    out.append(d['row'])
             except ValueError, e:
                 print "Can't decode: %s" % result
                 raise e

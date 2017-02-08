@@ -1,6 +1,6 @@
 {
   "name": "ophion",
-  "version": "0.0.1",
+  "version": "0.0.3",
   "description": "a schema and api for graph queries and operations",
   "main": "ophion.js",
   "scripts": {
@@ -13,6 +13,6 @@
   "repository": "git@github.com:bmeg/ophion.git",
   "license": "ISC",
   "dependencies": {
-    "webpack": "^2.2.1"
+    "webpack": "2.2.1"
   }
 }

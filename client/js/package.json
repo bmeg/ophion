@@ -1,0 +1,18 @@
+{
+  "name": "ophion",
+  "version": "0.0.1",
+  "description": "a schema and api for graph queries and operations",
+  "main": "ophion.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": [
+    "Ryan Spangler",
+    "Kyle Ellrott"
+  ],
+  "repository": "git@github.com:bmeg/ophion.git",
+  "license": "ISC",
+  "dependencies": {
+    "webpack": "^2.2.1"
+  }
+}

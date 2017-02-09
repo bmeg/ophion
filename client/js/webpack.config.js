@@ -8,6 +8,7 @@ module.exports = {
   entry: APP_DIR + '/ophion.js',
   output: {
     library: 'ophion',
+    libraryTarget: 'umd',
     path: BUILD_DIR,
     filename: 'ophion.js'
   }

@@ -77,29 +77,19 @@ function Ophion() {
   var queryBase = '/gaia/vertex/query';
   return {
     execute: function(query, callback) {
-      var request = fetch(queryBase, {
+      fetch(queryBase, {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify(query),
-      })        
-
-      // $.ajax({
-      //   url: "/gaia/vertex/query",
-      //   dataType: 'json',
-      //   type: 'POST',
-      //   data: JSON.stringify(query),
-      //   success: function(results) {
-      //     callback(results)
-      //   }
-      // })        
-
-      request.when(function(data) {
-        callback(data)
-      });
+      }).then(callback);
     },
 
     query: function() {
       return OphionQuery(this)
     }
   }  
+}
+
+export {
+  Ophion
 }

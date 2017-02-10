@@ -2,7 +2,7 @@
   "name": "ophion",
   "version": "0.0.5",
   "description": "a schema and api for graph queries and operations",
-  "main": "ophion.js",
+  "main": "build/ophion.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },

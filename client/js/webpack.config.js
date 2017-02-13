@@ -13,6 +13,9 @@ module.exports = {
     path: BUILD_DIR,
     filename: 'ophion.js'
   },
+  resolve: {
+    extensions: ['.js', '.vue']
+  },
   module: {
     loaders: [
       {

@@ -1,3 +1,5 @@
+import * as callsync from './callsync.js';
+
 function OphionQuery(parent) {
   var parent = parent;
   var query = [];
@@ -93,5 +95,6 @@ function Ophion() {
 }
 
 export {
-  Ophion
+  Ophion,
+  callsync
 }

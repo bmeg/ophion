@@ -52,7 +52,9 @@ class OphionQuery:
         return self
 
     def values(self, v):
-        self.query.append({'values': v})
+        if not isinstance(v, list):
+            v = [v]
+        self.query.append({'values': {"labels" : v}})
         return self
 
     def cap(self, c):
@@ -125,9 +127,19 @@ class OphionQuery:
         self.query.append({"to" : dst})
         return self
 
-    def property(self, key, value):
-        self.query.append({"property" : {key:value}})
+    def property(self, *args):
+        if len(args) == 2:
+            self.query.append({"property" : {args[0]:args[1]}})
+        elif len(args) == 1 and isinstance(args[0], dict):
+            self.query.append({"property" : args[0]})
+        else:
+            raise Exception("Argument Error")
         return self
+
+    def map(self, func):
+        self.query.append({"map" : func})
+        return self
+
 
     def drop(self):
         self.query.append({"drop" : ''})

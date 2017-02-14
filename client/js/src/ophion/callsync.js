@@ -41,3 +41,19 @@ function callsync(catalog, outputName) {
 export {
   callsync
 }
+
+// Example:
+
+// var series = callsync({
+//   yellow: function(value, callback) {
+//     return callback(value['initial'] + 5)
+//   },
+
+//   green: function(value, callback) {
+//     return callback(value['yellow'] / 13)
+//   }
+// });
+
+// series(['yellow', 'green'], {initial: 21});
+
+// -----> {initial: 21, yellow: 26, green: 2, outcome: 2}

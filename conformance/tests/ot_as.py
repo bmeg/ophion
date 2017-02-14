@@ -14,6 +14,13 @@ def test_as_select(O):
     O.query().V("vertex2").addE("friend").to("vertex3").execute()
     O.query().V("vertex2").addE("parent").to("vertex4").execute()
 
-    print "as test", O.query().V("vertex1").mark("a").outgoing().mark("b").outgoing().mark("c").select(["a", "b", "c"]).execute()
+    for row in O.query().V("vertex1").mark("a").outgoing().mark("b").outgoing().mark("c").select(["a", "b", "c"]).execute():
+        res = dict(zip(["a","b","c"], row))
+        if res["a"]["vertex"]["gid"] != "vertex1":
+            errors.append("Incorrect as selection")
+        if res["b"]["vertex"]["gid"] != "vertex2":
+            errors.append("Incorrect as selection")
+        if res["c"]["vertex"]["gid"] not in ["vertex3", "vertex4"]:
+            errors.append("Incorrect as selection")
 
     return errors

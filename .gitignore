@@ -1,3 +1,5 @@
 project/target/
 target/
 *.pyc
+client/js/build/ophion.js
+client/js/node_modules

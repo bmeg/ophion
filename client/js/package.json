@@ -1,0 +1,22 @@
+{
+  "name": "ophion",
+  "version": "0.0.9",
+  "description": "a schema and api for graph queries and operations",
+  "main": "build/ophion.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": [
+    "Ryan Spangler",
+    "Kyle Ellrott"
+  ],
+  "repository": "git@github.com:bmeg/ophion.git",
+  "license": "ISC",
+  "dependencies": {
+    "babel-core": "6.22.1",
+    "babel-loader": "6.2.10",
+    "babel-preset-es2016": "6.22.0",
+    "underscore": "1.8.3",
+    "webpack": "2.2.1"
+  }
+}

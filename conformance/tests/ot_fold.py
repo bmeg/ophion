@@ -41,4 +41,34 @@ function(x) {
         if i['struct']['sum'] != 22:
             errors.append("Bad Mapping function")
 
+    for i in O.query().V().values("count").fold("""
+function(x, y) {
+ sum = 0
+ for (var key in x.count) {
+   sum += x.count[key]
+ }
+ return { "sum" : sum }
+}
+""").execute():
+        print i
+
+
+    with open("underscore-min.js") as handle:
+        underscore = handle.read()
+
+    for i in O.query().js_import(underscore).V().values("count").fold("""
+function(x, y) {
+ sum = {"count" : {}}
+ keys = _.union(_.keys(x.count), _.keys(y.count))
+ for (var key in keys) {
+   var a = x.count[keys[key]] || 0
+   var b = y.count[keys[key]] || 0
+   sum.count[keys[key]] = a + b
+ }
+ return sum
+}
+""").execute():
+        print i
+
+
     return list(set(errors))

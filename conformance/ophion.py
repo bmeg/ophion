@@ -33,6 +33,10 @@ class OphionQuery:
         self.query = []
         self.parent = parent
 
+    def js_import(self, src):
+        self.query.append({"import":src})
+        return self
+
     def V(self, id=None):
         self.query.append({"V":id})
         return self
@@ -140,6 +144,9 @@ class OphionQuery:
         self.query.append({"map" : func})
         return self
 
+    def fold(self, func):
+        self.query.append({"fold" : func})
+        return self
 
     def drop(self):
         self.query.append({"drop" : ''})

@@ -40,5 +40,16 @@ function(x) {
 """).execute():
         if i['struct']['sum'] != 22:
             errors.append("Bad Mapping function")
+    
+    for i in O.query().V().values("count").fold("""
+function(x, y) {
+ sum = 0
+ for (var key in x.count) {
+   sum += x.count[key]
+ }
+ return { "sum" : sum }
+}
+""").execute():
+        print i
 
     return list(set(errors))

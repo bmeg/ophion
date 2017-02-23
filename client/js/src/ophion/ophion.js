@@ -73,6 +73,10 @@ function OphionQuery(parent) {
       query.push({'cap': c})
       return this
     },
+    select: function(s) {
+      query.push({'select': s})
+      return this
+    },
     execute: function(callback) {
       parent.execute({query:query}, callback)
     }

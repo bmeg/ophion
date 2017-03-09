@@ -37,7 +37,8 @@ object Ophion {
   case class LimitOperation(limit: Long) extends Operation[GraphTraversal[_, _]]
   case class RangeOperation(begin: Long, end: Long) extends Operation[GraphTraversal[_, _]]
   case class SelectOperation(select: List[String]) extends Operation[GraphTraversal[_, _]]
-  case class CountOperation(count: String) extends Operation[GraphTraversal[_,Long]]
+  case class CountOperation(count: String) extends Operation[GraphTraversal[_, Long]]
+  case class DedupOperation(dedup: String) extends Operation[GraphTraversal[_, _]]
 
   object Operation {
     def identity: FreeOperation[GraphTraversal[_, _]] = Free.liftF(IdentityOperation)
@@ -59,6 +60,7 @@ object Ophion {
     def range(b: Long, e: Long): FreeOperation[GraphTraversal[_, _]] = Free.liftF(RangeOperation(b, e))
     def select(s: List[String]): FreeOperation[GraphTraversal[_, _]] = Free.liftF(SelectOperation(s))
     def count(c: String): FreeOperation[GraphTraversal[_, Long]] = Free.liftF(CountOperation(c))
+    def dedup(c: String): FreeOperation[GraphTraversal[_, _]] = Free.liftF(DedupOperation(c))
   }
 
   def operationInterpreter(traversal: GraphTraversal[_, _]): (Operation ~> Id) =
@@ -97,6 +99,7 @@ object Ophion {
           case LimitOperation(limit) => traversal.limit(limit).asInstanceOf[A]
           case RangeOperation(begin, end) => traversal.range(begin, end).asInstanceOf[A]
           case CountOperation(count) => traversal.count().asInstanceOf[A]
+          case DedupOperation(dedup) => traversal.dedup().asInstanceOf[A]
           case SelectOperation(select) => {
             if (select.isEmpty) {
               traversal
@@ -190,6 +193,7 @@ object Ophion {
       case JObject(List(JField("end", JInt(end)), JField("begin", JInt(begin)))) => RangeOperation(begin.toLong, end.toLong)
       case JObject(List(JField("select", select))) => SelectOperation(select.extract[List[String]])
       case JObject(List(JField("count", JString(count)))) => CountOperation(count)
+      case JObject(List(JField("dedup", JString(dedup)))) => DedupOperation(dedup)
     }, {
       case LabelOperation(label) => JObject(JField("label", JString(label)))
       // case HasOperation(has, within) => JObject(JField("has", JString(has)), JField("within", JArray(within)))

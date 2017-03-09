@@ -57,6 +57,10 @@ function OphionQuery(parent) {
       query.push({'count': ''})
       return this
     },
+    dedup: function() {
+      query.push({'dedup': ''})
+      return this
+    },
     groupCount: function(label) {
       query.push({'groupCount': label})
       return this
@@ -67,6 +71,10 @@ function OphionQuery(parent) {
     },
     cap: function(c) {
       query.push({'cap': c})
+      return this
+    },
+    select: function(s) {
+      query.push({'select': s})
       return this
     },
     execute: function(callback) {

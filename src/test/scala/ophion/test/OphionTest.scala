@@ -167,6 +167,31 @@ class OphionTest extends FunSuite {
     println(compact(render(json)))
   }
 
+  test("dedup") {
+    val values = """{"query":
+      [{"label": "person"},
+       {"out": "created"},
+       {"count": ""}]}"""
+
+    val query = Query.fromString(values)
+    val result = query.run(graph)
+    val json = Query.resultJson(result)
+    assert(result.get(0) == 4)
+    println(compact(render(json)))
+
+    val valuesD = """{"query":
+      [{"label": "person"},
+       {"out": "created"},
+       {"dedup": ""},
+       {"count": ""}]}"""
+
+    val queryD = Query.fromString(valuesD)
+    val resultD = queryD.run(graph)
+    val jsonD = Query.resultJson(resultD)
+    assert(resultD.get(0) == 2)
+    println(compact(render(jsonD)))
+  }
+
   test("groupCount") {
     val values = """{"query":
       [{"label": "person"},

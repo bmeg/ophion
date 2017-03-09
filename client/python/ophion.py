@@ -100,6 +100,10 @@ class OphionQuery:
         self.query.append({'count': ''})
         return self
 
+    def dedup(self):
+        self.query.append({'dedup': ''})
+        return self
+
     def groupCount(self, label):
         self.query.append({'groupCount': label})
         return self

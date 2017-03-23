@@ -30,8 +30,8 @@ message GraphStatement {
 
         //Function Methods
         string import = 50;
-        string map = 51;
-        string fold = 52;
+        SingleArity map = 51;
+        DoubleArity fold = 52;
 
         //methods with side effects, these should be ignored for read-only graphs
         string addV = 100;
@@ -40,6 +40,17 @@ message GraphStatement {
         string to = 103;
         string drop = 104;
     }
+}
+
+message SingleArity {
+  string first = 2;
+  GraphStatement body = 1;
+}
+
+message DoubleArity {
+  string first = 2;
+  string second = 3;
+  GraphStatement body = 1;
 }
 
 message HasStatement {

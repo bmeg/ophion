@@ -19,6 +19,11 @@ libraryDependencies ++= Seq(
   "org.scalatest"              %% "scalatest"                % "3.0.0" % "test"
 )
 
+PB.targets in Compile := Seq(
+  scalapb.gen() -> (sourceManaged in Compile).value
+)
+libraryDependencies += "com.trueaccord.scalapb" %% "scalapb-runtime" % com.trueaccord.scalapb.compiler.Version.scalapbVersion % "protobuf"
+
 resolvers += "Local Maven Repository" at "file://"+Path.userHome.absolutePath+"/.m2/repository"
 resolvers ++= Seq(
   "Akka Repository" at "http://repo.akka.io/releases/",

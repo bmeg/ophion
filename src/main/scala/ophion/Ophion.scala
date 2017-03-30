@@ -5,7 +5,7 @@ import cats.implicits._
 import cats.free.Free
 
 import org.apache.tinkerpop.gremlin.structure.{Graph, Element, Property, Vertex, Edge, VertexProperty}
-import org.apache.tinkerpop.gremlin.process.traversal.P
+import org.apache.tinkerpop.gremlin.process.traversal.{P, Traversal, Traverser}
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal
 
 import org.json4s._
@@ -14,6 +14,7 @@ import org.json4s.jackson.JsonMethods._
 import org.json4s.jackson.Serialization.{read, write}
 
 import scala.collection.JavaConversions._
+import java.util.function.{Predicate ⇒ JPredicate, Consumer ⇒ JConsumer, BiFunction ⇒ JBiFunction, Function => JFunction}
 
 object Ophion {
   type FreeOperation[F] = Free[Operation, F]
@@ -34,6 +35,10 @@ object Ophion {
   case class AsOperation(as: String) extends Operation[GraphTraversal[_, _]]
   case class GroupCountOperation(groupCount: String) extends Operation[GraphTraversal[_, _]]
   case class ByOperation(by: String) extends Operation[GraphTraversal[_, _]]
+  case class BackOperation(back: String) extends Operation[GraphTraversal[_, _]]
+  case class PropGreaterOperation(prop: String, gt: Double) extends Operation[GraphTraversal[_, _]]
+  case class PropLessOperation(prop: String, lt: Double) extends Operation[GraphTraversal[_, _]]
+  case class PropEqualsOperation(prop: String, eq: Double) extends Operation[GraphTraversal[_, _]]
   case class LimitOperation(limit: Long) extends Operation[GraphTraversal[_, _]]
   case class RangeOperation(begin: Long, end: Long) extends Operation[GraphTraversal[_, _]]
   case class SelectOperation(select: List[String]) extends Operation[GraphTraversal[_, _]]
@@ -56,6 +61,10 @@ object Ophion {
     def as(a: String): FreeOperation[GraphTraversal[_, _]] = Free.liftF(AsOperation(a))
     def groupCount(gc: String): FreeOperation[GraphTraversal[_, _]] = Free.liftF(GroupCountOperation(gc))
     def by(b: String): FreeOperation[GraphTraversal[_, _]] = Free.liftF(ByOperation(b))
+    def back(b: String): FreeOperation[GraphTraversal[_, _]] = Free.liftF(BackOperation(b))
+    def propGreater(p: String, g: Double): FreeOperation[GraphTraversal[_, _]] = Free.liftF(PropGreaterOperation(p, g))
+    def propLess(p: String, l: Double): FreeOperation[GraphTraversal[_, _]] = Free.liftF(PropLessOperation(p, l))
+    def propEquals(p:String, e: Double): FreeOperation[GraphTraversal[_, _]] = Free.liftF(PropEqualsOperation(p, e))
     def limit(l: Long): FreeOperation[GraphTraversal[_, _]] = Free.liftF(LimitOperation(l))
     def range(b: Long, e: Long): FreeOperation[GraphTraversal[_, _]] = Free.liftF(RangeOperation(b, e))
     def select(s: List[String]): FreeOperation[GraphTraversal[_, _]] = Free.liftF(SelectOperation(s))
@@ -96,6 +105,37 @@ object Ophion {
           }
 
           case ByOperation(by) => traversal.by(by).asInstanceOf[A]
+          case BackOperation(back) => traversal.select(back).asInstanceOf[A]
+
+          case PropGreaterOperation(prop, gt) => {
+            if (prop.isEmpty) {
+              traversal.filter(new JPredicate[Traverser[_]] {
+                override def test(h: Traverser[_]): Boolean = h.get.asInstanceOf[GraphTraversal[_, _]].is(P.gt(gt)).toList.head.asInstanceOf[Boolean]
+              }).asInstanceOf[A]
+              // traversal.filter(new JPredicate[Traverser[GraphTraversal[_, _]]] {
+              //   override def test(h: Traverser[GraphTraversal[_, _]]): Boolean = h.get.is(P.gt(gt)).toList.head.asInstanceOf[Boolean]
+              // }).asInstanceOf[A]
+            } else {
+              traversal.filter(_.value(prop).is(P.gt(gt))).asInstanceOf[A]
+            }
+          }
+
+          case PropLessOperation(prop, lt) => {
+            if (prop.isEmpty) {
+              traversal.filter(_.is(P.lt(lt))).asInstanceOf[A]
+            } else {
+              traversal.filter(_.value(prop).is(P.lt(lt))).asInstanceOf[A]
+            }
+          }
+
+          case PropEqualsOperation(prop, eq) => {
+            if (prop.isEmpty) {
+              traversal.filter(_.is(P.eq(eq))).asInstanceOf[A]
+            } else {
+              traversal.filter(_.value(prop).is(P.eq(eq))).asInstanceOf[A]
+            }
+          }
+
           case LimitOperation(limit) => traversal.limit(limit).asInstanceOf[A]
           case RangeOperation(begin, end) => traversal.range(begin, end).asInstanceOf[A]
           case CountOperation(count) => traversal.count().asInstanceOf[A]
@@ -185,12 +225,33 @@ object Ophion {
       case JObject(List(JField("as", JString(as)))) => AsOperation(as)
       case JObject(List(JField("groupCount", JString(groupCount)))) => GroupCountOperation(groupCount)
       case JObject(List(JField("by", JString(by)))) => ByOperation(by)
+      case JObject(List(JField("back", JString(back)))) => BackOperation(back)
+
+      // case JObject(List(JField("prop", JString(prop)), JField("gt", JLong(gt)))) => PropGreaterOperation(prop, gt.toLong)
+      case JObject(List(JField("prop", JString(prop)), JField("gt", JDouble(gt)))) => PropGreaterOperation(prop, gt.toDouble)
+      // case JObject(List(JField("gt", JLong(gt)), JField("prop", JString(prop)))) => PropGreaterOperation(prop, gt.toLong)
+      case JObject(List(JField("gt", JDouble(gt)), JField("prop", JString(prop)))) => PropGreaterOperation(prop, gt.toDouble)
+
+      // case JObject(List(JField("prop", JString(prop)), JField("lt", JLong(lt)))) => PropLessOperation(prop, lt.toLong)
+      case JObject(List(JField("prop", JString(prop)), JField("lt", JDouble(lt)))) => PropLessOperation(prop, lt.toDouble)
+      // case JObject(List(JField("lt", JLong(lt)), JField("prop", JString(prop)))) => PropLessOperation(prop, lt.toLong)
+      case JObject(List(JField("lt", JDouble(lt)), JField("prop", JString(prop)))) => PropLessOperation(prop, lt.toDouble)
+
+      // case JObject(List(JField("prop", JString(prop)), JField("eq", JLong(eq)))) => PropEqualsOperation(prop, eq.toLong)
+      case JObject(List(JField("prop", JString(prop)), JField("eq", JDouble(eq)))) => PropEqualsOperation(prop, eq.toDouble)
+      // case JObject(List(JField("prop", JString(prop)), JField("eq", JString(eq)))) => PropEqualsOperation(prop, eq.toString)
+      // case JObject(List(JField("eq", JLong(eq)), JField("prop", JString(prop)))) => PropEqualsOperation(prop, eq.toLong)
+      case JObject(List(JField("eq", JDouble(eq)), JField("prop", JString(prop)))) => PropEqualsOperation(prop, eq.toDouble)
+      // case JObject(List(JField("eq", JString(eq)), JField("prop", JString(prop)))) => PropEqualsOperation(prop, eq.toString)
+
       case JObject(List(JField("limit", JLong(limit)))) => LimitOperation(limit)
       case JObject(List(JField("limit", JInt(limit)))) => LimitOperation(limit.toLong)
+
       case JObject(List(JField("begin", JLong(begin)), JField("end", JLong(end)))) => RangeOperation(begin, end)
       case JObject(List(JField("end", JLong(end)), JField("begin", JLong(begin)))) => RangeOperation(begin, end)
       case JObject(List(JField("begin", JInt(begin)), JField("end", JInt(end)))) => RangeOperation(begin.toLong, end.toLong)
       case JObject(List(JField("end", JInt(end)), JField("begin", JInt(begin)))) => RangeOperation(begin.toLong, end.toLong)
+
       case JObject(List(JField("select", select))) => SelectOperation(select.extract[List[String]])
       case JObject(List(JField("count", JString(count)))) => CountOperation(count)
       case JObject(List(JField("dedup", JString(dedup)))) => DedupOperation(dedup)

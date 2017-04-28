@@ -1,0 +1,182 @@
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="description" content="An Information Integration Engine for Cancer Biology">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
+    <title>BMEG</title>
+
+    <!-- Add to homescreen for Chrome on Android -->
+    <meta name="mobile-web-app-capable" content="yes">
+    <link rel="icon" sizes="192x192" href="images/android-desktop.png">
+
+    <!-- Add to homescreen for Safari on iOS -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-title" content="Material Design Lite">
+    <link rel="apple-touch-icon-precomposed" href="images/ios-desktop.png">
+
+    <!-- Tile icon for Win8 (144x144 + tile color) -->
+    <meta name="msapplication-TileImage" content="images/touch/ms-touch-icon-144x144-precomposed.png">
+    <meta name="msapplication-TileColor" content="#3372DF">
+
+    <link rel="shortcut icon" href="images/favicon.png">
+
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:regular,bold,italic,thin,light,bolditalic,black,medium&amp;lang=en">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <link rel="stylesheet" href="https://code.getmdl.io/1.1.3/material.teal-blue.min.css">
+    <!-- <link rel="stylesheet" href="https://code.getmdl.io/1.1.3/material.blue_grey-light_blue.min.css"> -->
+    <link rel="stylesheet" href="/css/styles.css">
+    <script defer src="https://code.getmdl.io/1.1.3/material.min.js"></script>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="/js/bmeg.js"></script>
+    <style>
+    #view-source {
+      position: fixed;
+      display: block;
+      right: 0;
+      bottom: 0;
+      margin-right: 40px;
+      margin-bottom: 40px;
+      z-index: 900;
+    }
+    </style>
+  </head>
+  <body class="bmeg-io mdl-color--grey-100 mdl-color-text--black-700 mdl-base">
+    <div class="mdl-layout mdl-js-layout mdl-layout--fixed-header">
+      <header class="mdl-layout__header mdl-layout__header--scroll mdl-color--primary">
+        <div class="mdl-layout__header-row mdl-layout__tab-bar mdl-js-ripple-effect mdl-color--primary">
+          <a href="/"><img src="/img/bmeg-flat.png" height="65"/></a>
+          <!-- <a href="/"><img src="/static/bmeg-logo.png" height="45"/></a> -->
+          <a href="#graph" id="graph-tab" class="mdl-layout__tab is_active">Evidence Graph</a>
+          <a href="#overview" class="mdl-layout__tab">Overview</a>
+          <a href="#server" class="mdl-layout__tab">Software</a>
+          <a href="/observation-deck/" target="_blank" class="mdl-layout__tab">Observation Deck</a>
+        </div>
+      </header>
+      <main class="mdl-layout__content">
+        <div class="mdl-layout__tab-panel is-active" id="graph">
+          <section class="section--center mdl-grid mdl-grid--no-spacing mdl-shadow--2dp">
+            <div class="mdl-card mdl-cell--12-col">
+              <div class="mdl-card__supporting-text">
+                <div id="vertex-explore"></div>
+              </div>
+            </div>
+          </section>
+        
+        </div>
+        <div class="mdl-layout__tab-panel" id="overview">
+          <section class="section--center mdl-grid mdl-grid--no-spacing mdl-shadow--2dp">
+            <div class="mdl-card mdl-cell--12-col">
+              <div class="mdl-card__supporting-text">
+                <h4>Welcome to BMEG</h4>
+                <div>
+                  The BioMedical Evidence Graph (BMEG) is a system to collect heterogeneous 
+                  information into a common analysis framework. It is based on a graph database
+                  and presents various enpoints that allow access to that data. There are also 
+                  HTTP API based endpoints for directly quering the graph.
+                </div>
+                <div>
+                  Graphs are an incredibly informative technique to represent biological information. 
+                  Many different types of biological information, including pathway information, 
+                  sample relationships and ontological information are best represented with graphs. 
+                </div>
+                <img src="/static/schema.svg" style="width:600px;"/>
+                <p>The BMEG currently holds:</p>
+                <ul>
+                  <li>11009 Patients</li>
+                  <li>12656 Samples</li>
+                  <li>1454128 Variant Calls</li>
+                  <li>4007 mRNA Expression Samples</li>
+                  <li>102 Drug Sensitivity Signatures</li>
+                </ul>
+              </div>
+            </div>
+          </section>
+          <section class="section--center mdl-grid mdl-grid--no-spacing mdl-shadow--2dp">
+            <div class="mdl-card mdl-cell mdl-cell--12-col">
+              <div class="mdl-card__supporting-text mdl-grid mdl-grid--no-spacing">
+                <h4 class="mdl-cell mdl-cell--12-col">Data Sources</h4>
+                <ul>
+                  <li>TCGA</li>
+                  <li>CCLE</li>
+                  <li>CTDD</li>
+                </ul>
+              </div>
+            </div>
+          </section>
+          <section class="section--center mdl-grid mdl-grid--no-spacing mdl-shadow--2dp">
+            <div class="mdl-card mdl-cell mdl-cell--12-col">
+              <div class="mdl-card__supporting-text mdl-grid mdl-grid--no-spacing">
+                <h4 class="mdl-cell mdl-cell--12-col">DREAM challenges</h4>                
+                <h5><a href="https://synapse.org/DREAM_SMC" target="_blank">SMC-DNA</a></h5>
+                The ICGC-TCGA DREAM Genomic Mutation Calling Challenge was an international effort to improve 
+                standard methods for identifying cancer-associated mutations and rearrangements in whole-genome 
+                sequencing (WGS) data. Leaders of the International Cancer Genome Consortium (ICGC) and The 
+                Cancer Genome Atlas (TCGA) cancer genomics projects are joining with Sage Bionetworks and 
+                IBM-DREAM to initiate this innovative open crowd-sourced Challenge.
+                The goal of this somatic mutation calling (SMC) Challenge is to identify the most accurate mutation
+                detection algorithms, and establish the state-of-the-art. The algorithms in this Challenge must use
+                as input WGS data from tumour and normal samples and output mutation calls associated with cancer.
+              </div>
+            </div>
+          </section>
+        </div>
+        <div class="mdl-layout__tab-panel" id="server">
+          
+          <section class="section--center mdl-grid mdl-grid--no-spacing mdl-shadow--2dp">
+            <div class="mdl-card mdl-cell mdl-cell--12-col">
+              <div class="mdl-card__supporting-text mdl-grid mdl-grid--no-spacing">
+                <h4 class="mdl-cell mdl-cell--12-col">Software</h4>
+                The BMEG project represents the combination of several different software systems and projects.
+                These include workflow engines, task execution engines, best practices bioinformatics software pipelines, 
+                graph databases and formalized schema languages.
+              </div>
+            </div>
+          </section>
+
+          
+          <section class="section--center mdl-grid mdl-grid--no-spacing mdl-shadow--2dp">
+            <div class="mdl-card mdl-cell mdl-cell--12-col">
+              <div class="mdl-card__supporting-text mdl-grid mdl-grid--no-spacing">
+                <h4 class="mdl-cell mdl-cell--12-col"><a href="https://github.com/bmeg/gaia" target="_blank">Gaia</a></h4>
+                A graph database management system being developed to power the BMEG
+              </div>
+            </div>
+          </section>
+          <section class="section--center mdl-grid mdl-grid--no-spacing mdl-shadow--2dp">
+            <div class="mdl-card mdl-cell mdl-cell--12-col">
+              <div class="mdl-card__supporting-text mdl-grid mdl-grid--no-spacing">
+                <h4 class="mdl-cell mdl-cell--12-col"><a href="https://github.com/bmeg/funnel" target="_blank">Funnel</a></h4>
+                Trigger the Google Genomics Pipeline API with CWL
+              </div>
+            </div>
+          </section>
+          <section class="section--center mdl-grid mdl-grid--no-spacing mdl-shadow--2dp">
+            <div class="mdl-card mdl-cell mdl-cell--12-col">
+              <div class="mdl-card__supporting-text mdl-grid mdl-grid--no-spacing">
+                <h4 class="mdl-cell mdl-cell--12-col"><a href="https://github.com/bmeg/task-execution-server">Task Execution Server</a></h4>
+                The Task Execution Schema is a GA4GH schema to deploy dockerized work using a cross 
+                platform API.
+                <lu>
+                  <li>The Task Execution Schema proposal can be found at <a href="https://github.com/ga4gh/task-execution-schemas">https://github.com/ga4gh/task-execution-schemas</a></li>
+                  <li>The Protocol Buffer Based Schema can be found at <a href="https://github.com/ga4gh/task-execution-schemas/blob/master/proto/task_execution.proto">https://github.com/ga4gh/task-execution-schemas/blob/master/proto/task_execution.proto</a></li>
+                  <li>The swagger translation can be viewed at <a href="http://editor.swagger.io/#/?import=https://github.com/ga4gh/task-execution-schemas/raw/master/swagger/proto/task_execution.swagger.json">http://editor.swagger.io/#/?import=https://github.com/ga4gh/task-execution-schemas/raw/master/swagger/proto/task_execution.swagger.json</a></li>
+                  <li>The reference implementation can be found at <a href="https://github.com/bmeg/task-execution-server">https://github.com/bmeg/task-execution-server</a></li>
+                </lu>
+              </div>
+            </div>
+          </section>
+        </div>
+      </main>
+      <footer class="mdl-mini-footer">
+        <div class="mdl-mini-footer--bottom-section">
+          <ul class="mdl-mini-footer--link-list">
+            <li><img height="40" src="/static/ohsu-logo.png"/></li>
+            <li><img height="40" src="/static/ucsc-logo.png"/></li>
+          </ul>
+        </div>
+      </footer>
+    </div>
+  </body>
+</html>

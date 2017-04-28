@@ -1,0 +1,2 @@
+(ns ophion.proto)
+

@@ -1,17 +1,58 @@
 import sys
 import json
 import urllib2
+import traceback
 
 class Ophion:
     def __init__(self, host):
         self.host = host
-        self.url = host + "/gaia/vertex/query"
+        self.url = host + "/vertex/query"
 
+    # entry point
     def query(self):
         return OphionQuery(self)
 
+    # conditions
+    def eq(self, v):
+        return {'eq': v}
+
+    def neq(self, v):
+        return {'neq': v}
+
+    def gt(self, v):
+        return {'gt': v}
+
+    def gte(self, v):
+        return {'gte': v}
+
+    def lt(self, v):
+        return {'lt': v}
+
+    def lte(self, v):
+        return {'lte': v}
+
+    def between(self, lower, upper):
+        return {'between': {'lower': lower, 'upper': upper}}
+
+    def inside(self, lower, upper):
+        return {'inside': {'lower': lower, 'upper': upper}}
+
+    def outside(self, lower, upper):
+        return {'outside': {'lower': lower, 'upper': upper}}
+
+    def within(self, values):
+        return {'within': {'values': values}}
+
+    def without(self, values):
+        return {'without': {'values': values}}
+
+    # for match subqueries
+    def mark(self, label):
+        return self.query().mark(label)
+
+    # remote calls
     def vertex(self, gid):
-        url = self.host + "/gaia/vertex/find/" + gid
+        url = self.host + "/vertex/find/" + gid
         headers = {'Content-Type': 'application/json', 'Accept': 'application/json'}
         request = urllib2.Request(url, headers=headers)
         response = urllib2.urlopen(request)
@@ -19,102 +60,209 @@ class Ophion:
         return json.loads(result)
 
     def execute(self, query):
+        def loadJson(s):
+            if len(s) > 0:
+                return json.loads(s)
+            else:
+                return {}
+
         try:
             payload = query.render()
             headers = {'Content-Type': 'application/json', 'Accept': 'application/json'}
             request = urllib2.Request(self.url, payload, headers=headers)
             response = urllib2.urlopen(request)
             result = response.read()
-            return json.loads(result)
-        except:
-            return {'error': sys.exc_info()[0]}
+            return map(loadJson, result.rstrip().split("\n"))
+        except Exception as e:
+            traceback.print_exc()
+            return {
+                'error': {
+                    'system': sys.exc_info()[0],
+                    'exception': e
+                }
+            }
+
+def wrapValue(value):
+    v = value
+    if isinstance(value, int):
+        v = {'n': value}
+    elif isinstance(value, float):
+        v = {'r': value}
+    elif isinstance(value, str):
+        v = {'s': value}
+    elif isinstance(value, list):
+        v = map(wrapValue, value)
+    elif isinstance(value, dict):
+        v = {k: wrapValue(v) for k, v in value.iteritems()}
+    return v
 
 class OphionQuery:
     def __init__(self, parent=None):
         self.query = []
         self.parent = parent
 
-    def label(self, label):
-        self.query.append({'label': label})
+    # traversals
+    def incoming(self, labels):
+        if not isinstance(labels, list):
+            labels = [labels]
+        self.query.append({'in': {'labels': labels}})
         return self
 
-    def has(self, prop, within):
-        if not isinstance(within, list):
-            within = [within]
-        self.query.append({'has': prop, 'within': within})
+    def outgoing(self, labels):
+        if not isinstance(labels, list):
+            labels = [labels]
+        self.query.append({'out': {'labels': labels}})
         return self
 
-    def values(self, v):
-        self.query.append({'values': v})
+    def inEdge(self, labels):
+        if not isinstance(labels, list):
+            labels = [labels]
+        self.query.append({'inEdge': {'labels': labels}})
         return self
 
-    def cap(self, c):
-        if not isinstance(c, list):
-            c = [c]
-        self.query.append({'cap': c})
+    def outEdge(self, labels):
+        if not isinstance(labels, list):
+            labels = [labels]
+        self.query.append({'outEdge': {'labels': labels}})
         return self
 
-    def incoming(self, label):
-        self.query.append({'in': label})
+    def inVertex(self):
+        self.query.append({'inVertex': True})
         return self
 
-    def outgoing(self, label):
-        self.query.append({'out': label})
+    def outVertex(self):
+        self.query.append({'outVertex': True})
         return self
 
-    def inEdge(self, label):
-        self.query.append({'inEdge': label})
-        return self
-
-    def outEdge(self, label):
-        self.query.append({'outEdge': label})
-        return self
-
-    def inVertex(self, label):
-        self.query.append({'inVertex': label})
-        return self
-
-    def outVertex(self, label):
-        self.query.append({'outVertex': label})
-        return self
-
+    # traversal manipulation
     def mark(self, label):
-        self.query.append({'as': label})
+        if not isinstance(label, list):
+            label = [label]
+        self.query.append({'as': {'labels': label}})
         return self
 
     def select(self, labels):
         if not isinstance(labels, list):
             labels = [labels]
-        self.query.append({'select' : labels})
+        self.query.append({'select' : {'labels': labels}})
+        return self
+
+    def by(self, label):
+        self.query.append({'by': {'key': label}})
+        return self
+
+    def label(self, labels):
+        if not isinstance(labels, list):
+            labels = [labels]
+        self.query.append({'label': {'labels': labels}})
+        return self
+
+    def values(self, labels):
+        if not isinstance(labels, list):
+            labels = [labels]
+        self.query.append({'values': {'labels': labels}})
         return self
 
     def limit(self, l):
         self.query.append({'limit': l})
         return self
 
+    def order(self, o, asc):
+        self.query.append({'order': {'key': o, 'ascending': asc}})
+        return self
+
     def range(self, begin, end):
-        self.query.append({'begin': begin, 'end': end})
+        self.query.append({'range': {'lower': begin, 'upper': end}})
         return self
 
     def count(self):
-        self.query.append({'count': ''})
+        self.query.append({'count': True})
         return self
 
     def dedup(self):
-        self.query.append({'dedup': ''})
+        self.query.append({'dedup': True})
+        return self
+
+    def path(self):
+        self.query.append({'path': True})
+        return self
+
+    def aggregate(self, label):
+        self.query.append({'aggregate': label})
+        return self
+
+    def group(self, bys):
+        self.query.append({'group': {'bys': map(lambda by: {'key': by})}})
         return self
 
     def groupCount(self, label):
-        self.query.append({'groupCount': label})
+        self.query.append({'groupCount': {'key': label}})
         return self
 
-    def by(self, label):
-        self.query.append({'by': label})
+    def satisfies(self, condition):
+        self.query.append({'is': wrapValue(condition)})
         return self
 
+    def has(self, key, value):
+        v = wrapValue(value)
+        outer = {'key': key}
+        if isinstance(value, dict):
+            outer['condition'] = v
+        # elif: isinstance(value, OphionQuery);
+        else:
+            outer['value'] = v
+        self.query.append({'has': outer})
+        return self
+
+    def hasNot(self, key):
+        self.query.append({'hasNot': key})
+        return self
+
+    def match(self, queries):
+        self.query.append({'match': {'queries': queries}})
+        return self
+
+    # output
     def render(self):
-        output = {'query': self.query}
-        return json.dumps(output)
+        # output = {'query': self.query}
+        def subsubrender(step):
+            if isinstance(step, list) or isinstance(step, dict):
+                if 'queries' in step:
+                    return {'queries': map(lambda v: v.query, step['queries'])}
+                else:
+                    return step
+            else:
+                return step
+
+        def subrender(step):
+            return {k: subsubrender(v) for k, v in step.items()}
+
+        outquery = map(subrender, self.query)
+        return json.dumps(outquery)
 
     def execute(self):
         return self.parent.execute(self)
+
+
+# FIND SAMPLES WITH A MUTATION IN BRAF
+# O.query().match([
+#     O.mark("gene").has("symbol", "BRAF"),
+#     O.mark("gene").incoming("variantInGene").outgoing("variantInBiosample").mark("sample")
+# ]).select(["gene", "sample"])
+
+
+# SAMPLE x EXPRESSION matrix
+# O.query().has("gid", "cohort:CCLE").outgoing("hasSample").mark("sample").incoming("expressionForSample").mark("expression").select(["sample", "expression"]).count().execute()
+
+
+# SAMPLE x RESPONSE matrix
+# O.query().has("gid", "cohort:CCLE").outgoing("hasSample").mark("sample").outEdge("responseToCompound").mark("response").select(["sample", "response"]).count().execute()
+
+
+# FIND ALL SAMPLExEXPRESSIONxRESPONSE TRIPLES FOR CCLE COHORT
+# O.query().has("gid", "cohort:CCLE").outgoing("hasSample").match([
+#     O.mark("sample").incoming("expressionForSample").mark("expression"),
+#     O.mark("sample").outEdge("responseToCompound").mark("response")
+# ]).select(["sample", "expression", "response"]).limit(1)
+
+

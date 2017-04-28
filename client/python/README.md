@@ -2,6 +2,8 @@
 
 A python client for making [Ophion](https://github.com/bmeg/ophion) queries.
 
+![OPHION](https://github.com/bmeg/ophion/blob/master/resources/ophion.jpg)
+
 # usage
 
 Ophion is an API for making graph queries using structured data. Queries are defined using a series of step operations provided by Ophion. The python client wraps the construction of these queries in an intuitive python interface.

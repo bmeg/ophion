@@ -41,10 +41,12 @@ class Ophion:
         return {'outside': {'lower': lower, 'upper': upper}}
 
     def within(self, values):
-        return {'within': {'values': values}}
+        return {'within': values}
+        # return {'within': {'values': values}}
 
     def without(self, values):
-        return {'without': {'values': values}}
+        return {'without': values}
+        # return {'without': {'values': values}}
 
     # for match subqueries
     def mark(self, label):
@@ -102,28 +104,44 @@ class OphionQuery:
         self.parent = parent
 
     # traversals
-    def incoming(self, labels):
-        if not isinstance(labels, list):
-            labels = [labels]
-        self.query.append({'in': {'labels': labels}})
+    def incoming(self, *args):
+        if len(args) == 0:
+            self.query.append({'in': []})
+        elif len(args) == 1:
+            labels = args[0]
+            if not isinstance(labels, list):
+                labels = [labels]
+            self.query.append({'in': {'labels': labels}})
         return self
 
-    def outgoing(self, labels):
-        if not isinstance(labels, list):
-            labels = [labels]
-        self.query.append({'out': {'labels': labels}})
+    def outgoing(self, *args):
+        if len(args) == 0:
+            self.query.append({'out': []})
+        elif len(args) == 1:
+            labels = args[0]
+            if not isinstance(labels, list):
+                labels = [labels]
+            self.query.append({'out': {'labels': labels}})
         return self
 
-    def inEdge(self, labels):
-        if not isinstance(labels, list):
-            labels = [labels]
-        self.query.append({'inEdge': {'labels': labels}})
+    def inEdge(self, *args):
+        if len(args) == 0:
+            self.query.append({'inEdge': []})
+        elif len(args) == 1:
+            labels = args[0]
+            if not isinstance(labels, list):
+                labels = [labels]
+            self.query.append({'inEdge': {'labels': labels}})
         return self
 
-    def outEdge(self, labels):
-        if not isinstance(labels, list):
-            labels = [labels]
-        self.query.append({'outEdge': {'labels': labels}})
+    def outEdge(self, *args):
+        if len(args) == 0:
+            self.query.append({'outEdge': []})
+        elif len(args) == 1:
+            labels = args[0]
+            if not isinstance(labels, list):
+                labels = [labels]
+            self.query.append({'outEdge': {'labels': labels}})
         return self
 
     def inVertex(self):
@@ -151,10 +169,13 @@ class OphionQuery:
         self.query.append({'by': {'key': label}})
         return self
 
-    def label(self, labels):
-        if not isinstance(labels, list):
-            labels = [labels]
-        self.query.append({'label': {'labels': labels}})
+    def label(self, *args):
+        # if len(args) == 0:
+        #     self.query.append({'label': })
+        # if not isinstance(labels, list):
+        #     labels = [labels]
+        # self.query.append({'label': {'labels': labels}})
+        self.query.append({'label': {}})
         return self
 
     def values(self, labels):
@@ -195,8 +216,12 @@ class OphionQuery:
         self.query.append({'group': {'bys': map(lambda by: {'key': by})}})
         return self
 
-    def groupCount(self, label):
-        self.query.append({'groupCount': {'key': label}})
+    def groupCount(self, *args):
+        if len(args) == 0:
+            self.query.append({'groupCount': {}})
+        else:
+            label = args[0]
+            self.query.append({'groupCount': {'key': label}})
         return self
 
     def satisfies(self, condition):

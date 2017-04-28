@@ -53,10 +53,10 @@
         query (query/delabelize raw-query)
         _ (log/info (mapv identity query))
         result (query/evaluate graph query)
-        source (stream/map output result)]
+        out (map output result)]
     {:status 200
      :headers {"content-type" "application/json"}
-     :body source}))
+     :body (stream/->source out)}))
 
 (defn find-edge-handler
   [graph request]

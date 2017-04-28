@@ -12,7 +12,7 @@
 (defn connect-janus
   [{:keys [host keyspace] :as config}]
   (let [base (BaseConfiguration.)]
-    (.setProperty base "storage.backend" "cassandra")
+    (.setProperty base "storage.backend" "cassandrathrift")
     (.setProperty base "storage.hostname" (or (name host) "localhost"))
     (.setProperty base "storage.cassandra.keyspace" (or (name keyspace) "ophion"))
     (JanusGraphFactory/open base)))

@@ -11,7 +11,11 @@
    [ophion.db :as db]
    [ophion.query :as query])
   (:import
-   [java.io InputStreamReader]))
+   [java.io InputStreamReader]
+   [ch.qos.logback.classic Logger Level]))
+
+(.setLevel 
+   (org.slf4j.LoggerFactory/getLogger (Logger/ROOT_LOGGER_NAME)) Level/INFO)
 
 (defn append-newline
   [s]

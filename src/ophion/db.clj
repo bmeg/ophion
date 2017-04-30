@@ -24,3 +24,6 @@
     :tinkergraph (connect-tinkergraph config)
     (connect-tinkergraph config)))
 
+(defn commit
+  [graph]
+  (.. graph tx commit))

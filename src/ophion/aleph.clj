@@ -57,7 +57,9 @@
         query (query/delabelize raw-query)
         _ (log/info (mapv identity query))
         result (query/evaluate graph query)
-        out (map output result)]
+        out (map output result)
+        source (stream/->source out)]
+    (stream/on-drained source #(db/commit graph))
     {:status 200
      :headers {"content-type" "application/json"}
      :body (stream/->source out)}))

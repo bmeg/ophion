@@ -59,10 +59,14 @@
         result (query/evaluate graph query)
         out (map output result)
         source (stream/->source out)]
-    (stream/on-drained source #(db/commit graph))
+    (stream/on-drained
+     source
+     (fn []
+       (log/debug "query complete")
+       (db/commit graph)))
     {:status 200
      :headers {"content-type" "application/json"}
-     :body (stream/->source out)}))
+     :body source}))
 
 (defn find-edge-handler
   [graph request]

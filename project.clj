@@ -1,4 +1,4 @@
-(defproject ophion "0.0.1"
+(defproject ophion "0.0.2"
   :description "graph queries as data"
   :url "http://github.com/bmeg/ophion"
   :license {:name "Eclipse Public License"
@@ -9,6 +9,7 @@
                  [org.immutant/web "2.1.6"]
                  [aleph "0.4.3"]
                  [polaris "0.0.17"]
+                 [clojurewerkz/elastisch "2.2.1"]
                  [org.apache.tinkerpop/tinkergraph-gremlin "3.2.3"]
                  [org.janusgraph/janusgraph-core "0.2.0-SNAPSHOT"]
                  [org.janusgraph/janusgraph-cassandra "0.2.0-SNAPSHOT"]

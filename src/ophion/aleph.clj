@@ -112,8 +112,8 @@
    ["/schema/protograph" :schema #'schema]
    ["/vertex/find/:gid" :vertex-find (find-vertex graph)]
    ["/vertex/query" :vertex-query (vertex-query graph)]
-   ["/edge/find/:out/:label/:in" :vertex-find (find-edge graph)]
-   ["/edge/query" :vertex-query (edge-query graph)]])
+   ["/edge/find/:out/:label/:in" :edge-find (find-edge graph)]
+   ["/edge/query" :edge-query (edge-query graph)]])
 
 (defn start
   []

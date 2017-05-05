@@ -9,7 +9,8 @@
    [ring.middleware.resource :as ring]
    [ophion.config :as config]
    [ophion.db :as db]
-   [ophion.query :as query])
+   [ophion.query :as query]
+   [ophion.kafka :as kafka])
   (:import
    [java.io InputStreamReader]
    [ch.qos.logback.classic Logger Level]))

@@ -10,6 +10,7 @@
                  [aleph "0.4.3"]
                  [polaris "0.0.17"]
                  [clojurewerkz/elastisch "2.2.1"]
+                 [org.clojars.ghaskins/protobuf "3.0.2-2"]
                  [org.apache.tinkerpop/tinkergraph-gremlin "3.2.3"]
                  [org.janusgraph/janusgraph-core "0.2.0-SNAPSHOT"]
                  [org.janusgraph/janusgraph-cassandra "0.2.0-SNAPSHOT"]

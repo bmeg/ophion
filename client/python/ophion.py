@@ -228,14 +228,17 @@ class OphionQuery:
         self.query.append({'is': wrapValue(condition)})
         return self
 
-    def has(self, key, value):
-        v = wrapValue(value)
+    def has(self, key, *args):
         outer = {'key': key}
-        if isinstance(value, dict):
-            outer['condition'] = v
-        # elif: isinstance(value, OphionQuery);
-        else:
-            outer['value'] = v
+        if len(args) > 0:
+            value = args[0]
+            v = wrapValue(value)
+            outer = {'key': key}
+            if isinstance(value, dict):
+                outer['condition'] = v
+                # elif: isinstance(value, OphionQuery);
+            else:
+                outer['value'] = v
         self.query.append({'has': outer})
         return self
 

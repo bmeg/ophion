@@ -37,8 +37,8 @@
 
 (defn send
   [producer topic message]
-  (let [record (new ProducerRecord topic (uuid) message)])
-  (.send producer))
+  (let [record (new ProducerRecord topic (uuid) message)]
+    (.send producer record)))
 
 (defn consumer
   ([host group-id topics] (consumer host group-id topics {}))

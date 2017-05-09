@@ -36,8 +36,9 @@
 
 (defn transform-kafka
   [config protograph consumer producer]
-  (let [vertex-topic (str (get-in config [:protograph :output]) ".Vertex")
-        edge-topic (str (get-in config [:protograph :output]) ".Edge")
+  (let [prefix (get-in config [:protograph :prefix])
+        vertex-topic (str prefix ".Vertex")
+        edge-topic (str prefix ".Edge")
         emit (kafka-emitter producer vertex-topic edge-topic)]
     (kafka/consume
      consumer
@@ -54,14 +55,15 @@
 (def default-config
   {:protograph
    {:path "../gaia-bmeg/bmeg.protograph.yml"
-    :output "protograph.bmeg"}
+    :prefix "protograph.bmeg"
+    :output "graph.ingested"}
    :kafka kafka/default-config})
 
 (def bmeg-topics
-  {:ccle ["ccle.ga4gh.VariantAnnotation" "ccle.ga4gh.CallSet" "ccle.ResponseCurve" "ccle.Biosample" "ccle.GeneExpression" "ccle.Cohort" "ccle.ga4gh.Variant"]
+  {:ccle ["ccle.ga4gh.VariantAnnotation" "ccle.ga4gh.CallSet" "ccle.ResponseCurve" "ccle.Biosample" "ccle.GeneExpression" "ccle.ga4gh.Variant"]
    :cna ["ccle.bmeg.cna.CNASegment" "ccle.bmeg.cna.CNACallSet"]
    :ctdd ["ctdd.json.bmeg.phenotype.ResponseCurve" "ctdd.json.bmeg.phenotype.Compound"]
-   :gdc ["gdc.Cohort"]
+   :cohort ["ccle.Cohort" "gdc.Cohort"]
    :hugo ["hugo.GeneSynonym" "hugo.Pubmed" "hugo.GeneFamily" "hugo.Gene" "hugo.GeneDatabase"]
    :mc3 ["mc3.ga4gh.VariantAnnotation" "mc3.ga4gh.Variant" "mc3.ga4gh.CallSet"]
    :tcga ["tcga.IndividualCohort" "tcga.Biosample" "tcga.GeneExpression" "tcga.Individual"]})

@@ -1,4 +1,6 @@
 (ns ophion.db
+  (:require
+   [ophion.config :as config])
   (:import
    [org.apache.commons.configuration BaseConfiguration]
    [org.janusgraph.core JanusGraphFactory JanusGraph]
@@ -15,6 +17,7 @@
     (.setProperty base "storage.backend" "cassandrathrift")
     (.setProperty base "storage.hostname" (or (name host) "localhost"))
     (.setProperty base "storage.cassandra.keyspace" (or (name keyspace) "ophion"))
+    (.setProperty base "storage.cassandra.frame-size-mb" "60")
     (JanusGraphFactory/open base)))
 
 (defn connect
@@ -27,3 +30,8 @@
 (defn commit
   [graph]
   (.. graph tx commit))
+
+(defn connect-graph
+  [path]
+  (let [config (config/read-config path)]
+    (connect (:graph config))))

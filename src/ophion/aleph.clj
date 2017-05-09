@@ -28,14 +28,9 @@
    json/generate-string
    query/translate))
 
-(defn connect-graph
-  [path]
-  (let [config (config/read-config path)]
-    (db/connect (:graph config))))
-
 (defn default-graph
   []
-  (connect-graph "config/ophion.clj"))
+  (db/connect-graph "config/ophion.clj"))
 
 (defn schema
   [request]

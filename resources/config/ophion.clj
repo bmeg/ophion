@@ -1,4 +1,4 @@
 {:graph  {:database :janus
           :host "localhost"
-          :keyspace :prototest}
+          :keyspace :elastictest}
  :server {:port 4443}}

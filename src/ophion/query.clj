@@ -2,7 +2,8 @@
   (:require
    [clojure.walk :as walk]
    [clojure.string :as string]
-   [taoensso.timbre :as log])
+   [taoensso.timbre :as log]
+   [ophion.db :as db])
   (:import
    [org.apache.tinkerpop.gremlin.structure
     Edge
@@ -300,21 +301,6 @@
   [^GraphTraversal g {:keys [head tail]}]
   (.cap g head (into-array tail)))
 
-(defn find-vertex
-  [graph gid]
-  (-> graph
-      traversal
-      (V [])
-      (has {:key :gid :value gid})
-      iterator-seq
-      first))
-
-(defn get-vertex
-  [graph gid-or-vertex]
-  (cond
-    (vertex? gid-or-vertex) gid-or-vertex
-    (string? gid-or-vertex) (find-vertex graph gid-or-vertex)))
-
 (defn set-property!
   [element key val]
   (.property element (name key) val))
@@ -331,12 +317,37 @@
   (let [vertex (.addVertex graph label)]
     (set-property! vertex :gid gid)
     (set-properties! vertex properties)
+    (db/commit graph)
     vertex))
 
+(defn find-vertex
+  [graph gid]
+  (-> graph
+      traversal
+      (V [])
+      (has {:key :gid :value gid})
+      iterator-seq
+      first))
+
+(defn find-or-create-vertex
+  [graph label gid]
+  (let [found (find-vertex graph gid)]
+    (if found
+      found
+      (add-vertex! graph {:label label :gid gid :properties {}}))))
+
+(defn get-vertex
+  [graph label gid-or-vertex]
+  (cond
+    (vertex? gid-or-vertex) gid-or-vertex
+    (string? gid-or-vertex) (find-or-create-vertex graph label gid-or-vertex)))
+
 (defn add-edge!
-  [graph {:keys [label in out properties]}]
-  (let [out-vertex (get-vertex graph out)
-        in-vertex (get-vertex graph in)
+  [graph {:keys [label fromLabel from-label toLabel to-label from to properties]}]
+  (let [from-label (or fromLabel from-label)
+        to-label (or toLabel to-label)
+        out-vertex (get-vertex graph from-label from)
+        in-vertex (get-vertex graph to-label to)
         edge (.addEdge out-vertex (name label) in-vertex (into-array []))]
     (set-properties! edge properties)
     edge))

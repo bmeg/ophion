@@ -2,6 +2,7 @@
   (:require
    [clojure.string :as string]
    [clojure.java.io :as io]
+   [taoensso.timbre :as log]
    [clojurewerkz.propertied.properties :as props])
   (:import
    [java.util Properties UUID]
@@ -41,6 +42,7 @@
     (.send producer record)))
 
 (defn consumer
+  ([host group-id] (consumer host group-id []))
   ([host group-id topics] (consumer host group-id topics {}))
   ([host group-id topics props]
    (let [config (merge
@@ -72,22 +74,48 @@
 
 (defn path->topic
   [path]
+  "removes the suffix at the end of a path"
   (let [parts (string/split path #"\.")]
     (string/join "." (butlast parts))))
 
 (defn path->label
   [path]
+  "extracts the penultimate element out of a path"
   (let [parts (string/split path #"\.")]
     (-> parts reverse (drop 1) first)))
 
-(defn file->topic
-  [producer file topic]
-  (for [line (line-seq (io/reader file))]
-    (send producer topic line)))
+(defn topic->label
+  [topic]
+  "returns the suffix at the end of a path"
+  (let [parts (string/split topic #"\.")]
+    (last parts)))
 
-(defn dir->topics
-  [producer path]
-  (let [files (filter #(.isFile %) (file-seq path))]
-    (for [file files]
+(defn file->stream
+  [out file topic]
+  (doseq [line (line-seq (io/reader file))]
+    (send out topic line)))
+
+(defn dir->streams
+  [out path]
+  (let [files (filter #(.isFile %) (file-seq (io/file path)))]
+    (doseq [file files]
       (let [topic (path->topic (.getName file))]
-        (file->topic producer file topic)))))
+        (log/info "populating new topic" topic)
+        (file->stream out file topic)))))
+
+(defn spout-dir
+  [config path]
+  (let [host (:host config)
+        spout (producer host)]
+    (dir->streams spout path)))
+
+(def default-config
+  {:host "localhost:9092"
+   :consumer
+   {:group-id (uuid)}})
+
+(defn -main
+  [& args]
+  (doseq [path args]
+    (log/info "spouting" path)
+    (spout-dir default-config path)))

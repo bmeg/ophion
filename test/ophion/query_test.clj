@@ -23,22 +23,22 @@
     {:label "monster" :gid "hydra" :properties {:name "hydra"}}
     {:label "monster" :gid "cerberus" :properties {:name "cerberus"}}]
    :edges
-   [{:out "jupiter" :label "father" :in "saturn"}
-    {:out "jupiter" :label "brother" :in "neptune"}
-    {:out "jupiter" :label "brother" :in "pluto"}
-    {:out "jupiter" :label "lives" :in "sky" :properties {:reason "likes wind" :much 0.3}}
-    {:out "neptune" :label "brother" :in "jupiter"}
-    {:out "neptune" :label "brother" :in "pluto"}
-    {:out "neptune" :label "lives" :in "sea" :properties {:reason "likes waves" :much 0.4}}
-    {:out "pluto" :label "brother" :in "jupiter"}
-    {:out "pluto" :label "brother" :in "neptune"}
-    {:out "pluto" :label "lives" :in "tartarus" :properties {:reason "likes death" :much 0.5}}
-    {:out "hercules" :label "father" :in "jupiter"}
-    {:out "hercules" :label "mother" :in "alcmene"}
-    {:out "hercules" :label "battled" :in "nemean" :properties {:trial 1}}
-    {:out "hercules" :label "battled" :in "hydra" :properties {:trial 2}}
-    {:out "hercules" :label "battled" :in "cerberus" :properties {:trial 12}}
-    {:out "cerberus" :label "lives" :in "tartarus"}]})
+   [{:from-label "god" :from "jupiter" :label "father" :to-label "god" :to "saturn"}
+    {:from-label "god" :from "jupiter" :label "brother" :to-label "god" :to "neptune"}
+    {:from-label "god" :from "jupiter" :label "brother" :to-label "god" :to "pluto"}
+    {:from-label "god" :from "jupiter" :label "lives" :to-label "location" :to "sky" :properties {:reason "likes wind" :much 0.3}}
+    {:from-label "god" :from "neptune" :label "brother" :to-label "god" :to "jupiter"}
+    {:from-label "god" :from "neptune" :label "brother" :to-label "god" :to "pluto"}
+    {:from-label "god" :from "neptune" :label "lives" :to-label "location" :to "sea" :properties {:reason "likes waves" :much 0.4}}
+    {:from-label "god" :from "pluto" :label "brother" :to-label "god" :to "jupiter"}
+    {:from-label "god" :from "pluto" :label "brother" :to-label "god" :to "neptune"}
+    {:from-label "god" :from "pluto" :label "lives" :to-label "location" :to "tartarus" :properties {:reason "likes death" :much 0.5}}
+    {:from-label "demigod" :from "hercules" :label "father" :to-label "god" :to "jupiter"}
+    {:from-label "demigod" :from "hercules" :label "mother" :to-label "human" :to "alcmene"}
+    {:from-label "demigod" :from "hercules" :label "battled" :to-label "monster" :to "nemean" :properties {:trial 1}}
+    {:from-label "demigod" :from "hercules" :label "battled" :to-label "monster" :to "hydra" :properties {:trial 2}}
+    {:from-label "monster" :from "hercules" :label "battled" :to-label "monster" :to "cerberus" :properties {:trial 12}}
+    {:from-label "monster" :from "cerberus" :label "lives" :to-label "location" :to "tartarus"}]})
 
 (def graph
   (query/ingest-graph! (TinkerGraph/open) gods-graph))

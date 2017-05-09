@@ -29,7 +29,9 @@
 
 (defn commit
   [graph]
-  (.. graph tx commit))
+  (try
+    (.. graph tx commit)
+    (catch Exception e)))
 
 (defn connect-graph
   [path]

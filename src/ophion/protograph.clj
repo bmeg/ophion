@@ -71,6 +71,4 @@
   [& args]
   (let [config default-config
         protograph (load (get-in config [:protograph :path]))]
-    (transform-topics config protograph (:hugo bmeg-topics))
-    ;; (transform-topics config protograph args)
-    ))
+    (transform-topics config protograph args)))

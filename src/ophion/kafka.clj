@@ -110,7 +110,7 @@
     (dir->streams spout path)))
 
 (def default-config
-  {:host (or (System/genenv "KAFKA_HOST") "localhost:9092")
+  {:host (or (System/getenv "KAFKA_HOST") "localhost:9092")
    :consumer
    {:group-id (uuid)}})
 

@@ -32,7 +32,6 @@
   [protograph emit message]
   (let [label (kafka/topic->label (.topic message))
         data (Protograph/readJSON (.value message))]
-    (log/info label data)
     (process protograph emit label data)))
 
 (defn transform-kafka
@@ -70,5 +69,12 @@
 (defn -main
   [& args]
   (let [config default-config
-        protograph (load (get-in config [:protograph :path]))]
-    (transform-topics config protograph args)))
+        protograph (load (get-in config [:protograph :path]))
+        devourers (mapv
+                   (fn [[key topics]]
+                     (log/info "devouring" (name key))
+                     (future
+                       (transform-topics config protograph topics)))
+                   bmeg-topics)]
+    (doseq [devourer devourers]
+      (deref devourer))))

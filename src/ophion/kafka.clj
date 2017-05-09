@@ -59,7 +59,7 @@
   [consumer handle-message]
   (while true
     (let [records (.poll consumer 10000)]
-      (for [record records]
+      (doseq [record records]
         (handle-message record)))))
 
 (defn list-topics

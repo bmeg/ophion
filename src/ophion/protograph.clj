@@ -1,5 +1,6 @@
 (ns ophion.protograph
   (:require
+   [cheshire.core :as json]
    [taoensso.timbre :as log]
    [ophion.kafka :as kafka])
   (:import
@@ -23,14 +24,15 @@
   [producer vertex-topic edge-topic]
   (emitter
    (fn [vertex]
-     (kafka/send producer vertex-topic vertex))
+     (kafka/send producer vertex-topic (Protograph/writeJSON vertex)))
    (fn [edge]
-     (kafka/send producer edge-topic edge))))
+     (kafka/send producer edge-topic (Protograph/writeJSON edge)))))
 
 (defn transform-message
   [protograph emit message]
   (let [label (kafka/topic->label (.topic message))
         data (Protograph/readJSON (.value message))]
+    (log/info label data)
     (process protograph emit label data)))
 
 (defn transform-kafka
@@ -48,11 +50,11 @@
         group-id (get-in config [:kafka :consumer :group-id])
         consumer (kafka/consumer host group-id topics)
         producer (kafka/producer host)]
-    (transform-kafka config)))
+    (transform-kafka config protograph consumer producer)))
 
 (def default-config
   {:protograph
-   {:path "../gaia-bmeg/bmeg.protograph.yaml"
+   {:path "../gaia-bmeg/bmeg.protograph.yml"
     :output "protograph.bmeg"}
    :kafka kafka/default-config})
 
@@ -69,4 +71,6 @@
   [& args]
   (let [config default-config
         protograph (load (get-in config [:protograph :path]))]
-    (transform-topics config protograph args)))
+    (transform-topics config protograph (:hugo bmeg-topics))
+    ;; (transform-topics config protograph args)
+    ))

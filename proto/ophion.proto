@@ -52,6 +52,11 @@ message Traversal {
     }
   }
 
+  message Search {
+    string label = 1;
+    string search = 2;
+  }
+
   oneof statement {
     // sheer graph traversal
     Labels V = 1;
@@ -63,6 +68,7 @@ message Traversal {
     Labels outEdge = 7;
     bool inVertex = 8;
     bool outVertex = 9;
+    Search search = 99;
 
     // traversal manipulation
     bool identity = 20;

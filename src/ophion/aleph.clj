@@ -10,7 +10,8 @@
    [ophion.config :as config]
    [ophion.db :as db]
    [ophion.query :as query]
-   [ophion.kafka :as kafka])
+   [ophion.kafka :as kafka]
+   [ophion.search :as search])
   (:import
    [java.io InputStreamReader]
    [ch.qos.logback.classic Logger Level]))
@@ -50,11 +51,11 @@
      :body (json/generate-string out)}))
 
 (defn vertex-query-handler
-  [graph request]
+  [graph operations request]
   (let [raw-query (json/parse-stream (InputStreamReader. (:body request)) keyword)
         query (query/delabelize raw-query)
         _ (log/info (mapv identity query))
-        result (query/evaluate graph query)
+        result (query/evaluate graph operations query)
         out (map output result)
         source (stream/->source out)]
     (stream/on-drained
@@ -105,20 +106,22 @@
    :body (config/resource "public/viewer.html")})
 
 (defn ophion-routes
-  [graph]
-  [["/" :home #'home]
-   ["/schema/protograph" :schema #'schema]
-   ["/vertex/find/:gid" :vertex-find (find-vertex graph)]
-   ["/vertex/query" :vertex-query (vertex-query graph)]
-   ["/edge/find/:out/:label/:in" :edge-find (find-edge graph)]
-   ["/edge/query" :edge-query (edge-query graph)]])
+  [graph search]
+  (let [operations (query/build-operations {:search search})]
+    [["/" :home #'home]
+     ["/schema/protograph" :schema #'schema]
+     ["/vertex/find/:gid" :vertex-find (find-vertex graph)]
+     ["/vertex/query" :vertex-query (vertex-query graph operations)]
+     ["/edge/find/:out/:label/:in" :edge-find (find-edge graph)]
+     ["/edge/query" :edge-query (edge-query graph)]]))
 
 (defn start
   []
   (log/info "starting server")
   (let [config (config/read-config "config/ophion.clj")
         graph (db/connect (:graph config))
-        routes (polaris/build-routes (ophion-routes graph))
+        search (search/connect (:search config))
+        routes (polaris/build-routes (ophion-routes graph search))
         router (ring/wrap-resource (polaris/router routes) "public")]
     (http/start-server router {:port (or (:port config) 4443)})))
 

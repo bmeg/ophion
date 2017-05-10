@@ -3,7 +3,8 @@
    [clojure.walk :as walk]
    [clojure.string :as string]
    [taoensso.timbre :as log]
-   [ophion.db :as db])
+   [ophion.db :as db]
+   [ophion.search :as search])
   (:import
    [org.apache.tinkerpop.gremlin.structure
     Edge
@@ -101,6 +102,11 @@
 (defn traversal
   [^Graph g]
   (.traversal g))
+
+(defn search-index
+  [connection ^GraphTraversalSource g {:keys [label search]}]
+  (let [results (search/search connection label search)]
+    (.V g (into-array (mapv :id results)))))
 
 (defn V
   [^GraphTraversalSource g vs]
@@ -352,7 +358,8 @@
     (set-properties! edge properties)
     edge))
 
-(def operations
+(defn build-operations
+  [config]
   {:addVertex add-vertex!
    :addEdge add-edge!
 
@@ -396,12 +403,13 @@
    :choose choose
    :coalesce coalesce
 
+   :search (partial search-index (:search config))
    :max highest
    :min lowest
    :mean mean})
 
 (defn traverse-query
-  [traversal query]
+  [operations traversal query]
   (reduce
    (fn [g step]
      (let [key (-> step keys first)
@@ -411,14 +419,14 @@
    query))
 
 (defn evaluate
-  [graph query]
+  [graph operations query]
   (let [source (traversal graph)
         now (-> query first keys first)
-        query (if (or (= now :V) (= now :E))
+        query (if (or (= now :V) (= now :E) (= now :search))
                   query
                   (cons {:V []} query))]
     (or
-     (iterator-seq (traverse-query source query))
+     (iterator-seq (traverse-query operations source query))
      [])))
 
 (defn element-properties

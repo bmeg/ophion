@@ -23,7 +23,18 @@
   (create connection (:label data) (assoc data :id id :graph graph)))
 
 (defn search
-  [{:keys [connection index]} query])
+  [{:keys [connection index]} label query]
+  (map
+   :_source
+   (get-in
+    (document/search
+     connection
+     (name index)
+     (name label)
+     {"query"
+      {"match"
+       {"_all" query}}})
+    [:hits :hits])))
 
 (def default-config
   {:host "127.0.0.1"

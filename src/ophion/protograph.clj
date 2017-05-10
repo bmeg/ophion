@@ -71,12 +71,9 @@
 (defn -main
   [& args]
   (let [config default-config
-        protograph (load (get-in config [:protograph :path]))
-        devourers (mapv
-                   (fn [[key topics]]
-                     (log/info "devouring" (name key))
-                     (future
-                       (transform-topics config protograph topics)))
-                   bmeg-topics)]
-    (doseq [devourer devourers]
-      (deref devourer))))
+        protograph (load (get-in config [:protograph :path]))]
+    (mapv
+     (fn [[key topics]]
+       (log/info "devouring" (name key))
+       (transform-topics config protograph topics))
+     bmeg-topics)))

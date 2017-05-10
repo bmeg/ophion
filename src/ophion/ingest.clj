@@ -5,33 +5,51 @@
    [ophion.db :as db]
    [ophion.query :as query]
    [ophion.kafka :as kafka]
-   [ophion.protograph :as protograph])
+   [ophion.protograph :as protograph]
+   [ophion.search :as search])
   (:import
    [protograph Protograph]))
 
 (defn ingest-vertex
-  [graph vertex]
-  (query/add-vertex! graph vertex))
+  [graph data]
+  (let [vertex (query/add-vertex! graph data)
+        id (.id vertex)]
+    {:id id
+     :data data
+     :graph "vertex"}))
 
-(defn ingest-vertex
-  [graph edge]
-  (query/add-edge! graph edge))
+(defn ingest-edge
+  [graph data]
+  (let [edge (query/add-edge! graph data)
+        id (.id edge)
+        out-id (.getOutVertexId id)
+        type-id (.getTypeId id)
+        edge-id (.getRelationId id)
+        in-id (.getInVertexId id)]
+    {:id edge-id
+     :out-id out-id
+     :label type-id
+     :in-id in-id
+     :data data
+     :graph "edge"}))
 
 (defn ingest-message
-  [graph producer prefix message]
+  [graph producer prefix continuation message]
   (let [label (kafka/topic->label (.topic message))
         data (json/parse-string (.value message) keyword)
         _ (log/info label data)
-        ingested (condp = label
-                   "Vertex" (query/add-vertex! graph data)
-                   "Edge" (query/add-edge! graph data))
-        id (.id ingested)
-        result {:id id :data data}
-        json (Protograph/writeJSON result)]
-    (kafka/send producer (str prefix "." label) json)))
+        result (condp = label
+                 "Vertex" (ingest-vertex graph data)
+                 "Edge" (ingest-edge graph data))
+        ;; id (.id ingested)
+        ;; json (Protograph/writeJSON result)
+        ;; result {:id id :data data :graph label}
+        ]
+    ;; (kafka/send producer (str prefix "." label) json)
+    (continuation result)))
 
 (defn ingest-graph
-  [config graph]
+  [config graph continuation]
   (let [host (get-in config [:kafka :host])
         group-id (kafka/uuid)
         prefix (get-in config [:protograph :prefix])
@@ -41,9 +59,13 @@
         producer (kafka/producer host)]
     (kafka/consume
      consumer
-     (partial ingest-message graph producer output-prefix))))
+     (partial ingest-message graph producer output-prefix continuation))))
 
 (defn -main
   []
-  (let [graph (db/connect-graph "config/ophion.clj")]
-    (ingest-graph protograph/default-config graph)))
+  (let [graph (db/connect-graph "config/ophion.clj")
+        search (search/connect (assoc search/default-config :index "test"))]
+    (ingest-graph
+     protograph/default-config
+     graph
+     (partial search/index-message search))))

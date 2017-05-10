@@ -65,12 +65,7 @@
 (defn list-topics
   [consumer]
   (let [topic-map (into {} (.listTopics consumer))]
-    (into
-     {}
-     (map
-      (fn [[k t]]
-        [k (into [] t)])
-      topic-map))))
+    (keys topic-map)))
 
 (defn path->topic
   [path]

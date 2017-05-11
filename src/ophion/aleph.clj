@@ -88,9 +88,9 @@
     (#'find-vertex-handler graph request)))
 
 (defn vertex-query
-  [graph]
+  [graph search]
   (fn [request]
-    (#'vertex-query-handler graph request)))
+    (#'vertex-query-handler graph search request)))
 
 (defn find-edge
   [graph]

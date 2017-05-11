@@ -318,6 +318,10 @@
   [^GraphTraversal g {:keys [head tail]}]
   (.cap g head (into-array tail)))
 
+;; (defn serialize
+;;   [val]
+;;   (if))
+
 (defn set-property!
   [element key val]
   (.property element (name key) val))

@@ -5,3 +5,4 @@ client/js/build/ophion.js
 client/js/node_modules
 .lein-repl-history
 .nrepl-port
+.lein-failures

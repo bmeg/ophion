@@ -4,6 +4,7 @@
    [taoensso.timbre :as log]
    [ophion.config :as config]
    [ophion.db :as db]
+   [ophion.search :as search]
    [ophion.query :as query])
   (:import
    [org.apache.tinkerpop.gremlin.tinkergraph.structure TinkerGraph]))
@@ -41,7 +42,10 @@
     {:from-label "monster" :from "cerberus" :label "lives" :to-label "location" :to "tartarus"}]})
 
 (def graph
-  (query/ingest-graph! (TinkerGraph/open) gods-graph))
+  (let [graph (query/ingest-graph! (TinkerGraph/open) gods-graph)
+        search (search/connect {:index "ophion-test"})]
+    {:graph graph
+     :search search}))
 
 (def queries
   {:empty []

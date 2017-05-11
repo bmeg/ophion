@@ -20,21 +20,33 @@
 
 (defn index-message
   [connection {:keys [id data graph]}]
-  (create connection (:label data) (assoc data :id id :graph graph)))
+  (create connection graph (assoc data :id id :graph graph)))
 
 (defn search
-  [{:keys [connection index]} label query]
-  (map
-   :_source
-   (get-in
-    (document/search
-     connection
-     (name index)
-     (name label)
-     {"query"
-      {"match"
-       {"_all" query}}})
-    [:hits :hits])))
+  ([{:keys [connection index]} mapping query]
+   (map
+    :_source
+    (get-in
+     (document/search
+      connection
+      (name index)
+      (name mapping)
+      {"query"
+       {"match"
+        {"_all" query}}})
+     [:hits :hits])))
+  ([{:keys [connection index]} mapping term query]
+   (map
+    :_source
+    (get-in
+     (document/search
+      connection
+      (name index)
+      (name mapping)
+      {"query"
+       {"term"
+        {term query}}})
+     [:hits :hits]))))
 
 (def default-config
   {:host "127.0.0.1"

@@ -33,7 +33,10 @@
 
 (defn default-graph
   []
-  (db/connect-graph "config/ophion.clj"))
+  (let [graph (db/connect-graph "config/ophion.clj")
+        search (search/connect {:index "test"})]
+    {:graph graph
+     :search search}))
 
 (defn schema
   [request]
@@ -51,11 +54,11 @@
      :body (json/generate-string out)}))
 
 (defn vertex-query-handler
-  [graph operations request]
+  [graph search request]
   (let [raw-query (json/parse-stream (InputStreamReader. (:body request)) keyword)
         query (query/delabelize raw-query)
         _ (log/info (mapv identity query))
-        result (query/evaluate graph operations query)
+        result (query/evaluate {:graph graph :search search} query)
         out (map output result)
         source (stream/->source out)]
     (stream/on-drained
@@ -107,13 +110,12 @@
 
 (defn ophion-routes
   [graph search]
-  (let [operations (query/build-operations {:search search})]
-    [["/" :home #'home]
-     ["/schema/protograph" :schema #'schema]
-     ["/vertex/find/:gid" :vertex-find (find-vertex graph)]
-     ["/vertex/query" :vertex-query (vertex-query graph operations)]
-     ["/edge/find/:out/:label/:in" :edge-find (find-edge graph)]
-     ["/edge/query" :edge-query (edge-query graph)]]))
+  [["/" :home #'home]
+   ["/schema/protograph" :schema #'schema]
+   ["/vertex/find/:gid" :vertex-find (find-vertex graph)]
+   ["/vertex/query" :vertex-query (vertex-query graph search)]
+   ["/edge/find/:out/:label/:in" :edge-find (find-edge graph)]
+   ["/edge/query" :edge-query (edge-query graph)]])
 
 (defn start
   []

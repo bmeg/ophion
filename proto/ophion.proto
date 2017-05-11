@@ -53,7 +53,7 @@ message Traversal {
   }
 
   message Search {
-    string label = 1;
+    string term = 1;
     string search = 2;
   }
 

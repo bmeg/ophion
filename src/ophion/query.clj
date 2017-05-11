@@ -104,9 +104,20 @@
   (.traversal g))
 
 (defn search-index
-  [connection ^GraphTraversalSource g {:keys [label search]}]
-  (let [results (search/search connection label search)]
-    (.V g (into-array (mapv :id results)))))
+  [connection label {:keys [term search]}]
+  (let [results
+        (if term
+          (search/search connection label term search)
+          (search/search connection label search))]
+    (mapv :id results)))
+
+;; (defn search-index
+;;   [connection label ^GraphTraversalSource g {:keys [term search]}]
+;;   (let [results
+;;         (if term
+;;           (search/search connection label term search)
+;;           (search/search connection label search))]
+;;     (.V g (into-array (mapv :id results)))))
 
 (defn V
   [^GraphTraversalSource g vs]
@@ -358,8 +369,7 @@
     (set-properties! edge properties)
     edge))
 
-(defn build-operations
-  [config]
+(def operations
   {:addVertex add-vertex!
    :addEdge add-edge!
 
@@ -403,13 +413,12 @@
    :choose choose
    :coalesce coalesce
 
-   :search (partial search-index (:search config))
    :max highest
    :min lowest
    :mean mean})
 
 (defn traverse-query
-  [operations traversal query]
+  [traversal query]
   (reduce
    (fn [g step]
      (let [key (-> step keys first)
@@ -418,15 +427,25 @@
    traversal
    query))
 
+   ;; :searchVertex (partial search-index (:search config) "vertex")
+   ;; :searchEdge (partial search-index (:search config) "edge")
+
 (defn evaluate
-  [graph operations query]
+  [{:keys [graph search]} query]
   (let [source (traversal graph)
-        now (-> query first keys first)
-        query (if (or (= now :V) (= now :E) (= now :search))
-                  query
-                  (cons {:V []} query))]
+        begin (first query)
+        now (-> begin keys first)
+        pre (condp = now
+              :searchVertex {:V (search-index search "vertex" (get begin now))}
+              :searchEdge {:E (search-index search "edge" (get begin now))}
+              :V begin
+              :E begin
+              false)
+        query (if pre
+                (cons pre (rest query))
+                (cons {:V []} query))]
     (or
-     (iterator-seq (traverse-query operations source query))
+     (iterator-seq (traverse-query source query))
      [])))
 
 (defn element-properties

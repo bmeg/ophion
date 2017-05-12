@@ -318,13 +318,15 @@
   [^GraphTraversal g {:keys [head tail]}]
   (.cap g head (into-array tail)))
 
-;; (defn serialize
-;;   [val]
-;;   (if))
+(defn serialize
+  [val]
+  (if (coll? val)
+    (json/generate-string val)
+    val))
 
 (defn set-property!
   [element key val]
-  (.property element (name key) val))
+  (.property element (name key) (serialize val)))
 
 (defn set-properties!
   [element properties]

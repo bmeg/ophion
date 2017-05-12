@@ -2,6 +2,7 @@
   (:require
    [clojure.walk :as walk]
    [clojure.string :as string]
+   [cheshire.core :as json]
    [taoensso.timbre :as log]
    [ophion.db :as db]
    [ophion.search :as search])

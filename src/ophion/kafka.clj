@@ -23,8 +23,10 @@
    {"auto.offset.reset" "earliest"
     "enable.auto.commit" "true"
     "auto.commit.interval.ms" "1000"
-    "request.timeout.ms" "140000"
-    "session.timeout.ms" "120000"}))
+    "max.poll.records" "80"
+    "max.poll.interval.ms" "30000"
+    "request.timeout.ms" "40000"
+    "session.timeout.ms" "30000"}))
 
 (defn uuid
   []
@@ -58,7 +60,7 @@
 (defn consume
   [consumer handle-message]
   (while true
-    (let [records (.poll consumer 10000)]
+    (let [records (.poll consumer 1000)]
       (doseq [record records]
         (handle-message record)))))
 

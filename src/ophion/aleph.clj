@@ -7,10 +7,10 @@
    [polaris.core :as polaris]
    [taoensso.timbre :as log]
    [ring.middleware.resource :as ring]
+   [protograph.kafka :as kafka]
    [ophion.config :as config]
    [ophion.db :as db]
    [ophion.query :as query]
-   [ophion.kafka :as kafka]
    [ophion.search :as search])
   (:import
    [java.io InputStreamReader]

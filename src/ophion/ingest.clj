@@ -2,10 +2,10 @@
   (:require
    [taoensso.timbre :as log]
    [cheshire.core :as json]
+   [protograph.kafka :as kafka]
+   [protograph.core :as protograph]
    [ophion.db :as db]
    [ophion.query :as query]
-   [ophion.kafka :as kafka]
-   [ophion.protograph :as protograph]
    [ophion.search :as search])
   (:import
    [protograph Protograph]))

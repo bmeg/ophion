@@ -201,7 +201,7 @@ class OphionQuery:
         return self
 
     def dedup(self):
-        self.query.append({'dedup': True})
+        self.query.append({'dedup': []})
         return self
 
     def path(self):
@@ -307,11 +307,8 @@ class OphionQuery:
 # SAMPLE x RESPONSE matrix
 # O.query().has("gid", "cohort:CCLE").outgoing("hasSample").mark("sample").outEdge("responseToCompound").mark("response").select(["sample", "response"]).count().execute()
 
-
 # FIND ALL SAMPLExEXPRESSIONxRESPONSE TRIPLES FOR CCLE COHORT
 # O.query().has("gid", "cohort:CCLE").outgoing("hasSample").match([
-#     O.mark("sample").incoming("expressionForSample").mark("expression"),
+#     O.mark("sample").incoming("expressionForSample").values(['serializedExpresion']).mark("expression"),
 #     O.mark("sample").outEdge("responseToCompound").mark("response")
 # ]).select(["sample", "expression", "response"]).limit(1)
-
-

@@ -36,10 +36,10 @@
 (defn janus-make-index
   [graph index]
   (try
-    (let [index-name (string/join "-" (concat (keys index) ["-index"]))
+    (let [index-name (string/join "-" (concat (keys index) ["index"]))
           manage (.openManagement graph)]
-      (janus-apply-index manage (.buildIndex manage index-name Vertex) index)
-      (janus-apply-index manage (.buildIndex manage index-name Edge) index)
+      (janus-apply-index manage (.buildIndex manage (str index-name "-vertex") Vertex) index)
+      (janus-apply-index manage (.buildIndex manage index-name "-edge" Edge) index)
       (.commit manage))
     (catch Exception e
       (.printStackTrace e))))

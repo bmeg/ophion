@@ -250,6 +250,27 @@ class OphionQuery:
         self.query.append({'match': {'queries': queries}})
         return self
 
+    def searchArgs(self, args):
+        out = {}
+
+        if len(args) > 1:
+            out['term'] = args[0]
+            out['search'] = args[1]
+        else:
+            out['search'] = args[0]
+
+        return out
+
+    def searchVertex(self, *args):
+        opts = self.searchArgs(args)
+        self.query.append({'searchVertex': opts})
+        return self
+
+    def searchEdge(self, *args):
+        opts = self.searchArgs(args)
+        self.query.append({'searchEdge': opts})
+        return self
+
     # output
     def render(self):
         # output = {'query': self.query}

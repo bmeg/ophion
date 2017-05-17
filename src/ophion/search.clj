@@ -12,7 +12,8 @@
     (elastic/connect
      (str
       "http://" (or host "127.0.0.1")
-      ":" (or port "9200")))}))
+      ":" (or port "9200")))
+    :index index}))
 
 (defn create
   [{:keys [connection index]} mapping data]

@@ -45,7 +45,7 @@
         ;; json (Protograph/writeJSON result)
         ;; result {:id id :data data :graph label}
         ]
-    ;; (kafka/send producer (str prefix "." label) json)
+    ;; (kafka/send-message producer (str prefix "." label) json)
     (continuation result)))
 
 (defn ingest-graph

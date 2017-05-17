@@ -4,6 +4,7 @@
    [clojure.string :as string]
    [cheshire.core :as json]
    [taoensso.timbre :as log]
+   ;; [protograph.core :as protograph]
    [ophion.db :as db]
    [ophion.search :as search])
   (:import
@@ -355,10 +356,9 @@
 
 (defn find-or-create-vertex
   [graph label gid]
-  (let [found (find-vertex graph gid)]
-    (if found
-      found
-      (add-vertex! graph {:label label :gid gid :properties {}}))))
+  (if-let [found (find-vertex graph gid)]
+    found
+    (add-vertex! graph {:label label :gid gid :properties {}})))
 
 (defn get-vertex
   [graph label gid-or-vertex]
@@ -366,15 +366,35 @@
     (vertex? gid-or-vertex) gid-or-vertex
     (string? gid-or-vertex) (find-or-create-vertex graph label gid-or-vertex)))
 
+(defn find-edge
+  [graph gid]
+  (log/info gid)
+  (-> graph
+      traversal
+      (E [])
+      (has {:key :gid :value gid})
+      iterator-seq
+      first))
+
+(defn build-edge-gid
+  [{:keys [from label to]}]
+  (str
+   "(" from
+   ")--" label
+   "->(" to ")"))
+
 (defn add-edge!
-  [graph {:keys [label fromLabel from-label toLabel to-label from to properties]}]
-  (let [from-label (or fromLabel from-label)
-        to-label (or toLabel to-label)
-        out-vertex (get-vertex graph from-label from)
-        in-vertex (get-vertex graph to-label to)
-        edge (.addEdge out-vertex (name label) in-vertex (into-array []))]
-    (set-properties! edge properties)
-    edge))
+  [graph {:keys [gid label fromLabel from-label toLabel to-label from to properties] :as data}]
+  (let [gid (or gid (build-edge-gid data))]
+    (if-let [edge (find-edge graph gid)]
+      edge
+      (let [from-label (or fromLabel from-label)
+            to-label (or toLabel to-label)
+            out-vertex (get-vertex graph from-label from)
+            in-vertex (get-vertex graph to-label to)
+            edge (.addEdge out-vertex (name label) in-vertex (into-array []))]
+        (set-properties! edge (assoc properties :gid gid))
+        edge))))
 
 (def operations
   {:addVertex add-vertex!

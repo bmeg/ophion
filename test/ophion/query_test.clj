@@ -26,6 +26,7 @@
    :edges
    [{:from-label "god" :from "jupiter" :label "father" :to-label "god" :to "saturn"}
     {:from-label "god" :from "jupiter" :label "brother" :to-label "god" :to "neptune"}
+    {:from-label "god" :from "jupiter" :label "brother" :to-label "god" :to "neptune"}
     {:from-label "god" :from "jupiter" :label "brother" :to-label "god" :to "pluto"}
     {:from-label "god" :from "jupiter" :label "lives" :to-label "location" :to "sky" :properties {:reason "likes wind" :much 0.3}}
     {:from-label "god" :from "neptune" :label "brother" :to-label "god" :to "jupiter"}

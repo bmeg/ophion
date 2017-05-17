@@ -39,7 +39,7 @@
     (let [index-name (string/join "-" (concat (keys index) ["index"]))
           manage (.openManagement graph)]
       (janus-apply-index manage (.buildIndex manage (str index-name "-vertex") Vertex) index)
-      (janus-apply-index manage (.buildIndex manage index-name "-edge" Edge) index)
+      (janus-apply-index manage (.buildIndex manage (str index-name "-edge") Edge) index)
       (.commit manage))
     (catch Exception e
       (.printStackTrace e))))

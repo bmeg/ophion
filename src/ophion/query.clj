@@ -470,7 +470,7 @@
         search? (search-origins now)]
     (if search?
       (let [vertex? (search-vertex-origins now)
-            results (search-index search (if vertex? "Gene" "edge") (get begin now))]
+            results (search-index search (if vertex? "vertex" "edge") (get begin now))]
         (if (empty? results)
           []
           (iterator-seq

@@ -63,8 +63,9 @@
 
 (defn -main
   []
-  (let [graph (db/connect-graph "config/ophion.clj")
-        search (search/connect (assoc search/default-config :index "test"))]
+  (let [config (config/read-config "config/ophion.clj")
+        graph (db/connect (:graph config))
+        search (search/connect (merge search/default-config (:search config)))]
     (ingest-graph
      protograph/default-config
      graph

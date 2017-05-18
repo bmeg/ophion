@@ -32,9 +32,9 @@
       connection
       (name index)
       (name mapping)
-      {"query"
-       {"match"
-        {"_all" query}}})
+      :query
+      {:match
+       {:_all query}})
      [:hits :hits])))
   ([{:keys [connection index]} mapping term query]
    (map
@@ -44,9 +44,9 @@
       connection
       (name index)
       (name mapping)
-      {"query"
-       {"term"
-        {term query}}})
+      :query
+      {:term
+       {(str "properties." (name term)) query}})
      [:hits :hits]))))
 
 (def default-config

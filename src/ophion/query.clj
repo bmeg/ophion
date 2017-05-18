@@ -453,26 +453,45 @@
    traversal
    query))
 
-   ;; :searchVertex (partial search-index (:search config) "vertex")
-   ;; :searchEdge (partial search-index (:search config) "edge")
+(def search-origins
+  #{:searchVertex :search-vertex :searchEdge :search-edge})
+
+(def search-vertex-origins
+  #{:searchVertex :search-vertex})
+
+(def search-edge-origins
+  #{:searchEdge :search-edge})
 
 (defn evaluate
   [{:keys [graph search]} query]
   (let [source (traversal graph)
         begin (first query)
         now (-> begin keys first)
-        pre (condp = now
-              :searchVertex {:V (search-index search "vertex" (get begin now))}
-              :searchEdge {:E (search-index search "edge" (get begin now))}
-              :V begin
-              :E begin
-              false)
-        query (if pre
-                (cons pre (rest query))
-                (cons {:V []} query))]
-    (or
-     (iterator-seq (traverse-query source query))
-     [])))
+        search? (search-origins now)]
+    (if search?
+      (let [vertex? (search-vertex-origins now)
+            results (search-index search (if vertex? "Gene" "edge") (get begin now))]
+        (if (empty? results)
+          []
+          (iterator-seq
+           (traverse-query source (cons {:V results} (rest query))))))
+      (let [base (if (or (= :V now) (= :E now))
+                   query
+                   (cons {:V []} query))]
+        (or
+         (iterator-seq (traverse-query source base))
+         [])))))
+
+   ;; :searchVertex (partial search-index (:search config) "vertex")
+   ;; :searchEdge (partial search-index (:search config) "edge")
+
+            ;; pre (condp = now
+            ;;       :V begin
+            ;;       :E begin
+            ;;       false)
+            ;; query (if pre
+            ;;         (cons pre (rest query))
+            ;;         (cons {:V []} query))
 
 (defn element-properties
   [el]

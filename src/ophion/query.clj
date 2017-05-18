@@ -470,28 +470,21 @@
         search? (search-origins now)]
     (if search?
       (let [vertex? (search-vertex-origins now)
-            results (search-index search (if vertex? "vertex" "edge") (get begin now))]
+            results (search-index
+                     search
+                     (if vertex? "vertex" "edge")
+                     (get begin now))]
         (if (empty? results)
           []
           (iterator-seq
            (traverse-query source (cons {:V results} (rest query))))))
+
       (let [base (if (or (= :V now) (= :E now))
                    query
                    (cons {:V []} query))]
         (or
          (iterator-seq (traverse-query source base))
          [])))))
-
-   ;; :searchVertex (partial search-index (:search config) "vertex")
-   ;; :searchEdge (partial search-index (:search config) "edge")
-
-            ;; pre (condp = now
-            ;;       :V begin
-            ;;       :E begin
-            ;;       false)
-            ;; query (if pre
-            ;;         (cons pre (rest query))
-            ;;         (cons {:V []} query))
 
 (defn element-properties
   [el]

@@ -9,7 +9,8 @@ BMEG='http://bmeg.io'
 def generate_analysis(bmeg, path):
     file = open(path)
     lines = csv.DictReader(file, quotechar='"', delimiter='\t')
-    samples = map(lambda line: line['gdc_cases.samples.portions.submitter_id'][:16], lines)
+    samples = [line['gdc_cases.samples.portions.submitter_id'][:16],
+               for line in lines]
 
     O = ophion.Ophion(bmeg)
     def analyze(gene):
@@ -18,7 +19,9 @@ def generate_analysis(bmeg, path):
 
         for sample in samples:
             print(sample)
-            result = O.query().has("gid", ['biosample:' + sample]).incoming("tumorSample").incoming("effectOf").outgoing("inGene").has("symbol", [gene]).count().execute()
+            result = O.query().has("gid", ['biosample:' + sample])\
+                .incoming("tumorSample").incoming("effectOf")\
+                .outgoing("inGene").has("symbol", [gene]).count().execute()
             if 'error' in result:
                 errors.append(sample)
             else:
@@ -31,12 +34,15 @@ def generate_analysis(bmeg, path):
 def reverse_analysis(bmeg, path):
     file = open(path)
     lines = csv.DictReader(file, quotechar='"', delimiter='\t')
-    samples = set(map(lambda line: line['gdc_cases.samples.portions.submitter_id'][:16], lines))
+    samples = set([line['gdc_cases.samples.portions.submitter_id'][:16]
+                   for line in lines])
 
     O = ophion.Ophion(bmeg)
     def analyze(gene):
-        results = O.query().has("gid", ["gene:" + gene]).incoming("inGene").outgoing("effectOf").outgoing("tumorSample").execute()
-        result_set = set(map(lambda result: result['properties']['barcode'][:16], results['result']))
+        results = O.query().has("gid", ["gene:" + gene]).incoming("inGene")\
+            .outgoing("effectOf").outgoing("tumorSample").execute()
+        result_set = set([result['properties']['barcode'][:16]
+                          for result in results['result']])
         intersection = set.intersection(result_set, samples)
 
         print(len(intersection))

@@ -1,9 +1,41 @@
+
 import sys
 import json
-import urllib2
+import requests
 import traceback
 
+from functools import reduce
+
+
 class Ophion:
+    """
+    Examples
+    --------
+    -- find samples with a mutation in BRAF:
+        O.query().match([
+            O.mark("gene").has("symbol", "BRAF"),
+            O.mark("gene").incoming("variantInGene")
+                .outgoing("variantInBiosample").mark("sample")
+            ]).select(["gene", "sample"])
+
+    -- (sample, expression) matrix:
+        O.query().has("gid", "cohort:CCLE")
+        .outgoing("hasSample").mark("sample").incoming("expressionForSample")
+        .mark("expression").select(["sample", "expression"]).count().execute()
+
+    -- (sample, drug-response) matrix:
+        O.query().has("gid", "cohort:CCLE")
+        .outgoing("hasSample").mark("sample").outEdge("responseToCompound")
+        .mark("response").select(["sample", "response"]).count().execute()
+
+    -- find all (sample, expression, response) triplets for the CCLE cohort:
+        O.query().has("gid", "cohort:CCLE").outgoing("hasSample").match([
+            O.mark("sample").incoming("expressionForSample")
+                .values(['serializedExpresion']).mark("expression"),
+            O.mark("sample").outEdge("responseToCompound").mark("response")
+            ]).select(["sample", "expression", "response"]).limit(1)
+    """
+
     def __init__(self, host):
         self.host = host
         self.url = host + "/vertex/query"
@@ -55,26 +87,26 @@ class Ophion:
     # remote calls
     def vertex(self, gid):
         url = self.host + "/vertex/find/" + gid
-        headers = {'Content-Type': 'application/json', 'Accept': 'application/json'}
-        request = urllib2.Request(url, headers=headers)
-        response = urllib2.urlopen(request)
-        result = response.read()
-        return json.loads(result)
+        headers = {'Content-Type': 'application/json',
+                   'Accept': 'application/json'}
+        return requests.post(url, headers=headers).json()
 
     def execute(self, query):
         def loadJson(s):
             if len(s) > 0:
-                return json.loads(s)
+                return s.json()
             else:
                 return {}
 
         try:
             payload = query.render()
-            headers = {'Content-Type': 'application/json', 'Accept': 'application/json'}
-            request = urllib2.Request(self.url, payload, headers=headers)
-            response = urllib2.urlopen(request)
-            result = response.read()
-            return map(loadJson, result.rstrip().split("\n"))
+            headers = {'Content-Type': 'application/json',
+                       'Accept': 'application/json'}
+            resp = requests.post(self.url,
+                                 data=payload, headers=headers)
+
+            return resp.text.rstrip().split("\n")
+
         except Exception as e:
             traceback.print_exc()
             return {
@@ -93,9 +125,9 @@ def wrapValue(value):
     elif isinstance(value, str):
         v = {'s': value}
     elif isinstance(value, list):
-        v = map(wrapValue, value)
+        v = list(map(wrapValue, value))
     elif isinstance(value, dict):
-        v = {k: wrapValue(v) for k, v in value.iteritems()}
+        v = {k: wrapValue(v) for k, v in value.items()}
     return v
 
 class OphionQuery:
@@ -277,7 +309,7 @@ class OphionQuery:
         def subsubrender(step):
             if isinstance(step, list) or isinstance(step, dict):
                 if 'queries' in step:
-                    return {'queries': map(lambda v: v.query, step['queries'])}
+                    return {'queries': [v.query for v in step['queries']]}
                 else:
                     return step
             else:
@@ -286,29 +318,10 @@ class OphionQuery:
         def subrender(step):
             return {k: subsubrender(v) for k, v in step.items()}
 
-        outquery = map(subrender, self.query)
+        outquery = [subrender(q) for q in self.query]
         return json.dumps(outquery)
+
 
     def execute(self):
         return self.parent.execute(self)
 
-
-# FIND SAMPLES WITH A MUTATION IN BRAF
-# O.query().match([
-#     O.mark("gene").has("symbol", "BRAF"),
-#     O.mark("gene").incoming("variantInGene").outgoing("variantInBiosample").mark("sample")
-# ]).select(["gene", "sample"])
-
-
-# SAMPLE x EXPRESSION matrix
-# O.query().has("gid", "cohort:CCLE").outgoing("hasSample").mark("sample").incoming("expressionForSample").mark("expression").select(["sample", "expression"]).count().execute()
-
-
-# SAMPLE x RESPONSE matrix
-# O.query().has("gid", "cohort:CCLE").outgoing("hasSample").mark("sample").outEdge("responseToCompound").mark("response").select(["sample", "response"]).count().execute()
-
-# FIND ALL SAMPLExEXPRESSIONxRESPONSE TRIPLES FOR CCLE COHORT
-# O.query().has("gid", "cohort:CCLE").outgoing("hasSample").match([
-#     O.mark("sample").incoming("expressionForSample").values(['serializedExpresion']).mark("expression"),
-#     O.mark("sample").outEdge("responseToCompound").mark("response")
-# ]).select(["sample", "expression", "response"]).limit(1)

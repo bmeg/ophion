@@ -6,3 +6,5 @@ client/js/node_modules
 .lein-repl-history
 .nrepl-port
 .lein-failures
+node_modules
+npm-debug.log

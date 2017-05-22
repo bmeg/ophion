@@ -6,7 +6,7 @@
 // Functions in the catalog take two arguments. The first is the value to operate on,
 // and the second is a callback to send the outcome to (instead of returning a value).
 
-import * as _ from 'underscore';
+var _ = require('underscore');
 
 function callsync(catalog, outputName) {
   if (!outputName) {
@@ -38,8 +38,8 @@ function callsync(catalog, outputName) {
   return execute;
 }
 
-export {
-  callsync
+module.exports = {
+  callsync: callsync
 }
 
 // Example:

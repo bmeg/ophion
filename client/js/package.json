@@ -1,8 +1,8 @@
 {
   "name": "ophion",
-  "version": "0.0.13",
+  "version": "0.0.20",
   "description": "a schema and api for graph queries and operations",
-  "main": "src/ophion.js",
+  "main": "ophion.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -13,6 +13,8 @@
   "repository": "git@github.com:bmeg/ophion.git",
   "license": "ISC",
   "dependencies": {
+    "es6-promise": "^4.1.0",
+    "isomorphic-fetch": "^2.2.1",
     "underscore": "1.8.3"
   }
 }

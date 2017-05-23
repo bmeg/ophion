@@ -70,6 +70,6 @@
         graph (db/connect (:graph config))
         search (search/connect (merge search/default-config (:search config)))]
     (ingest-graph
-     protograph/default-config
+     config
      graph
      (partial search/index-message search))))

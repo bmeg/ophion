@@ -17,7 +17,10 @@
 
 (defn create
   [{:keys [connection index]} mapping data]
-  (document/create connection index mapping data))
+  (try
+    (document/create connection index mapping data)
+    (catch Exception e
+      (log/info e))))
 
 (defn index-message
   [connection {:keys [id data graph]}]

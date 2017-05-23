@@ -20,7 +20,7 @@
   (try
     (document/create connection index mapping data)
     (catch Exception e
-      (log/info e))))
+      (.printStackTrace e))))
 
 (defn index-message
   [connection {:keys [id data graph]}]

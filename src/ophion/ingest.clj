@@ -52,12 +52,14 @@
 (defn ingest-graph
   [config graph continuation]
   (let [host (get-in config [:kafka :host])
+        port (or (get-in config [:kafka :port]) "9092")
+        kafka-url (str host ":" port)
         group-id (kafka/uuid)
         prefix (get-in config [:protograph :prefix])
         input-topics [(str prefix ".Vertex") (str prefix ".Edge")]
         output-prefix (get-in config [:protograph :output])
-        consumer (kafka/consumer {:host host :topics input-topics})
-        producer (kafka/producer host)]
+        consumer (kafka/consumer {:host kafka-url :topics input-topics})
+        producer (kafka/producer kafka-url)]
     (kafka/consume
      consumer
      (partial ingest-message graph producer output-prefix continuation))))

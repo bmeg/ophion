@@ -6,6 +6,7 @@
    [protograph.core :as protograph]
    [ophion.db :as db]
    [ophion.query :as query]
+   [ophion.config :as config]
    [ophion.search :as search])
   (:import
    [protograph Protograph]))
@@ -55,7 +56,7 @@
         prefix (get-in config [:protograph :prefix])
         input-topics [(str prefix ".Vertex") (str prefix ".Edge")]
         output-prefix (get-in config [:protograph :output])
-        consumer (kafka/consumer host (kafka/uuid) input-topics)
+        consumer (kafka/consumer {:host host :topics input-topics})
         producer (kafka/producer host)]
     (kafka/consume
      consumer

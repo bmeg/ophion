@@ -37,6 +37,7 @@
        {:_all query}}
       :size 1000)
      [:hits :hits])))
+
   ([{:keys [connection index]} mapping term query]
    (map
     :_source

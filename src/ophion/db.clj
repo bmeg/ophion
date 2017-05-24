@@ -70,4 +70,5 @@
     (janus-make-index graph {:type String})
     (janus-make-index graph {:label String})
     (janus-make-index graph {:symbol String})
+    (janus-make-index graph {:featureId String})
     (janus-make-index graph {:chromosome String :start String :end String})))

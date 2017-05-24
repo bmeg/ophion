@@ -1,5 +1,6 @@
 (ns ophion.ingest
   (:require
+   [clojure.java.io :as io]
    [clojure.tools.cli :as cli]
    [taoensso.timbre :as log]
    [cheshire.core :as json]
@@ -22,6 +23,7 @@
 
 (defn ingest-edge
   [graph data]
+  (log/info "ingest edge" data)
   (let [edge (query/add-edge! graph data)
         id (.id edge)
         out-id (.getOutVertexId id)
@@ -50,7 +52,7 @@
     ;; (kafka/send-message producer (str prefix "." label) json)
     (continuation result)))
 
-(defn ingest-graph
+(defn ingest-topic
   [config graph continuation]
   (let [host (get-in config [:kafka :host])
         port (or (get-in config [:kafka :port]) "9092")
@@ -65,13 +67,22 @@
      consumer
      (partial ingest-message graph producer output-prefix continuation))))
 
+(defn ingest-file
+  [path graph continuation]
+  (doseq [file (kafka/dir->files path)]
+    (let [label (kafka/path->label (.getName file))]
+      (doseq [line (line-seq (io/reader file))]
+        (let [data (json/parse-string line keyword)
+              result (condp = label
+                       "Vertex" (ingest-vertex graph data)
+                       "Edge" (ingest-edge graph data))]
+          (continuation result))))))
+
 (def parse-args
   [["-k" "--kafka KAFKA" "host for kafka server"
     :default "localhost:9092"]
    ["-i" "--input INPUT" "input file or directory"]
-   ["-o" "--output OUTPUT" "prefix for output file"]
-   ["-t" "--topic TOPIC" "input topic to read from"]
-   ["-x" "--prefix PREFIX" "output topic prefix"]])
+   ["-x" "--prefix PREFIX" "input topic prefix"]])
 
 (defn assoc-env
   [config env]
@@ -81,12 +92,12 @@
       (assoc :command env)))
 
 (defn -main
-  []
+  [& args]
   (let [env (:options (cli/parse-opts args parse-args))
         config (config/read-config "config/ophion.clj")
         graph (db/connect (:graph config))
-        search (search/connect (merge search/default-config (:search config)))]
-    (ingest-graph
-     config
-     graph
-     (partial search/index-message search))))
+        search (search/connect (merge search/default-config (:search config)))
+        continuation (partial search/index-message search)]
+    (if (:topic env)
+      (ingest-topic config graph continuation)
+      (ingest-file (:input env) graph continuation))))

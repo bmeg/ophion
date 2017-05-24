@@ -1,0 +1,212 @@
+- label: Project
+  role: Vertex
+  gid: "project:{{name}}"
+  actions:
+    - field: hasMember
+      remote_edges:
+        edge_label: hasMember
+        destination_label: Individual
+
+- label: Individual
+  role: Vertex
+  gid: "individual:{{datasetId}}:{{name}}"
+  actions:
+    - field: info
+      splice_map:
+        prefix: info
+        delimiter: ":"
+        lift_fields: true
+
+- label: Cohort
+  role: Vertex
+  gid: "cohort:{{name}}"
+  actions:
+    - field: hasMember
+      remote_edges:
+        edge_label: hasSample
+        destination_label: Biosample
+
+- label: Biosample
+  role: Vertex
+  gid: "biosample:{{datasetId}}:{{name}}"
+  actions:
+    - field: info
+      splice_map:
+        prefix: info
+    - field: individualId
+      remote_edges:
+        edge_label: biosampleOfIndividual
+        destination_label: Individual
+    - field: disease
+      inner_vertex:
+        edge_label: termForDisease
+        destination_label: OntologyTerm
+        outer_id: biosampleId
+
+- label: CallSet
+  role: Edge
+  gid: "callSet:{{name}}"
+  actions:
+    - field: biosampleId
+      edge_terminal:
+        edge_label: variantInBiosample
+        destination_label: Biosample
+
+- label: Variant
+  role: Vertex
+  gid: "variant:{{referenceName}}:{{start}}:{{end}}:{{referenceBases}}:{{alternateBases}}"
+  actions: 
+    - field: info
+      splice_map:
+        prefix: info
+    - field: calls
+      link_through:
+        edge_label: variantInBiosample
+        destination_label: Biosample
+        embedded_in: callSetId
+    - field: alternateBases
+      join_list:
+        delimiter: ","
+
+- label: VariantAnnotation
+  role: Edge
+  gid: "variantAnnotation:{{variantId}}:{{annotationSetId}}"
+  actions:
+    - field: transcriptEffects
+      embedded_terminals:
+        edge_label: variantInGene
+        destination_label: Gene
+        embedded_in: featureId
+        lift_fields: [effects]
+    - field: variantId
+      edge_source:
+        edge_label: variantInGene
+        destination_label: Variant
+    - field: variantId
+      store_field:
+        store: true
+
+- label: TranscriptEffect
+  role: Edge
+  gid: "transcriptEffect:{{featureId}}:{{annotationId}}:{{alternateBases}}"
+  actions:
+    - field: featureId
+      edge_terminal:
+        edge_label: variantInGene
+        destination_label: Gene
+    - field: effects
+      lift_fields: true
+
+- label: OntologyTerm
+  role: Vertex
+  gid: "ontologyTerm:{{term}}"
+
+- label: ResponseCurve
+  role: Edge
+  gid: "responseCurve:{{sample}}:{{compound}}"
+  actions:
+    - field: summary
+      serialize_field:
+        serialized_name: responseSummary
+    - field: values
+      serialize_field:
+        serialized_name: responseValues
+    - field: sample
+      edge_source:
+        edge_label: responseToCompound
+        destination_label: Biosample
+    - field: compound
+      edge_terminal:
+        edge_label: responseToCompound
+        destination_label: Compound
+
+- label: Compound
+  role: Vertex
+  gid: "compound:{{name}}"
+  actions:
+    - field: synonyms
+      remote_edges:
+        edge_label: synonymForCompound
+        destination_label: Compound
+    - field: target
+      remote_edges:
+        edge_label: compoundTargetsGene
+        destination_label: Gene
+
+- label: Gene
+  role: Vertex
+  gid: "gene:{{symbol}}"
+  actions:
+    - field: inFamily
+      remote_edges:
+        edge_label: geneInFamily
+        destination_label: GeneFamily
+    - field: citedFrom
+      remote_edges:
+        edge_label: citedFrom
+        destination_label: Pubmed
+
+- label: GeneSynonym
+  role: Edge
+  gid: "geneSynonym:{{symbol}}"
+  actions:
+    - field: synonymFor
+      edge_terminal:
+        edge_label: synonymForGene
+        destination_label: Gene
+    - field: inDatabase
+      edge_source:
+        edge_label: synonymForGene
+        destination_label: GeneDatabase
+    - field: info
+      splice_map:
+        prefix: info
+
+- label: GeneDatabase
+  role: Vertex
+  gid: "geneDatabase:{{name}}"
+
+- label: GeneFamily
+  role: Vertex
+  gid: "geneFamily:{{tag}}"
+
+- label: GeneExpression
+  role: Vertex
+  gid: "geneExpression:{{biosampleId}}"
+  actions:
+    - field: expressions
+      serialize_field:
+        serialized_name: serializedExpressions
+    - field: biosampleId
+      remote_edges:
+        edge_label: expressionForSample
+        destination_label: Biosample
+    - field: biosampleId
+      store_field:
+        store: true
+
+- label: Pubmed
+  role: Vertex
+  gid: "pubmed:{{id}}"
+
+- label: CNACallSet
+  role: Edge
+  gid: "cnaCallSet:{{bioSampleId}}"
+  actions:
+    - field: bioSampleId
+      edge_terminal:
+        edge_label: segmentOfSample
+        destination_label: Biosample
+
+- label: CNASegment
+  role: Vertex
+  gid: "cnaSegment:{{callSetId}}:{{referenceName}}:{{start}}:{{end}}:{{value}}"
+  actions:
+    - field: callSetId
+      link_through:
+        edge_label: segmentOfSample
+        destination_label: Biosample
+    - field: genes
+      remote_edges:
+        edge_label: segmentInGene
+        destination_label: Gene

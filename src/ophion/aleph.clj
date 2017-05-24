@@ -38,11 +38,12 @@
     {:graph graph
      :search search}))
 
-(defn schema
-  [request]
+(defn fetch-schema-handler
+  [schema request]
   {:status 200
    :headers {"content-type" "application/json"}
-   :body (config/resource "config/bmeg.protograph.json")})
+   ;; :body (config/resource "config/bmeg.protograph.json")
+   :body schema})
 
 (defn find-vertex-handler
   [graph request]
@@ -82,6 +83,11 @@
    :headers {"content-type" "application/json"}
    :body "found"})
 
+(defn fetch-schema
+  [schema]
+  (fn [request]
+    (#'fetch-schema-handler schema request)))
+
 (defn find-vertex
   [graph]
   (fn [request]
@@ -109,9 +115,9 @@
    :body (config/resource "public/viewer.html")})
 
 (defn ophion-routes
-  [graph search]
+  [graph search protograph]
   [["/" :home #'home]
-   ["/schema/protograph" :schema #'schema]
+   ["/schema/protograph" :schema (fetch-schema protograph)]
    ["/vertex/find/:gid" :vertex-find (find-vertex graph)]
    ["/vertex/query" :vertex-query (vertex-query graph search)]
    ["/edge/find/:out/:label/:in" :edge-find (find-edge graph)]
@@ -123,7 +129,9 @@
   (let [config (config/read-config "config/ophion.clj")
         graph (db/connect (:graph config))
         search (search/connect (:search config))
-        routes (polaris/build-routes (ophion-routes graph search))
+        protograph (protograph/load-protograph (or (get-in config [:protograph :path]) "config/protograph.yml"))
+        schema (Protograph/writeJSON (.graphStructure protograph))
+        routes (polaris/build-routes (ophion-routes graph search schema))
         router (ring/wrap-resource (polaris/router routes) "public")]
     (http/start-server router {:port (or (:port config) 4443)})))
 

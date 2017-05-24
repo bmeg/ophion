@@ -1,5 +1,6 @@
 (ns ophion.ingest
   (:require
+   [clojure.tools.cli :as cli]
    [taoensso.timbre :as log]
    [cheshire.core :as json]
    [protograph.kafka :as kafka]
@@ -64,9 +65,25 @@
      consumer
      (partial ingest-message graph producer output-prefix continuation))))
 
+(def parse-args
+  [["-k" "--kafka KAFKA" "host for kafka server"
+    :default "localhost:9092"]
+   ["-i" "--input INPUT" "input file or directory"]
+   ["-o" "--output OUTPUT" "prefix for output file"]
+   ["-t" "--topic TOPIC" "input topic to read from"]
+   ["-x" "--prefix PREFIX" "output topic prefix"]])
+
+(defn assoc-env
+  [config env]
+  (-> config
+      (assoc-in [:protograph :prefix] (:prefix env))
+      (assoc-in [:kafka :host] (:kafka env))
+      (assoc :command env)))
+
 (defn -main
   []
-  (let [config (config/read-config "config/ophion.clj")
+  (let [env (:options (cli/parse-opts args parse-args))
+        config (config/read-config "config/ophion.clj")
         graph (db/connect (:graph config))
         search (search/connect (merge search/default-config (:search config)))]
     (ingest-graph

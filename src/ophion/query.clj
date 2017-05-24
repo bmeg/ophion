@@ -336,7 +336,7 @@
      (set-property! element key val)))
   element)
 
-(defn add-vertex!
+(defn create-vertex!
   [graph {:keys [label gid properties]}]
   (let [vertex (.addVertex graph label)]
     (set-property! vertex :gid gid)
@@ -354,10 +354,11 @@
       first))
 
 (defn find-or-create-vertex
-  [graph label gid]
-  (if-let [found (find-vertex graph gid)]
-    found
-    (add-vertex! graph {:label label :gid gid :properties {}})))
+  ([graph label gid] (find-or-create-vertex graph label gid {}))
+  ([graph label gid properties]
+   (if-let [found (find-vertex graph gid)]
+     found
+     (create-vertex! graph {:label label :gid gid :properties properties}))))
 
 (defn get-vertex
   [graph label gid-or-vertex]
@@ -393,7 +394,17 @@
             in-vertex (get-vertex graph to-label to)
             edge (.addEdge out-vertex (name label) in-vertex (into-array []))]
         (set-properties! edge (assoc properties :gid gid))
+        (db/commit graph)
         edge))))
+
+(defn add-vertex!
+  [graph {:keys [label gid properties] :as data}]
+  (let [type-gid (str "type:" label)
+        type-vertex (find-or-create-vertex graph "Type" type-gid {:symbol label})
+        vertex (create-vertex! graph data)
+        edge-data {:label "hasInstance" :from-label "Type" :to-label label :from type-gid :to gid}
+        type-edge (add-edge! graph edge-data)]
+    vertex))
 
 (def operations
   {:addVertex add-vertex!

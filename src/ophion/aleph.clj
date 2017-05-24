@@ -7,6 +7,7 @@
    [polaris.core :as polaris]
    [taoensso.timbre :as log]
    [ring.middleware.resource :as ring]
+   [protograph.core :as protograph]
    [protograph.kafka :as kafka]
    [ophion.config :as config]
    [ophion.db :as db]
@@ -14,7 +15,8 @@
    [ophion.search :as search])
   (:import
    [java.io InputStreamReader]
-   [ch.qos.logback.classic Logger Level]))
+   [ch.qos.logback.classic Logger Level]
+   [protograph Protograph]))
 
 (.setLevel
  (org.slf4j.LoggerFactory/getLogger
@@ -33,8 +35,9 @@
 
 (defn default-graph
   []
-  (let [graph (db/connect-graph "config/ophion.clj")
-        search (search/connect {:index "test"})]
+  (let [config (config/read-config "config/ophion.clj")
+        graph (db/connect (:graph config))
+        search (search/connect (:search config))]
     {:graph graph
      :search search}))
 

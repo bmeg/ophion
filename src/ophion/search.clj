@@ -13,7 +13,7 @@
      (str
       "http://" (or host "127.0.0.1")
       ":" (or port "9200")))
-    :index index}))
+    :index (name index)}))
 
 (defn create
   [{:keys [connection index]} mapping data]

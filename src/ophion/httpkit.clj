@@ -1,18 +1,20 @@
-(ns ophion.immutant
+(ns ophion.httpkit
   (:require
-   [cheshire.core :as json]
+   [clojure.string :as string]
    [clojure.java.io :as io]
+   [cheshire.core :as json]
    [polaris.core :as polaris]
    [taoensso.timbre :as log]
    [ring.middleware.resource :as ring]
-   [immutant.web :as web]
-   ;; [immutant.web.async :as async]
+   [org.httpkit.server :as http]
+   [protograph.core :as protograph]
    [protograph.kafka :as kafka]
    [ophion.config :as config]
    [ophion.db :as db]
    [ophion.query :as query]
    [ophion.search :as search])
   (:import
+   [protograph Protograph]
    [java.io InputStreamReader]
    [ch.qos.logback.classic Logger Level]))
 
@@ -33,16 +35,17 @@
 
 (defn default-graph
   []
-  (let [graph (db/connect-graph "config/ophion.clj")
-        search (search/connect {:index "test"})]
+  (let [config (config/read-config "config/ophion.clj")
+        graph (db/connect (:graph config))
+        search (search/connect (:search config))]
     {:graph graph
      :search search}))
 
-(defn schema
-  [request]
+(defn fetch-schema-handler
+  [schema request]
   {:status 200
    :headers {"content-type" "application/json"}
-   :body (config/resource "config/bmeg.protograph.json")})
+   :body schema})
 
 (defn find-vertex-handler
   [graph request]
@@ -59,28 +62,11 @@
         query (query/delabelize raw-query)
         _ (log/info (mapv identity query))
         result (query/evaluate {:graph graph :search search} query)
-        out (map output result)]
+        out (string/join (map output result))]
     (db/commit graph)
     {:status 200
      :headers {"content-type" "application/json"}
      :body out}))
-
-;; (defn vertex-query-handler
-;;   [graph search request]
-;;   (let [raw-query (json/parse-stream (InputStreamReader. (:body request)) keyword)
-;;         query (query/delabelize raw-query)
-;;         _ (log/info (mapv identity query))
-;;         result (query/evaluate {:graph graph :search search} query)
-;;         out (map output result)
-;;         source (stream/->source out)]
-;;     (stream/on-drained
-;;      source
-;;      (fn []
-;;        (log/debug "query complete")
-;;        (db/commit graph)))
-;;     {:status 200
-;;      :headers {"content-type" "application/json"}
-;;      :body source}))
 
 (defn find-edge-handler
   [graph request]
@@ -93,6 +79,11 @@
   {:status 200
    :headers {"content-type" "application/json"}
    :body "found"})
+
+(defn fetch-schema
+  [schema]
+  (fn [request]
+    (#'fetch-schema-handler schema request)))
 
 (defn find-vertex
   [graph]
@@ -118,12 +109,12 @@
   [request]
   {:status 200
    :headers {"content-type" "text/html"}
-   :body (config/resource "public/viewer.html")})
+   :body (config/read-resource "public/viewer.html")})
 
 (defn ophion-routes
-  [graph search]
+  [graph search protograph]
   [["/" :home #'home]
-   ["/schema/protograph" :schema #'schema]
+   ["/schema/protograph" :schema (fetch-schema protograph)]
    ["/vertex/find/:gid" :vertex-find (find-vertex graph)]
    ["/vertex/query" :vertex-query (vertex-query graph search)]
    ["/edge/find/:out/:label/:in" :edge-find (find-edge graph)]
@@ -135,37 +126,13 @@
   (let [config (config/read-config "config/ophion.clj")
         graph (db/connect (:graph config))
         search (search/connect (:search config))
-        routes (polaris/build-routes (ophion-routes graph search))
+        protograph (protograph/load-protograph (or (get-in config [:protograph :path]) "config/protograph.yml"))
+        schema (Protograph/writeJSON (.graphStructure protograph))
+        routes (polaris/build-routes (ophion-routes graph search schema))
         router (ring/wrap-resource (polaris/router routes) "public")]
-    (web/run
-      #'home ;; (polaris/router routes) ;; router
-      :port (or (:port config) 4443))))
-
-;; (defn ophion-static
-;;   [request]
-;;   {:status 200
-;;    :body "ophion"})
-
-;; (def graph (query/tinkergraph))
-
-;; (defn ophion
-;;   [request]
-;;   (info (str request))
-;;   (async/as-channel
-;;    request
-;;    {:on-open
-;;     (fn [stream]
-;;       (let [reader (InputStreamReader. (:body request))
-;;             query (json/read reader :key-fn keyword)
-;;             result (query/evaluate graph query)]
-;;         (map
-;;          (comp async/send! query/translate)
-;;          (iterator-seq result))))}))
-
-;; (defn start
-;;   []
-;;   (info "starting server")
-;;   (web/run #'ophion {:port 4443}))
+    (http/run-server
+     router
+     {:port (or (:port config) 4443)})))
 
 (defn -main
   []

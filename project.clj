@@ -5,10 +5,11 @@
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :dependencies [[org.clojure/clojure "1.8.0"]
                  [aleph "0.4.3"]
-                 [polaris "0.0.17"]
+                 [polaris "0.0.19"]
                  [cheshire "5.7.1"]
                  [com.taoensso/timbre "4.8.0"]
-                 ;; [org.immutant/web "2.1.6"]
+                 ;; [org.immutant/web "2.1.7"]
+                 [http-kit "2.2.0"]
                  [protograph "0.0.4-SNAPSHOT"
                   :exclusions [org.scala-lang.modules/scala-xml_2.11
                                org.slf4j/slf4j-log4j12]]
@@ -37,4 +38,4 @@
                  ["sonatype releases"
                   "https://oss.sonatype.org/content/repositories/releases"]]
   :jvm-opts ["-Xmx12g" "-Xms12g"]
-  :main ophion.aleph)
+  :main ophion.httpkit)

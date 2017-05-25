@@ -299,6 +299,10 @@ function Ophion(site='') {
 
     without: function(v) {
       return {'without': _.map(v, value)}
+    },
+
+    mark: function(l) {
+      return OphionQuery(this).mark(l)
     }
   }
 }

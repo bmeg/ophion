@@ -56,7 +56,7 @@
      :headers {"content-type" "application/json"}
      :body (json/generate-string out)}))
 
-(defn vertex-query-handler
+(defn vertex-query-handler-straight
   [graph search request]
   (let [raw-query (json/parse-stream (InputStreamReader. (:body request)) keyword)
         query (query/delabelize raw-query)
@@ -67,6 +67,18 @@
     {:status 200
      :headers {"content-type" "application/json"}
      :body out}))
+
+(defn vertex-query-handler-streamed
+  [graph search request]
+  (http/with-channel request channel
+    (http/on-close channel (fn [status] (println "channel closed: " status)))
+    (let [raw-query (json/parse-stream (InputStreamReader. (:body request)) keyword)
+          query (query/delabelize raw-query)
+          _ (log/info (mapv identity query))
+          result (query/evaluate {:graph graph :search search} query)]
+      (doseq [line (map output result)]
+        (http/send! channel line))
+      (db/commit graph))))
 
 (defn find-edge-handler
   [graph request]
@@ -93,7 +105,7 @@
 (defn vertex-query
   [graph search]
   (fn [request]
-    (#'vertex-query-handler graph search request)))
+    (#'vertex-query-handler-straight graph search request)))
 
 (defn find-edge
   [graph]
@@ -137,3 +149,5 @@
 (defn -main
   []
   (start))
+
+

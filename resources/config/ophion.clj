@@ -1,6 +1,6 @@
 {:graph  {:database :janus
           :host "localhost"
-          :keyspace :projecttest}
+          :keyspace :prototest}
  :server {:port 4443}
  :search {:index :projecttest}
  :protograph {:path "../gaia-bmeg/bmeg.protograph.yml"

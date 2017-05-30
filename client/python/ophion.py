@@ -1,6 +1,7 @@
 import sys
 import json
 import urllib2
+import requests
 import traceback
 
 class Ophion:
@@ -70,6 +71,16 @@ class Ophion:
 
         try:
             payload = query.render()
+
+            ################ streaming request attempt
+            # response = requests.post(self.url, data=payload, stream=True)
+            # v = []
+            # # if response.encoding is None:
+            # #     response.encoding = 'utf-8'
+            # for item in response.iter_lines(decode_unicode=True):
+            #     v.append(item)
+            # return v
+
             headers = {'Content-Type': 'application/json', 'Accept': 'application/json'}
             request = urllib2.Request(self.url, payload, headers=headers)
             response = urllib2.urlopen(request)

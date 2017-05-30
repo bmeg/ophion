@@ -45,7 +45,6 @@
   [schema request]
   {:status 200
    :headers {"content-type" "application/json"}
-   ;; :body (config/resource "config/bmeg.protograph.json")
    :body schema})
 
 (defn find-vertex-handler

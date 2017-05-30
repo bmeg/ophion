@@ -210,3 +210,51 @@
       remote_edges:
         edge_label: segmentInGene
         destination_label: Gene
+
+- label: Predictor
+  role: Vertex
+  gid: "{{id}}"
+  actions:
+    - field: environmental_contexts
+      remote_edges:
+        edge_label: predictorForCompound
+        destination_label: Compound
+        embedded_in: description
+    - field: phenotype
+      inner_vertex:
+        edge_label: predictorHasPhenotype
+        destination_label: PhenotypeInstance
+    - field: model_id
+      remote_edges:
+        edge_label: predictorHasModel
+        destination_label: LinearSignature
+
+- label: PredictorAssociation
+  role: Edge
+  gid: "predictorAssociation:{{sample_id}}:{{predictor_id}}"
+  actions:
+    - field: sample_id
+      edge_terminal:
+        edge_label: sample
+        destination_label: Biosample
+    - field: predictor_id
+      edge_source:
+        edge_label: sample
+        destination_label: Predictor
+
+- label: PhenotypeInstance
+  role: Vertex
+  gid: "phenotypeInstance:{{#type}}{{term}}{{/type}}:{{#qualifier}}{{term}}{{/qualifier}}"
+  actions:
+    - field: qualifier
+      inner_vertex:
+        edge_label: qualifier
+        destination_label: OntologyTerm
+
+- label: LinearSignature
+  role: Vertex
+  gid: "{{id}}"
+  actions:
+    - field: coefficients
+      serialize_field:
+        serialized_name: modelCoefficients

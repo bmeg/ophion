@@ -1,0 +1,73 @@
+<!doctype html>
+<html>
+  <head>
+    <title>BMEG</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Roboto:300,400,500,700" type="text/css">
+    <link rel="stylesheet" href="https://code.getmdl.io/1.3.0/material.blue-light_blue.min.css" />
+    <link rel="stylesheet" href="https://unpkg.com/react-table@latest/react-table.css" />
+
+    <script defer src="https://code.getmdl.io/1.3.0/material.min.js"></script>
+    
+        <link rel="stylesheet" href="/css/main.css">
+    
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
+    <script src="https://fb.me/react-0.14.2.js"></script>
+    <script src="https://fb.me/react-dom-0.14.2.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-core/5.8.23/browser.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.6/d3.min.js"></script>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="/js/response.bundle.js"></script>
+    
+  </head>
+  <body>
+    
+    <div class="mdl-layout mdl-js-layout mdl-layout--fixed-header">
+      <header class="mdl-layout__header">
+        <div class="mdl-layout__header-row">
+          
+          <span class="mdl-layout-title"><a href="http://bmeg.io/"><img src="/bmeg-flat.png" height="45"/></a></span>
+          
+          <div class="mdl-layout-spacer"></div>
+          
+          <form action="#">
+            <div class="mdl-textfield mdl-js-textfield">
+              <input class="mdl-textfield__input mdl-color--grey-100" type="text" id="sample1">
+              <label class="mdl-textfield__label" for="sample1"></label>
+            </div>
+          </form>
+          <div class="mdl-layout-spacer"></div>
+          
+        </div>
+      </header>
+      <div class="mdl-layout__drawer">
+        <span class="mdl-layout-title">Apps</span>
+        <nav class="mdl-navigation">
+          <a class="mdl-navigation__link" href="/">Home</a>
+          
+          <a class="mdl-navigation__link" href="/categories/">Categories</a>
+          
+          <a class="mdl-navigation__link" href="/cohorts/">Cohorts</a>
+          
+          <a class="mdl-navigation__link" href="/">Home</a>
+          
+          <a class="mdl-navigation__link" href="/drug_compare/">Response Compare</a>
+          
+          <a class="mdl-navigation__link" href="/search/">Search</a>
+          
+          <a class="mdl-navigation__link" href="/tags/">Tags</a>
+          
+        </nav>
+        <span class="mdl-layout-title">
+          <img src="/ucsc-logo.png" height="35"/>
+          <img src="/ohsu-logo.png" height="35"/>
+        </span>
+      </div>
+
+ <p><div id="drug-response" /></p>
+
+
+</div>
+</body>
+</html>
+

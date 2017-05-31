@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Home on BMEG</title>
+    <link>http://bmeg.io/</link>
+    <description>Recent content in Home on BMEG</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    
+	<atom:link href="http://bmeg.io/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>Cohorts</title>
+      <link>http://bmeg.io/cohorts/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>http://bmeg.io/cohorts/</guid>
+      <description> </description>
+    </item>
+    
+    <item>
+      <title>Response Compare</title>
+      <link>http://bmeg.io/drug_compare/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>http://bmeg.io/drug_compare/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Search</title>
+      <link>http://bmeg.io/search/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>http://bmeg.io/search/</guid>
+      <description>Are we searching now?</description>
+    </item>
+    
+  </channel>
+</rss>

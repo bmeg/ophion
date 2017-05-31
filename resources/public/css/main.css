@@ -1,0 +1,12 @@
+h1 {
+    color:green;
+}
+
+.sidebar-subitem {
+  padding-left: 3em;
+  min-height: 1.5em;
+}
+.sidebar-hidden { display:none; }
+.sidebar-container {
+  padding-top: 5em;
+}

@@ -1,3 +1,362 @@
+/**
+ * Copyright 2015 Google Inc. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+html, body {
+  font-family: 'Roboto', 'Helvetica', sans-serif;
+  margin: 0;
+  padding: 0;
+}
+a {
+  cursor: pointer;
+}
+.bmeg-io .mdl-layout__header-row {
+  padding-left: 40px;
+}
+.bmeg-io .mdl-layout.is-small-screen .mdl-layout__header-row h3 {
+  font-size: inherit;
+}
+.bmeg-io .mdl-layout__tab-bar-button {
+  display: none;
+}
+.bmeg-io .mdl-layout.is-small-screen .mdl-layout__tab-bar .mdl-button {
+  display: none;
+}
+.bmeg-io .mdl-layout:not(.is-small-screen) .mdl-layout__tab-bar,
+.bmeg-io .mdl-layout:not(.is-small-screen) .mdl-layout__tab-bar-container {
+  overflow: visible;
+}
+.bmeg-io .mdl-layout__tab-bar-container {
+  height: 64px;
+}
+.bmeg-io .mdl-layout__tab-bar {
+  padding: 0;
+  padding-left: 16px;
+  box-sizing: border-box;
+  height: 100%;
+  width: 100%;
+}
+.bmeg-io .mdl-layout__tab-bar .mdl-layout__tab {
+  height: 64px;
+  line-height: 64px;
+}
+.bmeg-io .mdl-layout__tab-bar .mdl-layout__tab.is-active::after {
+  background-color: white;
+  height: 4px;
+}
+.bmeg-io main > .mdl-layout__tab-panel {
+  padding: 8px;
+  padding-top: 48px;
+}
+.bmeg-io .mdl-card {
+  height: auto;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-flex-direction: column;
+      -ms-flex-direction: column;
+          flex-direction: column;
+}
+.bmeg-io .mdl-card > * {
+  height: auto;
+}
+.bmeg-io .mdl-card .mdl-card__supporting-text {
+  margin: 40px;
+  -webkit-flex-grow: 1;
+      -ms-flex-positive: 1;
+          flex-grow: 1;
+  padding: 0;
+  color: inherit;
+  width: calc(100% - 80px);
+}
+.bmeg-io.bmeg-io .mdl-card__supporting-text h4 {
+  margin-top: 0;
+  margin-bottom: 20px;
+}
+.bmeg-io .mdl-card__actions {
+  margin: 0;
+  padding: 4px 40px;
+  color: inherit;
+}
+.bmeg-io .mdl-card__actions a {
+  color: #00BCD4;
+  margin: 0;
+}
+.bmeg-io .mdl-card__actions a:hover,
+.bmeg-io .mdl-card__actions a:active {
+  color: inherit;
+  background-color: transparent;
+}
+.bmeg-io .mdl-card__supporting-text + .mdl-card__actions {
+  border-top: 1px solid rgba(0, 0, 0, 0.12);
+}
+.bmeg-io #add {
+  position: absolute;
+  right: 40px;
+  top: 36px;
+  z-index: 999;
+}
+
+.bmeg-io .mdl-layout__content section:not(:last-of-type) {
+  position: relative;
+  margin-bottom: 48px;
+}
+.bmeg-io section.section--center {
+  max-width: 860px;
+}
+.bmeg-io #features section.section--center {
+  max-width: 620px;
+}
+.bmeg-io section > header{
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-align-items: center;
+      -ms-flex-align: center;
+          align-items: center;
+  -webkit-justify-content: center;
+      -ms-flex-pack: center;
+          justify-content: center;
+}
+.bmeg-io section > .section__play-btn {
+  min-height: 200px;
+}
+.bmeg-io section > header > .material-icons {
+  font-size: 3rem;
+}
+.bmeg-io section > button {
+  position: absolute;
+  z-index: 99;
+  top: 8px;
+  right: 8px;
+}
+.bmeg-io section .section__circle {
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-align-items: center;
+      -ms-flex-align: center;
+          align-items: center;
+  -webkit-justify-content: flex-start;
+      -ms-flex-pack: start;
+          justify-content: flex-start;
+  -webkit-flex-grow: 0;
+      -ms-flex-positive: 0;
+          flex-grow: 0;
+  -webkit-flex-shrink: 1;
+      -ms-flex-negative: 1;
+          flex-shrink: 1;
+}
+.bmeg-io section .section__text {
+  -webkit-flex-grow: 1;
+      -ms-flex-positive: 1;
+          flex-grow: 1;
+  -webkit-flex-shrink: 0;
+      -ms-flex-negative: 0;
+          flex-shrink: 0;
+  padding-top: 8px;
+}
+.bmeg-io section .section__text h5 {
+  font-size: inherit;
+  margin: 0;
+  margin-bottom: 0.5em;
+}
+.bmeg-io section .section__text a {
+  text-decoration: none;
+}
+.bmeg-io section .section__circle-container > .section__circle-container__circle {
+  width: 64px;
+  height: 64px;
+  border-radius: 32px;
+  margin: 8px 0;
+}
+.bmeg-io section.section--footer .section__circle--big {
+  width: 100px;
+  height: 100px;
+  border-radius: 50px;
+  margin: 8px 32px;
+}
+.bmeg-io .is-small-screen section.section--footer .section__circle--big {
+  width: 50px;
+  height: 50px;
+  border-radius: 25px;
+  margin: 8px 16px;
+}
+.bmeg-io section.section--footer {
+  padding: 64px 0;
+  margin: 0 -8px -8px -8px;
+}
+.bmeg-io section.section--center .section__text:not(:last-child) {
+  border-bottom: 1px solid rgba(0,0,0,.13);
+}
+.bmeg-io .mdl-card .mdl-card__supporting-text > h3:first-child {
+  margin-bottom: 24px;
+}
+.bmeg-io .mdl-layout__tab-panel:not(#overview) {
+  background-color: white;
+}
+.bmeg-io #features section {
+  margin-bottom: 72px;
+}
+.bmeg-io #features h4, #features h5 {
+  margin-bottom: 16px;
+}
+.bmeg-io .toc {
+  border-left: 4px solid #C1EEF4;
+  margin: 24px;
+  padding: 0;
+  padding-left: 8px;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-flex-direction: column;
+      -ms-flex-direction: column;
+          flex-direction: column;
+}
+.bmeg-io .toc h4 {
+  font-size: 0.9rem;
+  margin-top: 0;
+}
+.bmeg-io .toc a {
+  color: #4DD0E1;
+  text-decoration: none;
+  font-size: 16px;
+  line-height: 28px;
+  display: block;
+}
+.bmeg-io .mdl-menu__container {
+  z-index: 99;
+}
+
+.console-query-line {
+  
+}
+.prop-table {
+  width: 100%;
+}
+.prop-key {
+  font-weight: bold;
+}
+
+.vertex-edges-wrapper {
+  display: flex;
+  flex-grow: 1;
+  margin-top: 40px;
+}
+.vertex-edges {
+  width: 50%;
+  padding: 0 10px;
+}
+.vertex-edges h4 {
+  text-align: center;
+}
+.expando-header {
+  padding: 5px;
+  background-color: #eee;
+  border: 1px solid #ddd;
+}
+.expando-content {
+  padding: 5px 10px;
+}
+.expando.mdl-navigation {
+  flex-direction: column;
+}
+.mdl-collapse .mdl-navigation__link {
+  display: block;
+  position: relative;
+}
+
+.mdl-collapse.mdl-collapse--opened {
+  border-top: 1px solid #e0e0e0;
+  border-bottom: 1px solid #e0e0e0;
+  margin-top: -1px;
+}
+
+.mdl-collapse.mdl-collapse--opened + .mdl-collapse.mdl-collapse--opened {
+  border-top: none;
+  margin-top: 0;
+}
+
+.mdl-collapse .mdl-collapse__content-wrapper {
+  overflow: hidden;
+}
+
+.mdl-collapse .mdl-collapse__content {
+  transition-property: margin-top;
+  transition-duration: 0.2s;
+}
+
+.mdl-collapse .mdl-collapse__icon {
+  transition-property: transform;
+  transition-duration: 0.2s;
+  color: rgba(0,0,0,0.3);
+
+  /* MDL should provide some facility for positioning icons inside list items so I don't have to do this */
+  position: absolute;
+  right: 6px;
+  margin-top: -3px;
+}
+
+.mdl-collapse.mdl-collapse--opened .mdl-collapse__icon {
+  transform: rotate(-180deg);
+}
+
+.mdl-collapse:not(.mdl-collapse--opened) .mdl-collapse__button {
+  color: teal;
+}
+
+.mdl-collapse.mdl-collapse--opened .mdl-collapse__content {
+  margin-top: 0 !important;
+}
+
+.gene-search-form {
+  width: 90%;
+  margin: 0 auto;
+}
+.gene-search-form > div {
+  width: 100%;
+}
+
+.hidden {
+  display: none;
+}
+
+.edge-label {
+  color: #22aaee;
+}
+
+.edge-direction {
+  color: #509b77;
+}
+
+.informative-header {
+  color: #eeaa77;
+  font-size: 16px;
+}
+
+.spacing {
+  width: 20px;
+  height: 20px;
+}
+
+.label-block {
+    display: block;
+    color: #bbccdd;
+    padding-bottom: 5px;
+}
+
 h1 {
     color:green;
 }

@@ -59,6 +59,16 @@ function OphionQuery(parent) {
       return this
     },
 
+    searchVertex: function(term, search) {
+      if (search) {
+        query.push({'searchVertex': {'term': term, 'search': search}})
+      } else {
+        query.push({'searchVertex': {'search': term}})
+      }
+
+      return this
+    },
+
     incoming: function(l) {
       query.push({'in': labels(l)})
       return this

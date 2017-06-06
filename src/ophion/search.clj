@@ -36,8 +36,10 @@
       (name index)
       (name mapping)
       :query
-      {:match
-       {:_all query}}
+      {:simple_query_string
+       {:query query}}
+      ;; {:match
+      ;;  {:_all query}}
       :size 1000)
      [:hits :hits])))
 

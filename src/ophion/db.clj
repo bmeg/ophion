@@ -97,6 +97,12 @@
     (.. graph tx commit)
     (catch Exception e)))
 
+(defn rollback
+  [graph]
+  (try
+    (.. graph tx rollback)
+    (catch Exception e)))
+
 (defn connect-graph
   [path]
   (let [config (config/read-config path)]

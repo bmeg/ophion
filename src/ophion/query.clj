@@ -176,7 +176,7 @@
 (defn by
   [^GraphTraversal g {:keys [key query]}]
   (cond
-    key (.by g (name key))
+    key (.by g ^String (name key))
     query (.by g ^Traversal (query->traversal query))
     :else g))
 
@@ -207,6 +207,7 @@
 (defn order
   [^GraphTraversal g {:keys [key ascending]}]
   (-> g
+      (.has (name key))
       (.order)
       (.by (name key) (if ascending Order/incr Order/decr))))
 
@@ -357,7 +358,9 @@
   ([graph label gid] (find-or-create-vertex graph label gid {}))
   ([graph label gid properties]
    (if-let [found (find-vertex graph gid)]
-     found
+     (do
+       (set-properties! found properties)
+       found)
      (create-vertex! graph {:label label :gid gid :properties properties}))))
 
 (defn get-vertex
@@ -368,7 +371,6 @@
 
 (defn find-edge
   [graph gid]
-  (log/info gid)
   (-> graph
       traversal
       (E [])
@@ -400,9 +402,9 @@
 (defn add-vertex!
   [graph {:keys [label gid properties] :as data}]
   (let [type-gid (str "type:" label)
-        type-vertex (find-or-create-vertex graph "Type" type-gid {:symbol label})
-        vertex (create-vertex! graph data)
-        edge-data {:label "hasInstance" :from-label "Type" :to-label label :from type-gid :to gid}
+        type-vertex (find-or-create-vertex graph "type" type-gid {:symbol label})
+        vertex (find-or-create-vertex graph label gid properties)
+        edge-data {:label "hasInstance" :from-label "type" :to-label label :from type-gid :to gid}
         type-edge (add-edge! graph edge-data)]
     vertex))
 

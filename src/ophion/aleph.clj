@@ -68,7 +68,8 @@
      source
      (fn []
        (log/debug "query complete")
-       (db/commit graph)))
+       (db/commit graph)
+       (db/rollback graph)))
     {:status 200
      :headers {"content-type" "application/json"}
      :body source}))
@@ -114,7 +115,7 @@
   [request]
   {:status 200
    :headers {"content-type" "text/html"}
-   :body (config/resource "public/viewer.html")})
+   :body (config/read-resource "public/viewer.html")})
 
 (defn ophion-routes
   [graph search protograph]

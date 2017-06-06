@@ -14,10 +14,12 @@
    [{:label "location" :gid "sky" :properties {:name "sky"}}
     {:label "location" :gid "sea" :properties {:name "sea"}}
     {:label "location" :gid "tartarus" :properties {:name "tartarus"}}
+    {:label "titan" :gid "saturn" :properties {:name "saturn" :age 5000}}
     {:label "titan" :gid "saturn" :properties {:name "saturn" :age 10000}}
     {:label "god" :gid "jupiter" :properties {:name "jupiter" :age 5000}}
     {:label "god" :gid "neptune" :properties {:name "neptune" :age 4500}}
-    {:label "god" :gid "pluto" :properties {:name "pluto" :age 4000}}
+    {:label "god" :gid "pluto" :properties {:name "pluto"}}
+    {:label "god" :gid "pluto" :properties {:age 4000}}
     {:label "demigod" :gid "hercules" :properties {:name "hercules" :age 30}}
     {:label "human" :gid "alcmene" :properties {:name "alcmene" :age 45}}
     {:label "monster" :gid "nemean" :properties {:name "nemean"}}
@@ -76,9 +78,9 @@
             {:has {:key :much :value 0.5}}
             {:in-vertex :place}
             {:as [:places]}
+            {:order {:key :name :ascending true}}
             {:select [:gods :places]}
-            {:by {:key :name}}
-            {:order {:key :name :ascending true}}]
+            {:by {:key :name}}]
    
    :string-values [{:has-label ["god"]}
                    {:values ["name"]}]
@@ -108,17 +110,18 @@
                {:values ["name"]}
                {:aggregate "everyone"}]
    :weird-group [{:where
-            {:query
-             [{:out-edge []}]}}
+                  {:query
+                   [{:out-edge []}]}}
+                 {:group
+                  {:by
+                   [{:query
+                     [{:out-edge []}
+                      {:label true}]}]}}]
+   :group [{:has {:key :name}}
            {:group
             {:by
-             [{:query
-               [{:out-edge []}
-                {:label true}]}]}}]
-   :group [{:group
-            {:by
              [{:query [{:label true}]}
-              {:key "name"}]}}]
+              {:key :name}]}}]
 
    :group-count-query [{:group-count
                          {:query
@@ -157,23 +160,23 @@
 (deftest empty-test
   (testing "if the query is empty it should just return all vertexes"
     (let [result (test-query :empty)]
-      (is (= (count result) 12)))))
+      (is (= (count result) 18)))))
 
 (deftest vertexes-test
   (testing "all the vertexes"
     (let [result (test-query :V)]
-      (is (= (count result) 12)))))
+      (is (= (count result) 18)))))
 
 (deftest edges-test
   (testing "all the edges"
     (let [result (test-query :E)]
-      (is (= (count result) 16)))))
+      (is (= (count result) 28)))))
 
 (deftest in-test
   (testing "in"
     (let [result (test-query :in)]
-      (is (= (count result) 4))
-      (is (= #{"god" "monster"} (set (map #(.label %) result)))))))
+      (is (= (count result) 7))
+      (is (= #{"god" "monster" "type"} (set (map #(.label %) result)))))))
 
 (deftest out-test
   (testing "out"
@@ -184,8 +187,8 @@
 (deftest in-edge-test
   (testing "in-edge"
     (let [result (test-query :in-edge)]
-      (is (= (count result) 3))
-      (is (= #{"battled"} (set (map #(.label %) result)))))))
+      (is (= (count result) 6))
+      (is (= #{"battled" "hasInstance"} (set (map #(.label %) result)))))))
 
 (deftest out-edge-test
   (testing "out-edge"
@@ -274,7 +277,7 @@
 (deftest count-test
   (testing "count"
     (let [result (test-query :count)]
-      (is (= (first result) 12)))))
+      (is (= (first result) 18)))))
 
 (deftest path-test
   (testing "path"
@@ -293,8 +296,8 @@
     (let [result (test-query :weird-group)
           groups (first result)]
       (is (= (count result) 1))
-      (is (= (count groups) 2))
-      (is (= (keys groups) ["mother" "lives"]))
+      (is (= (count groups) 3))
+      (is (= (set (keys groups)) #{"mother" "hasInstance" "lives"}))
       (is (= (.label (first (get groups "mother"))) "demigod")))))
 
 (deftest group-test

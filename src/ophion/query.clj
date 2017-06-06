@@ -112,14 +112,6 @@
           (search/search connection label search))]
     (mapv :id results)))
 
-;; (defn search-index
-;;   [connection label ^GraphTraversalSource g {:keys [term search]}]
-;;   (let [results
-;;         (if term
-;;           (search/search connection label term search)
-;;           (search/search connection label search))]
-;;     (.V g (into-array (mapv :id results)))))
-
 (defn V
   [^GraphTraversalSource g vs]
   (.V g (into-array vs)))

@@ -157,7 +157,7 @@ function OphionQuery(parent) {
     },
 
     range: function(lower, upper) {
-      query.push({'lower': lower, 'upper': upper})
+      query.push({'range': {'lower': lower, 'upper': upper}})
       return this
     },
 

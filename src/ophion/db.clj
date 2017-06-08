@@ -27,7 +27,7 @@
 (defn janus-get-property-key
   [manage [key type]]
   (or
-   (.getPropertyKey manage)
+   (.getPropertyKey manage (name key))
    (.make
     (.dataType
      (.makePropertyKey manage (name key)) type))))
@@ -36,7 +36,7 @@
   [manage db-index index]
   (let [db (reduce
             (fn [db-index [k v]]
-              (let [property (janus-get-property-key manage k v)]
+              (let [property (janus-get-property-key manage [k v])]
                 (.addKey db-index property)))
             db-index index)]
     (.buildCompositeIndex db)))
@@ -58,14 +58,14 @@
 
 (defn edge-index-name
   [edge-label index]
-  (string/join "-" (concat [edge-label] (keys index) ["vertex-centric-index"])))
+  (string/join "-" (concat [edge-label] (sort (keys index)) ["vertex-centric-index"])))
 
 (defn janus-edge-index
   [graph edge-label index]
   (try
     (let [index-name (edge-index-name edge-label index)
           manage (.openManagement graph)
-          property-keys (into-array (mapv (partial janus-get-property-key index)))
+          property-keys (into-array (mapv (partial janus-get-property-key manage) index))
           edge (.getEdgeLabel manage edge-label)
           index (.buildEdgeIndex manage edge index-name Direction/BOTH Order/incr property-keys)]
       (.commit manage))
@@ -114,7 +114,7 @@
     (janus-property-index graph {:id String})
     (janus-property-index graph {:gid String})
     (janus-property-index graph {:type String})
-    (janus-property-index graph {:label String})
     (janus-property-index graph {:symbol String})
     (janus-property-index graph {:featureId String})
-    (janus-property-index graph {:chromosome String :start String :end String})))
+    (janus-property-index graph {:chromosome String :start String :end String})
+    (janus-edge-index graph "variantInGene" {:featureId String})))

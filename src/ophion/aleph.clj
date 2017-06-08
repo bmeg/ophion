@@ -1,12 +1,13 @@
 (ns ophion.aleph
   (:require
+   [clojure.string :as string]
+   [clojure.java.io :as io]
    [manifold.stream :as stream]
    [aleph.http :as http]
    [cheshire.core :as json]
-   [clojure.java.io :as io]
-   [polaris.core :as polaris]
    [taoensso.timbre :as log]
    [ring.middleware.resource :as ring]
+   [polaris.core :as polaris]
    [protograph.core :as protograph]
    [protograph.kafka :as kafka]
    [ophion.config :as config]
@@ -55,6 +56,18 @@
     {:status 200
      :headers {"content-type" "application/json"}
      :body (json/generate-string out)}))
+
+(defn vertex-query-handler-straight
+  [graph search request]
+  (let [raw-query (json/parse-stream (InputStreamReader. (:body request)) keyword)
+        query (query/delabelize raw-query)
+        _ (log/info (mapv identity query))
+        result (query/evaluate {:graph graph :search search} query)
+        out (string/join (map output result))]
+    (db/commit graph)
+    {:status 200
+     :headers {"content-type" "application/json"}
+     :body out}))
 
 (defn vertex-query-handler
   [graph search request]

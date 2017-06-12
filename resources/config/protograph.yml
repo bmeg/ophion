@@ -13,8 +13,6 @@
   actions:
     - field: info
       splice_map:
-        prefix: info
-        delimiter: ":"
         lift_fields: true
 
 - label: Cohort
@@ -32,7 +30,7 @@
   actions:
     - field: info
       splice_map:
-        prefix: info
+        prefix: ""
     - field: individualId
       remote_edges:
         edge_label: biosampleOfIndividual
@@ -58,7 +56,7 @@
   actions: 
     - field: info
       splice_map:
-        prefix: info
+        prefix: ""
     - field: calls
       link_through:
         edge_label: variantInBiosample
@@ -160,7 +158,7 @@
         destination_label: GeneDatabase
     - field: info
       splice_map:
-        prefix: info
+        prefix: ""
 
 - label: GeneDatabase
   role: Vertex

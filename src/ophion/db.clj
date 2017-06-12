@@ -1,6 +1,7 @@
 (ns ophion.db
   (:require
    [clojure.string :as string]
+   [taoensso.timbre :as log]
    [ophion.config :as config])
   (:import
    [org.apache.commons.configuration BaseConfiguration]
@@ -32,6 +33,12 @@
     (.dataType
      (.makePropertyKey manage (name key)) type))))
 
+(defn janus-get-edge-label
+  [manage edge-label]
+  (or
+   (.getEdgeLabel manage (name edge-label))
+   (.make (.makeEdgeLabel manage (name edge-label)))))
+
 (defn janus-apply-index
   [manage db-index index]
   (let [db (reduce
@@ -58,7 +65,12 @@
 
 (defn edge-index-name
   [edge-label index]
-  (string/join "-" (concat [edge-label] (sort (keys index)) ["vertex-centric-index"])))
+  (string/join
+   "-"
+   (concat
+    [(name edge-label)]
+    (sort (map name (keys index)))
+    ["vertex-centric-index"])))
 
 (defn janus-edge-index
   [graph edge-label index]
@@ -66,7 +78,8 @@
     (let [index-name (edge-index-name edge-label index)
           manage (.openManagement graph)
           property-keys (into-array (mapv (partial janus-get-property-key manage) index))
-          edge (.getEdgeLabel manage edge-label)
+          edge (janus-get-edge-label manage edge-label)
+          _ (log/info index-name edge property-keys)
           index (.buildEdgeIndex manage edge index-name Direction/BOTH Order/incr property-keys)]
       (.commit manage))
     (catch Exception e
@@ -77,7 +90,7 @@
   (try
     (let [index-name (edge-index-name edge-label index)
           manage (.openManagement graph)
-          edge (.getEdgeLabel manage edge-label)
+          edge (janus-get-edge-label manage edge-label)
           index (.getRelationIndex manage edge index-name)]
       (.updateIndex index SchemaAction/REINDEX)
       (.commit manage))
@@ -108,13 +121,22 @@
   (let [config (config/read-config path)]
     (connect (:graph config))))
 
+(def indexes
+  {:vertexes
+   [{:id String}
+    {:gid String}
+    {:type String}
+    {:symbol String}
+    {:featureId String}
+    {:chromosome String :start String :end String}]
+   :edges
+   [{:variantInGene {:featureId String}}]})
+
 (defn -main
   [& args]
-  (let [graph (connect-graph "config/ophion.clj")]
-    (janus-property-index graph {:id String})
-    (janus-property-index graph {:gid String})
-    (janus-property-index graph {:type String})
-    (janus-property-index graph {:symbol String})
-    (janus-property-index graph {:featureId String})
-    (janus-property-index graph {:chromosome String :start String :end String})
-    (janus-edge-index graph "variantInGene" {:featureId String})))
+  (let [graph (connect-graph "config/ophion.clj")
+        indexes indexes]
+    (doseq [vertex (:vertexes indexes)]
+      (janus-property-index graph vertex))
+    (doseq [edge (:edges indexes)]
+      (janus-edge-index graph (first (keys edge)) (first (vals edge))))))

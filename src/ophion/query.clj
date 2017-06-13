@@ -320,7 +320,9 @@
 
 (defn set-property!
   [element key val]
-  (.property element (name key) (serialize val)))
+  (try
+    (.property element (name key) (serialize val))
+    (catch Exception e (.printStackTrace e))))
 
 (defn set-properties!
   [element properties]

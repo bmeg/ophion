@@ -44,12 +44,7 @@
         _ (log/info label data)
         result (condp = label
                  "Vertex" (ingest-vertex graph data)
-                 "Edge" (ingest-edge graph data))
-        ;; id (.id ingested)
-        ;; json (Protograph/writeJSON result)
-        ;; result {:id id :data data :graph label}
-        ]
-    ;; (kafka/send-message producer (str prefix "." label) json)
+                 "Edge" (ingest-edge graph data))]
     (continuation result)))
 
 (defn ingest-topic

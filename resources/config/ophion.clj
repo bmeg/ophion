@@ -3,7 +3,7 @@
           :keyspace :prototest}
  :server {:port 4443}
  :search {:index :projecttest}
- :protograph {:path "../gaia-bmeg/bmeg.protograph.yml"
+ :protograph {:path "resources/config/protograph.yml"
               :prefix "tcga.lifted.protograph"}
  :kafka {:host "localhost"
          :port 9092}}

@@ -185,7 +185,7 @@
 
 - label: Pubmed
   role: Vertex
-  gid: "pubmed:{{id}}"
+  gid: "pubmed:{{pmid}}"
 
 - label: CNACallSet
   role: Edge

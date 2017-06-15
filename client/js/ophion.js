@@ -156,6 +156,14 @@ function OphionQuery(parent) {
       return this
     },
 
+    order: function(o, asc) {
+      if (asc === undefined) {
+        asc = true;
+      }
+      query.push({'order': {'key': o, 'ascending': asc}})
+      return this
+    },
+
     range: function(lower, upper) {
       query.push({'range': {'lower': lower, 'upper': upper}})
       return this

@@ -14,6 +14,7 @@
                   :exclusions [org.scala-lang.modules/scala-xml_2.11
                                org.slf4j/slf4j-log4j12]]
                  [clojurewerkz/elastisch "2.2.1"]
+                 [com.novemberain/monger "3.1.0"]
                  ;; [clojurewerkz/propertied "1.2.0"]
                  [org.apache.tinkerpop/tinkergraph-gremlin "3.2.3"]
                  [org.janusgraph/janusgraph-core "0.2.0-SNAPSHOT"

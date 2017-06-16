@@ -25,6 +25,19 @@
     (.setProperty base "storage.cassandra.frame-size-mb" "60")
     (JanusGraphFactory/open base)))
 
+(defn property-index-name
+  [index]
+  (string/join "-" (concat (map name (keys index)) ["index"])))
+
+(defn edge-index-name
+  [edge-label index]
+  (string/join
+   "-"
+   (concat
+    [(name edge-label)]
+    (sort (map name (keys index)))
+    ["vertex-centric-index"])))
+
 (defn janus-get-property-key
   [manage [key type]]
   (or
@@ -54,10 +67,6 @@
             db-index index)]
     (.buildCompositeIndex db)))
 
-(defn property-index-name
-  [index]
-  (string/join "-" (concat (map name (keys index)) ["index"])))
-
 (defn janus-get-property-index
   [manage index]
   (let [index-name (property-index-name index)]
@@ -85,15 +94,6 @@
         property-index (janus-get-property-index manage index)]
     (.get (.updateIndex manage property-index SchemaAction/REINDEX))
     (.commit manage)))
-
-(defn edge-index-name
-  [edge-label index]
-  (string/join
-   "-"
-   (concat
-    [(name edge-label)]
-    (sort (map name (keys index)))
-    ["vertex-centric-index"])))
 
 (defn janus-edge-index
   [graph edge-label index]

@@ -39,6 +39,12 @@
    (.getEdgeLabel manage (name edge-label))
    (.make (.makeEdgeLabel manage (name edge-label)))))
 
+(defn janus-get-edge-index
+  [manage edge-label index]
+  (let [index-name (edge-index-name edge-label index)
+        edge (janus-get-edge-label manage edge-label)]
+    (.getRelationIndex manage edge index-name)))
+
 (defn janus-apply-index
   [manage db-index index]
   (let [db (reduce
@@ -50,7 +56,12 @@
 
 (defn property-index-name
   [index]
-  (string/join "-" (concat (keys index) ["index"])))
+  (string/join "-" (concat (map name (keys index)) ["index"])))
+
+(defn janus-get-property-index
+  [manage index]
+  (let [index-name (property-index-name index)]
+    (.getGraphIndex manage index-name)))
 
 (defn janus-property-index
   [graph index]
@@ -62,6 +73,18 @@
       (.commit manage))
     (catch Exception e
       (.printStackTrace e))))
+
+(defn close-transactions!
+  [graph]
+  (map #(.rollback %) (.getOpenTransactions graph)))
+
+(defn janus-property-reindex
+  [graph index]
+  (close-transactions! graph)
+  (let [manage (.openManagement graph)
+        property-index (janus-get-property-index manage index)]
+    (.get (.updateIndex manage property-index SchemaAction/REINDEX))
+    (.commit manage)))
 
 (defn edge-index-name
   [edge-label index]
@@ -88,11 +111,10 @@
 (defn janus-edge-reindex
   [graph edge-label index]
   (try
-    (let [index-name (edge-index-name edge-label index)
-          manage (.openManagement graph)
-          edge (janus-get-edge-label manage edge-label)
-          index (.getRelationIndex manage edge index-name)]
-      (.updateIndex index SchemaAction/REINDEX)
+    (close-transactions! graph)
+    (let [manage (.openManagement graph)
+          index (janus-get-edge-index manage edge-label index)]
+      (.get (.updateIndex index SchemaAction/REINDEX))
       (.commit manage))
     (catch Exception e
       (.printStackTrace e))))

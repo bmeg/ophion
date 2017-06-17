@@ -6,19 +6,6 @@
    [taoensso.timbre :as log]
    [ophion.mongo :as mongo]))
 
-(defn outgoing
-  [from label]
-  [{:$match {:from from :label label}}
-   {:$project {:gid true :from true :to true}}
-   {:$lookup
-    {:from "element"
-     :localField "to"
-     :foreignField "gid"
-     :as "outgoing"}}
-   {:$unwind "$outgoing"}
-   {:$replaceRoot {:newRoot "$outgoing"}}
-   {:$project {:_id false}}])
-
 (defn has
   [state where]
   [{:$match where}])
@@ -37,8 +24,16 @@
       :localField "gid"
       :foreignField "to"
       :as "from"}}
-    {:$project {:to {:$filter {:input "$from" :as "o" :cond {:$eq ["$$o.label" label]}}}}}
+    {:$project
+     {:history "$_history"
+      :to
+      {:$filter
+       {:input "$from"
+        :as "o"
+        :cond
+        {:$eq ["$$o.label" label]}}}}}
     {:$unwind "$from"}
+    {:$addFields {"from._history" "$history"}}
     {:$replaceRoot {:newRoot "$from"}}]
    where))
 
@@ -50,8 +45,16 @@
       :localField "gid"
       :foreignField "from"
       :as "to"}}
-    {:$project {:to {:$filter {:input "$to" :as "o" :cond {:$eq ["$$o.label" label]}}}}}
+    {:$project
+     {:history "$_history"
+      :to
+      {:$filter
+       {:input "$to"
+        :as "o"
+        :cond
+        {:$eq ["$$o.label" label]}}}}}
     {:$unwind "$to"}
+    {:$addFields {"to._history" "$history" "to.yellol" "1333"}}
     {:$replaceRoot {:newRoot "$to"}}]
    where))
 
@@ -64,6 +67,7 @@
       :foreignField "gid"
       :as "from"}}
     {:$unwind "$from"}
+    {:$addFields {"from._history" "$_history"}}
     {:$replaceRoot {:newRoot "$from"}}]
    where))
 
@@ -76,6 +80,7 @@
       :foreignField "gid"
       :as "to"}}
     {:$unwind "$to"}
+    {:$addFields {"to._history" "$_history"}}
     {:$replaceRoot {:newRoot "$to"}}]
    where))
 
@@ -91,6 +96,22 @@
    (to-edge state where)
    (to-vertex state {})))
 
+(defn mark
+  [state label]
+  (let [path (str "_history." label)]
+    [{:$addFields {path "$$ROOT"}}
+     {:$project
+      {(str path "._history") false
+       (str path "._id") false}}]))
+
+(defn select
+  [state labels]
+  [{:$project
+    (reduce
+     (fn [project label]
+       (assoc project label (str "$_history." label)))
+     {} labels)}])
+
 (def steps
   {:where has
    :from-edge from-edge
@@ -98,7 +119,9 @@
    :from-vertex from-vertex
    :to-vertex to-vertex
    :from from
-   :to to})
+   :to to
+   :mark mark
+   :select select})
 
 (defn apply-step
   [steps step state]

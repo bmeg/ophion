@@ -1,5 +1,6 @@
 (ns ophion.mongo
   (:require
+   [taoensso.timbre :as log]
    [monger.core :as db]
    [monger.collection :as mongo])
   (:import
@@ -14,17 +15,26 @@
   [db collection what]
   (mongo/insert db collection what))
 
-(defn find
-  [db collection id]
-  (mongo/find-one-as-map db collection {:_id (ObjectId. id)}))
+(defn upsert!
+  [db collection what]
+  (mongo/update db collection {:gid (:gid what)} {:$set what} {:upsert true}))
+
+(defn update!
+  [db collection where values]
+  (mongo/update db collection where values {:upsert true}))
+
+(defn purge!
+  ([db])
+  ([db collection]
+   (mongo/remove db collection)))
+
+(defn one
+  [db collection gid]
+  (mongo/find-one-as-map db collection {:gid gid}))
 
 (defn query
   [db collection where]
   (mongo/find-maps db collection where))
-
-(defn update
-  [db collection where values]
-  (mongo/update db collection where values {:upsert true}))
 
 (defn find-all
   [db collection]
@@ -32,7 +42,8 @@
 
 (defn aggregate
   [db collection pipeline]
-  (mongo/aggregate db collection pipeline))
+  (log/info collection pipeline)
+  (mongo/aggregate db (name collection) pipeline))
 
 (defn timestamp
   [record]
@@ -45,12 +56,20 @@
    (:properties element)
    (dissoc element :properties)))
 
-(defn ingest-graph
+(defn edge-gid
+  [edge]
+  (str
+   "(" (:from edge) ")"
+   "--" (:label edge) "->"
+   "(" (:to edge) ")"))
+
+(defn ingest-graph!
   [db {:keys [vertexes edges]}]
   (doseq [vertex vertexes]
-    (insert! db :element (flat vertex)))
+    (upsert! db :vertex (assoc (flat vertex) :type "vertex")))
   (doseq [edge edges]
-    (insert! db :element (flat edge))))
+    (let [gid (edge-gid edge)]
+      (upsert! db :edge (assoc (flat edge) :gid gid :type "edge")))))
 
 (def gods-graph
   {:vertexes

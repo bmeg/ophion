@@ -112,6 +112,11 @@
        (assoc project label (str "$_history." label)))
      {} labels)}])
 
+(defn group-count
+  [state path]
+  [{:$group {:_id (str "$" path) :count {:$sum 1}}}
+   {:$project {:key "$_id" :count "$count"}}])
+
 (def steps
   {:where has
    :from-edge from-edge
@@ -121,7 +126,8 @@
    :from from
    :to to
    :mark mark
-   :select select})
+   :select select
+   :group-count group-count})
 
 (defn apply-step
   [steps step state]

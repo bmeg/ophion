@@ -1,5 +1,6 @@
 (ns ophion.ingest
   (:require
+   [clojure.string :as string]
    [clojure.java.io :as io]
    [clojure.tools.cli :as cli]
    [taoensso.timbre :as log]
@@ -98,7 +99,29 @@
                       #(json/parse-string % keyword))
                      lines)]
       (doseq [lines (partition 1000 processed)]
-        (mongo/bulk-insert! db (string/lower-case label) lines)))))
+        (try
+          (mongo/bulk-insert! graph (string/lower-case label) lines)
+          (catch Exception e (println "failed")))))))
+
+(defn ingest-batches-carefully
+  [path graph]
+  (doseq [file (kafka/dir->files path)]
+    (let [label (kafka/path->label (.getName file))
+          lines (line-seq (io/reader file))
+          processed (map
+                     (comp
+                      (if (= label "Vertex")
+                        aggregate/process-vertex
+                        aggregate/process-edge)
+                      #(json/parse-string % keyword))
+                     lines)
+          groups (group-by :gid processed)]
+      (doseq [lines (partition 1000 groups)]
+        (let [merged (map
+                      (fn [[gid parts]]
+                        (apply merge parts))
+                      lines)]
+          (mongo/bulk-insert! graph (string/lower-case label) merged))))))
 
 (def parse-args
   [["-k" "--kafka KAFKA" "host for kafka server"
@@ -118,7 +141,7 @@
   (let [env (:options (cli/parse-opts args parse-args))
         config (config/read-config "config/ophion.clj")
         ;; graph (db/connect (:graph config))
-        graph (mongo/connect! {:database "abyss"})
+        graph (mongo/connect! {:database "pillar"})
         search (search/connect (merge search/default-config (:search config)))
         continuation (partial search/index-message search)]
     (if (:topic env)

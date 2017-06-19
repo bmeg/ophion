@@ -26,7 +26,7 @@
       :as "from"}}
     {:$project
      {:history "$_history"
-      :to
+      :from
       {:$filter
        {:input "$from"
         :as "o"
@@ -54,7 +54,7 @@
         :cond
         {:$eq ["$$o.label" label]}}}}}
     {:$unwind "$to"}
-    {:$addFields {"to._history" "$history" "to.yellol" "1333"}}
+    {:$addFields {"to._history" "$history"}}
     {:$replaceRoot {:newRoot "$to"}}]
    where))
 

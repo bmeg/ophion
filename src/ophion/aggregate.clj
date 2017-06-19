@@ -147,9 +147,10 @@
      (vec (apply concat attired)))))
 
 (defn evaluate
-  [db query]
-  (let [aggregate (translate query)]
-    (mongo/aggregate db :vertex aggregate)))
+  ([db query] (evaluate db :vertex query))
+  ([db collection query]
+   (let [aggregate (translate query)]
+     (mongo/aggregate db collection aggregate))))
 
 (defn flat
   "this will squash properties if they are in the reserved set"

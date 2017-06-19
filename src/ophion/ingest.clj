@@ -99,9 +99,13 @@
                       #(json/parse-string % keyword))
                      lines)]
       (doseq [lines (partition 1000 processed)]
+        ;; (try
+        ;;   (mongo/insert-many! graph (string/lower-case label) lines)
+        ;;   ;; (mongo/bulk-insert! graph (string/lower-case label) lines)
+        ;;   (catch Exception e (println "failed")))
         (try
           (mongo/bulk-insert! graph (string/lower-case label) lines)
-          (catch Exception e (println "failed")))))))
+          (catch Exception e (println e)))))))
 
 (defn ingest-batches-carefully
   [path graph]

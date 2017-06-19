@@ -10,33 +10,19 @@
    [ophion.query :as query]
    [ophion.config :as config]
    [ophion.search :as search]
+   [ophion.mongo :as mongo]
    [ophion.aggregate :as aggregate])
   (:import
    [protograph Protograph]))
 
 (defn ingest-vertex
   [graph data]
-  (let [vertex (aggregate/add-vertex! graph data)
-        id (.id vertex)]
-    {:id id
-     :data data
-     :graph "vertex"}))
+  (aggregate/add-vertex! graph data))
 
 (defn ingest-edge
   [graph data]
   (log/info "ingest edge" data)
-  (let [edge (aggregate/add-edge! graph data)
-        id (.id edge)
-        out-id (.getOutVertexId id)
-        type-id (.getTypeId id)
-        edge-id (.getRelationId id)
-        in-id (.getInVertexId id)]
-    {:id edge-id
-     :out-id out-id
-     :label type-id
-     :in-id in-id
-     :data data
-     :graph "edge"}))
+  (aggregate/add-edge! graph data))
 
 ;; (defn ingest-vertex
 ;;   [graph data]
@@ -90,13 +76,29 @@
 (defn ingest-file
   [path graph continuation]
   (doseq [file (kafka/dir->files path)]
-    (let [label (kafka/path->label (.getName file))]
-      (doseq [line (line-seq (io/reader file))]
+    (let [label (kafka/path->label (.getName file))
+          lines (line-seq (io/reader file))]
+      (doseq [line lines]
         (let [data (json/parse-string line keyword)
               result (condp = label
                        "Vertex" (ingest-vertex graph data)
                        "Edge" (ingest-edge graph data))]
           (continuation result))))))
+
+(defn ingest-batches
+  [path graph]
+  (doseq [file (kafka/dir->files path)]
+    (let [label (kafka/path->label (.getName file))
+          lines (line-seq (io/reader file))
+          processed (map
+                     (comp
+                      (if (= label "Vertex")
+                        aggregate/process-vertex
+                        aggregate/process-edge)
+                      #(json/parse-string % keyword))
+                     lines)]
+      (doseq [lines (partition 1000 processed)]
+        (mongo/bulk-insert! db (string/lower-case label) lines)))))
 
 (def parse-args
   [["-k" "--kafka KAFKA" "host for kafka server"
@@ -116,9 +118,10 @@
   (let [env (:options (cli/parse-opts args parse-args))
         config (config/read-config "config/ophion.clj")
         ;; graph (db/connect (:graph config))
-        graph (mongo/connect! {:database "door"})
+        graph (mongo/connect! {:database "abyss"})
         search (search/connect (merge search/default-config (:search config)))
         continuation (partial search/index-message search)]
     (if (:topic env)
       (ingest-topic config graph continuation)
-      (ingest-file (:input env) graph continuation))))
+      ;; (ingest-file (:input env) graph continuation)
+      (ingest-batches (:input env) graph))))

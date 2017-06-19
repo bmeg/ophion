@@ -41,10 +41,18 @@
   [db collection]
   (mongo/find-maps db (name collection)))
 
+(defn count
+  [db collection where]
+  (mongo/count db (name collection) where))
+
 (defn aggregate
   [db collection pipeline]
   (log/info collection pipeline)
   (mongo/aggregate db (name collection) pipeline))
+
+(defn bulk-insert!
+  [db collection documents]
+  (mongo/insert-batch db (name collection) documents))
 
 (defn expand-fields
   [fields]

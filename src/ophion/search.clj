@@ -22,9 +22,13 @@
     (catch Exception e
       (.printStackTrace e))))
 
-(defn index-message
+(defn index-data
   [connection {:keys [id data graph]}]
   (create connection graph (assoc data :id id :graph graph)))
+
+(defn index-message
+  [connection message]
+  (create connection (:type message) message))
 
 (defn search
   ([{:keys [connection index]} mapping query]

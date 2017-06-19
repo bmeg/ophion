@@ -165,16 +165,26 @@
    "--" (:label edge) "->"
    "(" (:to edge) ")"))
 
+(defn process-vertex
+  [vertex]
+  (assoc (flat vertex) :type "vertex"))
+
+(defn process-edge
+  [edge]
+  (let [gid (edge-gid edge)]
+    (assoc (flat edge) :gid gid :type "edge")))
+
 (defn add-vertex!
   [db vertex]
-  (mongo/upsert! db :vertex (assoc (flat vertex) :type "vertex"))
-  (mongo/one db :vertex (:gid vertex)))
+  (let [ingest (process-vertex vertex)]
+    (mongo/upsert! db :vertex ingest)
+    ingest))
 
 (defn add-edge!
   [db edge]
-  (let [gid (edge-gid edge)]
-    (mongo/upsert! db :edge (assoc (flat edge) :gid gid :type "edge"))
-    (mongo/one db :edge gid)))
+  (let [ingest (process-edge edge)]
+    (mongo/upsert! db :edge ingest)
+    ingest))
 
 (defn ingest-graph!
   [db {:keys [vertexes edges]}]

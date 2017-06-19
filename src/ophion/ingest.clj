@@ -9,13 +9,14 @@
    [ophion.db :as db]
    [ophion.query :as query]
    [ophion.config :as config]
-   [ophion.search :as search])
+   [ophion.search :as search]
+   [ophion.aggregate :as aggregate])
   (:import
    [protograph Protograph]))
 
 (defn ingest-vertex
   [graph data]
-  (let [vertex (query/add-vertex! graph data)
+  (let [vertex (aggregate/add-vertex! graph data)
         id (.id vertex)]
     {:id id
      :data data
@@ -24,7 +25,7 @@
 (defn ingest-edge
   [graph data]
   (log/info "ingest edge" data)
-  (let [edge (query/add-edge! graph data)
+  (let [edge (aggregate/add-edge! graph data)
         id (.id edge)
         out-id (.getOutVertexId id)
         type-id (.getTypeId id)
@@ -36,6 +37,30 @@
      :in-id in-id
      :data data
      :graph "edge"}))
+
+;; (defn ingest-vertex
+;;   [graph data]
+;;   (let [vertex (query/add-vertex! graph data)
+;;         id (.id vertex)]
+;;     {:id id
+;;      :data data
+;;      :graph "vertex"}))
+
+;; (defn ingest-edge
+;;   [graph data]
+;;   (log/info "ingest edge" data)
+;;   (let [edge (query/add-edge! graph data)
+;;         id (.id edge)
+;;         out-id (.getOutVertexId id)
+;;         type-id (.getTypeId id)
+;;         edge-id (.getRelationId id)
+;;         in-id (.getInVertexId id)]
+;;     {:id edge-id
+;;      :out-id out-id
+;;      :label type-id
+;;      :in-id in-id
+;;      :data data
+;;      :graph "edge"}))
 
 (defn ingest-message
   [graph producer prefix continuation message]
@@ -90,7 +115,8 @@
   [& args]
   (let [env (:options (cli/parse-opts args parse-args))
         config (config/read-config "config/ophion.clj")
-        graph (db/connect (:graph config))
+        ;; graph (db/connect (:graph config))
+        graph (mongo/connect! {:database "door"})
         search (search/connect (merge search/default-config (:search config)))
         continuation (partial search/index-message search)]
     (if (:topic env)

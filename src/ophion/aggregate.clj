@@ -6,98 +6,92 @@
    [taoensso.timbre :as log]
    [ophion.mongo :as mongo]))
 
-(defn has
-  [state where]
+(defn where
+  [where]
   [{:$match where}])
 
-(defn apply-where
-  [query where]
-  (if where
-    (conj query {:$match where})
-    query))
-
 (defn from-edge
-  [state {:keys [label where]}]
-  (apply-where
-   [{:$lookup
-     {:from "edge"
-      :localField "gid"
-      :foreignField "to"
-      :as "from"}}
-    {:$project
-     {:history "$_history"
-      :from
-      {:$filter
-       {:input "$from"
-        :as "o"
-        :cond
-        {:$eq ["$$o.label" label]}}}}}
-    {:$unwind "$from"}
-    {:$addFields {"from._history" "$history"}}
-    {:$replaceRoot {:newRoot "$from"}}]
-   where))
+  [label]
+  [{:$lookup
+    {:from "edge"
+     :localField "gid"
+     :foreignField "to"
+     :as "from"}}
+   {:$project
+    {:history "$_history"
+     :from
+     {:$filter
+      {:input "$from"
+       :as "o"
+       :cond
+       {:$eq ["$$o.label" label]}}}}}
+   {:$unwind "$from"}
+   {:$addFields {"from._history" "$history"}}
+   {:$replaceRoot {:newRoot "$from"}}])
 
 (defn to-edge
-  [state {:keys [label where]}]
-  (apply-where
-   [{:$lookup
-     {:from "edge"
-      :localField "gid"
-      :foreignField "from"
-      :as "to"}}
-    {:$project
-     {:history "$_history"
-      :to
-      {:$filter
-       {:input "$to"
-        :as "o"
-        :cond
-        {:$eq ["$$o.label" label]}}}}}
-    {:$unwind "$to"}
-    {:$addFields {"to._history" "$history"}}
-    {:$replaceRoot {:newRoot "$to"}}]
-   where))
+  [label]
+  [{:$lookup
+    {:from "edge"
+     :localField "gid"
+     :foreignField "from"
+     :as "to"}}
+   {:$project
+    {:history "$_history"
+     :to
+     {:$filter
+      {:input "$to"
+       :as "o"
+       :cond
+       {:$eq ["$$o.label" label]}}}}}
+   {:$unwind "$to"}
+   {:$addFields {"to._history" "$history"}}
+   {:$replaceRoot {:newRoot "$to"}}])
 
 (defn from-vertex
-  [state {:keys [where]}]
-  (apply-where
-   [{:$lookup
-     {:from "vertex"
-      :localField "from"
-      :foreignField "gid"
-      :as "from"}}
-    {:$unwind "$from"}
-    {:$addFields {"from._history" "$_history"}}
-    {:$replaceRoot {:newRoot "$from"}}]
-   where))
+  [none]
+  [{:$lookup
+    {:from "vertex"
+     :localField "from"
+     :foreignField "gid"
+     :as "from"}}
+   {:$unwind "$from"}
+   {:$addFields {"from._history" "$_history"}}
+   {:$replaceRoot {:newRoot "$from"}}])
 
 (defn to-vertex
-  [state {:keys [where]}]
-  (apply-where
-   [{:$lookup
-     {:from "vertex"
-      :localField "to"
-      :foreignField "gid"
-      :as "to"}}
-    {:$unwind "$to"}
-    {:$addFields {"to._history" "$_history"}}
-    {:$replaceRoot {:newRoot "$to"}}]
-   where))
+  [none]
+  [{:$lookup
+    {:from "vertex"
+     :localField "to"
+     :foreignField "gid"
+     :as "to"}}
+   {:$unwind "$to"}
+   {:$addFields {"to._history" "$_history"}}
+   {:$replaceRoot {:newRoot "$to"}}])
 
 (defn from
-  [state where]
-  (concat
-   (from-edge state where)
-   (from-vertex state {})))
+  ([label]
+   (concat
+    (from-edge label)
+    (from-vertex label))))
 
 (defn to
-  [state where]
-  (concat
-   (to-edge state where)
-   (to-vertex state {})))
+  ([label]
+   (concat
+    (to-edge label)
+    (to-vertex label))))
+
+(defn values
+  [values]
+  [{:$project
+    (reduce
+     (fn [project value]
+       (assoc project value (str "$" (name value))))
+     {} values)}])
 
 (defn mark
-  [state label]
+  [label]
   (let [path (str "_history." label)]
     [{:$addFields {path "$$ROOT"}}
      {:$project
@@ -105,44 +99,56 @@
        (str path "._id") false}}]))
 
 (defn select
-  [state labels]
+  [labels]
   [{:$project
     (reduce
      (fn [project label]
        (assoc project label (str "$_history." label)))
      {} labels)}])
 
+(defn limit
+  [n]
+  [{:$limit n}])
+
 (defn group-count
-  [state path]
+  [path]
   [{:$group {:_id (str "$" path) :count {:$sum 1}}}
    {:$project {:key "$_id" :count "$count"}}])
 
+(def order-map
+  {:asc 1
+   :desc -1})
+
+(defn order
+  [fields]
+  [{:$sort fields}])
+
 (def steps
-  {:where has
+  {:where where
    :from-edge from-edge
    :to-edge to-edge
    :from-vertex from-vertex
    :to-vertex to-vertex
    :from from
    :to to
+   :values values
    :mark mark
    :select select
+   :limit limit
+   :order order
    :group-count group-count})
 
 (defn apply-step
-  [steps step state]
+  [steps step]
   (let [step-key (-> step keys first)
         about (-> step vals last)
         traverse (get steps step-key)]
-    (traverse state about)))
+    (traverse about)))
 
 (defn translate
   ([query] (translate {} query))
   ([state query]
-   (let [warp (map
-               (fn [step]
-                 (apply-step steps step state))
-               query)
+   (let [warp (map (partial apply-step steps) query)
          attired (conj (vec warp) [{:$project {:_id false}}])]
      (vec (apply concat attired)))))
 

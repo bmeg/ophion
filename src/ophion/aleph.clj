@@ -13,7 +13,9 @@
    [ophion.config :as config]
    [ophion.db :as db]
    [ophion.query :as query]
-   [ophion.search :as search])
+   [ophion.search :as search]
+   [ophion.mongo :as mongo]
+   [ophion.aggregate :as aggregate])
   (:import
    [java.io InputStreamReader]
    [ch.qos.logback.classic Logger Level]

@@ -3,6 +3,7 @@
    [clojure.string :as string]
    [clojure.java.io :as io]
    [clojure.tools.cli :as cli]
+   [clojure.pprint :as pprint]
    [taoensso.timbre :as log]
    [cheshire.core :as json]
    [protograph.kafka :as kafka]
@@ -14,6 +15,7 @@
    [ophion.mongo :as mongo]
    [ophion.aggregate :as aggregate])
   (:import
+   [com.mongodb BulkWriteException]
    [protograph Protograph]))
 
 (defn ingest-vertex
@@ -98,14 +100,9 @@
                         aggregate/process-edge)
                       #(json/parse-string % keyword))
                      lines)]
-      (doseq [lines (partition 1000 processed)]
-        ;; (try
-        ;;   (mongo/insert-many! graph (string/lower-case label) lines)
-        ;;   ;; (mongo/bulk-insert! graph (string/lower-case label) lines)
-        ;;   (catch Exception e (println "failed")))
-        (try
-          (mongo/bulk-insert! graph (string/lower-case label) lines)
-          (catch Exception e (println e)))))))
+      (doseq [lines (partition-all 1000 processed)]
+        (pprint/pprint
+         (mongo/bulk-insert! graph (string/lower-case label) lines))))))
 
 (defn ingest-batches-carefully
   [path graph]
@@ -119,13 +116,16 @@
                         aggregate/process-edge)
                       #(json/parse-string % keyword))
                      lines)
-          groups (group-by :gid processed)]
-      (doseq [lines (partition 1000 groups)]
-        (let [merged (map
-                      (fn [[gid parts]]
-                        (apply merge parts))
-                      lines)]
-          (mongo/bulk-insert! graph (string/lower-case label) merged))))))
+          groups (group-by :gid processed)
+          merged (map
+                  (fn [[gid parts]]
+                    (apply merge parts))
+                  groups)]
+      (pprint/pprint
+       (mongo/bulk-insert! graph (string/lower-case label) merged)))))
+
+      ;; (doseq [lines (partition 1000 merged)]
+      ;;   (mongo/bulk-insert! graph (string/lower-case label) lines)))
 
 (def parse-args
   [["-k" "--kafka KAFKA" "host for kafka server"

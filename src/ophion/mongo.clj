@@ -7,7 +7,7 @@
    [monger.collection :as mongo])
  (:import
   [com.mongodb.client.model InsertManyOptions BulkWriteOptions]
-  [com.mongodb DB WriteResult DBObject WriteConcern]
+  [com.mongodb DB WriteResult DBObject WriteConcern BulkWriteException]
   [java.util List Map]
   [org.bson.types ObjectId]))
 
@@ -74,13 +74,26 @@
 ;;   [db collection documents]
 ;;   (mongo/insert-batch db (name collection) documents))
 
+(defn extract-failures
+  [^BulkWriteException e]
+  (group-by
+   :message
+   (map
+    (fn [error]
+      {:message (.getMessage error)
+       :document (.getDetails error)})
+    (.getWriteErrors e))))
+
 (defn bulk-insert!
   [db collection documents]
-  (let [coll (.getCollection db (name collection))
-        op (.initializeUnorderedBulkOperation coll)]
-    (doseq [document documents]
-      (.insert op (convert/to-db-object document)))
-    (.execute op)))
+  (try
+    (let [coll (.getCollection db (name collection))
+          op (.initializeUnorderedBulkOperation coll)]
+      (doseq [document documents]
+        (.insert op (convert/to-db-object document)))
+      (.execute op))
+    (catch BulkWriteException e
+      (extract-failures e))))
 
 (defn expand-fields
   [fields]

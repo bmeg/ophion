@@ -18,38 +18,38 @@
    [com.mongodb BulkWriteException]
    [protograph Protograph]))
 
-(defn ingest-vertex
-  [graph data]
-  (aggregate/add-vertex! graph data))
-
-(defn ingest-edge
-  [graph data]
-  (log/info "ingest edge" data)
-  (aggregate/add-edge! graph data))
-
 ;; (defn ingest-vertex
 ;;   [graph data]
-;;   (let [vertex (query/add-vertex! graph data)
-;;         id (.id vertex)]
-;;     {:id id
-;;      :data data
-;;      :graph "vertex"}))
+;;   (aggregate/add-vertex! graph data))
 
 ;; (defn ingest-edge
 ;;   [graph data]
 ;;   (log/info "ingest edge" data)
-;;   (let [edge (query/add-edge! graph data)
-;;         id (.id edge)
-;;         out-id (.getOutVertexId id)
-;;         type-id (.getTypeId id)
-;;         edge-id (.getRelationId id)
-;;         in-id (.getInVertexId id)]
-;;     {:id edge-id
-;;      :out-id out-id
-;;      :label type-id
-;;      :in-id in-id
-;;      :data data
-;;      :graph "edge"}))
+;;   (aggregate/add-edge! graph data))
+
+(defn ingest-vertex
+  [graph data]
+  (let [vertex (query/add-vertex! graph data)
+        id (.id vertex)]
+    {:id id
+     :data data
+     :graph "vertex"}))
+
+(defn ingest-edge
+  [graph data]
+  (log/info "ingest edge" data)
+  (let [edge (query/add-edge! graph data)
+        id (.id edge)
+        out-id (.getOutVertexId id)
+        type-id (.getTypeId id)
+        edge-id (.getRelationId id)
+        in-id (.getInVertexId id)]
+    {:id edge-id
+     :out-id out-id
+     :label type-id
+     :in-id in-id
+     :data data
+     :graph "edge"}))
 
 (defn ingest-message
   [graph producer prefix continuation message]
@@ -124,9 +124,6 @@
       (pprint/pprint
        (mongo/bulk-insert! graph (string/lower-case label) merged)))))
 
-      ;; (doseq [lines (partition 1000 merged)]
-      ;;   (mongo/bulk-insert! graph (string/lower-case label) lines)))
-
 (def parse-args
   [["-k" "--kafka KAFKA" "host for kafka server"
     :default "localhost:9092"]
@@ -144,11 +141,11 @@
   [& args]
   (let [env (:options (cli/parse-opts args parse-args))
         config (config/read-config "config/ophion.clj")
-        ;; graph (db/connect (:graph config))
-        graph (mongo/connect! {:database "pillar"})
+        graph (db/connect (:graph config))
+        ;; graph (mongo/connect! {:database "pillar"})
         search (search/connect (merge search/default-config (:search config)))
         continuation (partial search/index-message search)]
     (if (:topic env)
       (ingest-topic config graph continuation)
-      ;; (ingest-file (:input env) graph continuation)
-      (ingest-batches (:input env) graph))))
+      ;; (ingest-batches (:input env) graph)
+      (ingest-file (:input env) graph continuation))))

@@ -54,26 +54,6 @@
   (log/info collection pipeline)
   (mongo/aggregate db (name collection) pipeline))
 
-;; (defn ^WriteResult insert-many!
-;;   "Saves documents do collection. You can optionally specify WriteConcern as a third argument."
-;;   ([^DB db ^String coll ^List documents]
-;;    (.bulkWrite
-;;     (.getCollection db (name coll))
-;;     ^List (convert/to-db-object documents)
-;;     (.ordered (new BulkWriteOptions) false)))
-;;     ;; (convert/to-db-object
-;;     ;;  {:writeConcern ^WriteConcern db/*mongodb-write-concern*
-;;     ;;   :ordered false})
-;;   ([^DB db ^String coll ^List documents ^WriteConcern concern]
-;;    (.bulkWrite
-;;     (.getCollection db (name coll))
-;;     ^List (convert/to-db-object documents)
-;;     (.ordered (new BulkWriteOptions) false))))
-
-;; (defn bulk-insert!
-;;   [db collection documents]
-;;   (mongo/insert-batch db (name collection) documents))
-
 (defn extract-failures
   [^BulkWriteException e]
   (group-by

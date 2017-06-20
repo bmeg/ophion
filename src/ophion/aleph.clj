@@ -91,9 +91,12 @@
 
 (defn find-edge-handler
   [graph request]
-  {:status 200
-   :headers {"content-type" "application/json"}
-   :body "found"})
+  (let [gid (-> request :params :gid)
+        edge (query/find-edge graph gid)
+        out (query/edge-connections edge)]
+    {:status 200
+     :headers {"content-type" "application/json"}
+     :body out}))
 
 (defn edge-query-handler
   [graph request]

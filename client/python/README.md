@@ -16,7 +16,7 @@ First, import the Ophion client and create a connection to an existing Ophion AP
 
 ```python
 import ophion
-O = ophion.Ophion('http://bmeg.compbio.ohsu.edu')
+O = ophion.Ophion('http://bmeg.io')
 ```
 Now that we have an Ophion instance, we can use this to make all of our queries.
 

@@ -11,7 +11,8 @@
    {:connection
     (elastic/connect
      (str
-      "http://" (or host "127.0.0.1")
+      "http://" (or host "localhost")
+      ;; "http://" (or host "127.0.0.1")
       ":" (or port "9200")))
     :index (name index)}))
 
@@ -28,7 +29,7 @@
 
 (defn index-message
   [connection message]
-  (create connection (:type message) message))
+  (create connection (:graph message) message))
 
 (defn search
   ([{:keys [connection index]} mapping query]

@@ -148,7 +148,9 @@
    [{:id String}
     {:gid String}
     {:type String}
+    {:name String}
     {:symbol String}
+    {:gender String}
     {:featureId String}
     {:chromosome String :start String :end String}]
    :edges

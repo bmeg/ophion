@@ -1,9 +1,19 @@
 {:graph  {:database :janus
           :host "localhost"
-          :keyspace :prototest}
+          :keyspace :animaltree}
  :server {:port 4443}
- :search {:index :projecttest}
+ :search {:index :animaltree
+          :indexed?
+          #{"Individual"
+            "Biosample"
+            "Project"
+            "Cohort"
+            "Gene"
+            "GeneFamily"
+            "GeneDatabase"
+            "OntologyTerm"
+            "Compound"}}
  :protograph {:path "resources/config/protograph.yml"
-              :prefix "tcga.lifted.protograph"}
+              :prefix "protograph"}
  :kafka {:host "localhost"
          :port 9092}}

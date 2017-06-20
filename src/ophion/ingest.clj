@@ -33,11 +33,11 @@
         id (.id vertex)]
     {:id id
      :data data
+     :label (:label data)
      :graph "vertex"}))
 
 (defn ingest-edge
   [graph data]
-  (log/info "ingest edge" data)
   (let [edge (query/add-edge! graph data)
         id (.id edge)
         out-id (.getOutVertexId id)
@@ -45,11 +45,12 @@
         edge-id (.getRelationId id)
         in-id (.getInVertexId id)]
     {:id edge-id
-     :out-id out-id
-     :label type-id
-     :in-id in-id
+     :graph "edge"
+     :label (:label data)
      :data data
-     :graph "edge"}))
+     :out-id out-id
+     :label-id type-id
+     :in-id in-id}))
 
 (defn ingest-message
   [graph producer prefix continuation message]
@@ -144,7 +145,11 @@
         graph (db/connect (:graph config))
         ;; graph (mongo/connect! {:database "pillar"})
         search (search/connect (merge search/default-config (:search config)))
-        continuation (partial search/index-message search)]
+        indexed? (get-in config [:search :indexed?] #{})
+        continuation (fn [message]
+                       (when (indexed? (:label message))
+                         (log/info "indexing" (:label message))
+                         (search/index-message search (dissoc message :label))))]
     (if (:topic env)
       (ingest-topic config graph continuation)
       ;; (ingest-batches (:input env) graph)

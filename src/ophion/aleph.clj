@@ -54,7 +54,7 @@
   [graph request]
   (let [gid (-> request :params :gid)
         vertex (query/find-vertex graph gid)
-        out (query/vertex-connections vertex)]
+        out (query/vertex-connections vertex 100)]
     {:status 200
      :headers {"content-type" "application/json"}
      :body (json/generate-string out)}))

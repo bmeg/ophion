@@ -547,23 +547,30 @@
         out (.. edge outVertex (value skey))]
     (assoc props "in" in "out" out)))
 
+(defn edge-limit
+  [limit edges gid]
+  (if-not (and limit (>= (count edges) limit))
+    (conj edges gid)))
+
 (defn in-edge-map
-  [edges key]
-  (reduce
-   (fn [m edge]
-     (let [skey (name key)
-           gid (.. edge outVertex (value skey))]
-       (update-in m [(.label edge)] #(conj % gid))))
-   {} edges))
+  ([edges key] (in-edge-map edges key nil))
+  ([edges key limit]
+   (reduce
+    (fn [m edge]
+      (let [skey (name key)
+            gid (.. edge outVertex (value skey))]
+        (update m (.label edge) #(edge-limit limit % gid))))
+    {} edges)))
 
 (defn out-edge-map
-  [edges key]
-  (reduce
-   (fn [m edge]
-     (let [skey (name key)
-           gid (.. edge inVertex (value skey))]
-       (update-in m [(.label edge)] #(conj % gid))))
-   {} edges))
+  ([edges key] (out-edge-map edges key nil))
+  ([edges key limit]
+   (reduce
+    (fn [m edge]
+      (let [skey (name key)
+            gid (.. edge inVertex (value skey))]
+        (update m (.label edge) #(edge-limit limit % gid))))
+    {} edges)))
 
 (defn vertex-properties
   [vertex]
@@ -576,13 +583,14 @@
     {}))
 
 (defn vertex-connections
-  [vertex]
-  (if vertex
-    (let [props (vertex-properties vertex)
-          in (in-edge-map (edges-for vertex [] :in) universal-key)
-          out (out-edge-map (edges-for vertex [] :out) universal-key)]
-      (assoc props "in" in "out" out))
-    {}))
+  ([vertex] (vertex-connections vertex nil))
+  ([vertex limit]
+   (if vertex
+     (let [props (vertex-properties vertex)
+           in (in-edge-map (edges-for vertex [] :in) universal-key limit)
+           out (out-edge-map (edges-for vertex [] :out) universal-key limit)]
+       (assoc props "in" in "out" out))
+     {})))
 
 (defn translate
   [o]

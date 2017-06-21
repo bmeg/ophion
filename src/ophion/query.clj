@@ -506,13 +506,6 @@
             [(.key p) (.value p)])
           (iterator-seq p)))))))
 
-(defn edge-properties
-  [edge]
-  (let [label (.label edge)
-        props (element-properties edge)]
-    {"label" label
-     "properties" props}))
-
 (defn traverse-from
   [vertex]
   (.. vertex
@@ -540,11 +533,10 @@
      "properties" props}))
 
 (defn edge-connections
-  [edge key]
+  [edge]
   (let [props (edge-properties edge)
-        skey (name key)
-        in (.. edge inVertex (value skey))
-        out (.. edge outVertex (value skey))]
+        in (.. edge inVertex (value "gid"))
+        out (.. edge outVertex (value "gid"))]
     (assoc props "in" in "out" out)))
 
 (defn edge-limit
@@ -558,8 +550,9 @@
    (reduce
     (fn [m edge]
       (let [skey (name key)
+            edge-gid (.value (.property edge "gid"))
             gid (.. edge outVertex (value skey))]
-        (update m (.label edge) #(edge-limit limit % gid))))
+        (update m (.label edge) #(edge-limit limit % {:edge edge-gid :in gid}))))
     {} edges)))
 
 (defn out-edge-map
@@ -568,8 +561,9 @@
    (reduce
     (fn [m edge]
       (let [skey (name key)
+            edge-gid (.value (.property edge "gid"))
             gid (.. edge inVertex (value skey))]
-        (update m (.label edge) #(edge-limit limit % gid))))
+        (update m (.label edge) #(edge-limit limit % {:edge edge-gid :out gid}))))
     {} edges)))
 
 (defn vertex-properties

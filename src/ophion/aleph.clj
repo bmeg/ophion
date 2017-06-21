@@ -91,12 +91,13 @@
 
 (defn find-edge-handler
   [graph request]
-  (let [gid (-> request :params :gid)
+  (let [gid (query/build-edge-gid (:params request))
+        _ (log/info gid)
         edge (query/find-edge graph gid)
         out (query/edge-connections edge)]
     {:status 200
      :headers {"content-type" "application/json"}
-     :body out}))
+     :body (json/generate-string out)}))
 
 (defn edge-query-handler
   [graph request]
@@ -141,7 +142,7 @@
    ["/schema/protograph" :schema (fetch-schema protograph)]
    ["/vertex/find/:gid" :vertex-find (find-vertex graph)]
    ["/vertex/query" :vertex-query (vertex-query graph search)]
-   ["/edge/find/:out/:label/:in" :edge-find (find-edge graph)]
+   ["/edge/find/:from/:label/:to" :edge-find (find-edge graph)]
    ["/edge/query" :edge-query (edge-query graph)]])
 
 (defn start

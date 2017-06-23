@@ -259,9 +259,9 @@ a {
   width: 50%;
   padding: 0 10px;
 }
-.vertex-edges h4 {
-  text-align: center;
-}
+/* .vertex-edges h4 { */
+/*   text-align: center; */
+/* } */
 .expando-header {
   padding: 5px;
   background-color: #eee;
@@ -368,4 +368,22 @@ h1 {
 .sidebar-hidden { display:none; }
 .sidebar-container {
   padding-top: 5em;
+}
+
+#search-input {
+    font-size: 21px;
+    width: 330px;
+    height: 23px;
+    font-family: 'Roboto', 'Helvetica', sans-serif;
+}
+
+.edge-arrow {
+    color: #bbccdd;
+}
+
+#vertex-explore {
+    padding: 1em 4em 1em 4em;
+}
+#vertex-container {
+    padding-top: 100px;
 }

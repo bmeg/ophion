@@ -62,6 +62,9 @@
       :size 1000)
      [:hits :hits]))))
 
+(defn aggregate
+  [])
+
 (def default-config
   {:host "127.0.0.1"
    :port "9200"

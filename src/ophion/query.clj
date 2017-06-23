@@ -521,9 +521,13 @@
 (defn edges-for
   ([vertex] (edges-for vertex []))
   ([vertex labels] (edges-for vertex labels :both))
-  ([vertex labels direction]
-   (let [D (get directions direction)]
-     (iterator-seq (.edges vertex D (into-array String labels))))))
+  ([vertex labels direction] (edges-for vertex labels :both nil))
+  ([vertex labels direction limit]
+   (let [D (get directions direction)
+         it (iterator-seq (.edges vertex D (into-array String labels)))]
+     (if limit
+       (take limit it)
+       it))))
 
 (defn edge-properties
   [edge]
@@ -581,8 +585,8 @@
   ([vertex limit]
    (if vertex
      (let [props (vertex-properties vertex)
-           in (in-edge-map (edges-for vertex [] :in) universal-key limit)
-           out (out-edge-map (edges-for vertex [] :out) universal-key limit)]
+           in (in-edge-map (edges-for vertex [] :in limit) universal-key)
+           out (out-edge-map (edges-for vertex [] :out limit) universal-key)]
        (assoc props "in" in "out" out))
      {})))
 

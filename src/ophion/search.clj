@@ -2,6 +2,7 @@
   (:require
    [clojurewerkz.elastisch.rest :as elastic]
    [clojurewerkz.elastisch.rest.index :as index]
+   [clojurewerkz.elastisch.rest.multi :as multi]
    [clojurewerkz.elastisch.rest.document :as document]))
 
 (defn connect
@@ -62,8 +63,45 @@
       :size 1000)
      [:hits :hits]))))
 
+(defn multi-index
+  [index]
+  {:index index
+   :ignore_unavailable true
+   :preference 1})
+
+(defn multi-query
+  [query]
+  {:size 0
+   :query
+   {:query_string
+    {:analyze_wildcard true
+     :query query}}})
+
+(defn multi-term
+  [term]
+  {:aggs
+   {(keyword term)
+    {:terms
+     {:field (str term ".keyword")
+      :order {:_term "asc"}}}}})
+
+(defn multi-from
+  [query size from]
+  (let [out (multi-query query)]
+    (assoc out :size size :from from)))
+
+(defn multi-aggregation
+  [query term]
+  (merge
+   (multi-query query)
+   (multi-term term)))
+
 (defn aggregate
-  [])
+  [{:keys [connection index]} terms query size from]
+  (let [in (multi-index index)
+        agg (mapv (partial multi-aggregation query) terms)
+        queries (conj agg (multi-from size from))
+        out (mapcat list (repeat in) queries)]))
 
 (def default-config
   {:host "127.0.0.1"

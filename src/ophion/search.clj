@@ -1,5 +1,7 @@
 (ns ophion.search
   (:require
+   [clojure.string :as string]
+   [cheshire.core :as json]
    [clojurewerkz.elastisch.rest :as elastic]
    [clojurewerkz.elastisch.rest.index :as index]
    [clojurewerkz.elastisch.rest.multi :as multi]
@@ -96,12 +98,25 @@
    (multi-query query)
    (multi-term term)))
 
+(defn json-lines
+  [lines]
+  (str (string/join "\n" (mapv json/generate-string lines)) "\n"))
+
+(defn elastic-get
+  ([connection url query] (elastic-get connection url query {}))
+  ([connection url query opts]
+   (let [json (json-lines query)]
+     (println json)
+     (elastic/get connection url {:body json :query-params opts}))))
+
 (defn aggregate
   [{:keys [connection index]} terms query size from]
   (let [in (multi-index index)
         agg (mapv (partial multi-aggregation query) terms)
-        queries (conj agg (multi-from size from))
-        out (mapcat list (repeat in) queries)]))
+        queries (conj agg (multi-from query size from))
+        lines (mapcat list (repeat in) queries)
+        url (elastic/multi-search-url connection index lines)]
+    (:responses (elastic-get connection url lines))))
 
 (def default-config
   {:host "127.0.0.1"

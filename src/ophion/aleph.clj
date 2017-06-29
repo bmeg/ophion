@@ -107,12 +107,6 @@
    :headers {"content-type" "application/json"}
    :body "found"})
 
-(defn edge-query-handler
-  [graph request]
-  {:status 200
-   :headers {"content-type" "application/json"}
-   :body "found"})
-
 (defn parse-int
   ([n] (parse-int n 0))
   ([n default]

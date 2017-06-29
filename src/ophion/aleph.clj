@@ -6,7 +6,9 @@
    [aleph.http :as http]
    [cheshire.core :as json]
    [taoensso.timbre :as log]
-   [ring.middleware.resource :as ring]
+   [ring.middleware.resource :as resource]
+   [ring.middleware.params :as params]
+   [ring.middleware.keyword-params :as keyword]
    [polaris.core :as polaris]
    [protograph.core :as protograph]
    [protograph.kafka :as kafka]
@@ -105,6 +107,29 @@
    :headers {"content-type" "application/json"}
    :body "found"})
 
+(defn edge-query-handler
+  [graph request]
+  {:status 200
+   :headers {"content-type" "application/json"}
+   :body "found"})
+
+(defn parse-int
+  ([n] (parse-int n 0))
+  ([n default]
+   (try
+     (Integer/parseInt n)
+     (catch Exception e default))))
+
+(defn search-counts-handler
+  [search request]
+  (let [{:keys [from size query terms]} (:params request)
+        out (search/aggregate search (string/split terms #",") query (parse-int size 100) (parse-int from))]
+    (log/info out)
+    (log/info from size query terms)
+    {:status 200
+     :headers {"content-type" "application/json"}
+     :body (json/generate-string out)}))
+
 (defn fetch-schema
   [schema]
   (fn [request]
@@ -130,6 +155,11 @@
   (fn [request]
     (#'edge-query-handler graph request)))
 
+(defn search-counts
+  [search]
+  (fn [request]
+    (#'search-counts-handler search request)))
+
 (defn home
   [request]
   {:status 200
@@ -143,7 +173,8 @@
    ["/vertex/find/:gid" :vertex-find (find-vertex graph)]
    ["/vertex/query" :vertex-query (vertex-query graph search)]
    ["/edge/find/:from/:label/:to" :edge-find (find-edge graph)]
-   ["/edge/query" :edge-query (edge-query graph)]])
+   ["/edge/query" :edge-query (edge-query graph)]
+   ["/search/counts" :search-counts (search-counts search)]])
 
 (defn start
   []
@@ -151,11 +182,18 @@
   (let [config (config/read-config "config/ophion.clj")
         graph (db/connect (:graph config))
         search (search/connect (:search config))
-        protograph (protograph/load-protograph (or (get-in config [:protograph :path]) "config/protograph.yml"))
+        protograph (protograph/load-protograph
+                    (or
+                     (get-in config [:protograph :path])
+                     "config/protograph.yml"))
         schema (Protograph/writeJSON (.graphStructure protograph))
         routes (polaris/build-routes (ophion-routes graph search schema))
-        router (ring/wrap-resource (polaris/router routes) "public")]
-    (http/start-server router {:port (or (:port config) 4443)})))
+        router (resource/wrap-resource (polaris/router routes) "public")
+        app (-> router
+                (resource/wrap-resource "public")
+                (keyword/wrap-keyword-params)
+                (params/wrap-params))]
+    (http/start-server app {:port (or (:port config) 4443)})))
 
 (defn -main
   []

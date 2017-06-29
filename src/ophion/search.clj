@@ -2,6 +2,7 @@
   (:require
    [clojure.string :as string]
    [cheshire.core :as json]
+   [taoensso.timbre :as log]
    [clojurewerkz.elastisch.rest :as elastic]
    [clojurewerkz.elastisch.rest.index :as index]
    [clojurewerkz.elastisch.rest.multi :as multi]
@@ -115,8 +116,9 @@
         agg (mapv (partial multi-aggregation query) terms)
         queries (conj agg (multi-from query size from))
         lines (mapcat list (repeat in) queries)
-        url (elastic/multi-search-url connection index lines)]
-    (:responses (elastic-get connection url lines))))
+        url (elastic/multi-search-url connection index lines)
+        response (elastic-get connection url lines)]
+    (:responses response)))
 
 (def default-config
   {:host "127.0.0.1"

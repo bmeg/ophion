@@ -82,7 +82,7 @@
 
 (defn multi-term
   [term]
-  {:aggs
+  {:aggregations
    {(keyword term)
     {:terms
      {:field (str term ".keyword")

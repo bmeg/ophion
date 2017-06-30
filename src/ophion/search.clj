@@ -116,7 +116,7 @@
         agg (mapv (partial multi-aggregation query) terms)
         queries (conj agg (multi-from query size from))
         lines (mapcat list (repeat in) queries)
-        url (elastic/multi-search-url connection index lines)
+        url (elastic/multi-search-url connection index "vertex")
         response (elastic-get connection url lines)]
     (:responses response)))
 

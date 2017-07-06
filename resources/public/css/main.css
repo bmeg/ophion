@@ -384,6 +384,11 @@ h1 {
 #vertex-explore {
     padding: 1em 4em 1em 4em;
 }
+
 #vertex-container {
     padding-top: 100px;
+}
+
+#response-plot {
+    width: 1200px;
 }

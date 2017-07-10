@@ -61,25 +61,36 @@
      :headers {"content-type" "application/json"}
      :body (json/generate-string out)}))
 
-(defn vertex-query-handler-straight
-  [graph search request]
-  (let [raw-query (json/parse-stream (InputStreamReader. (:body request)) keyword)
-        query (query/delabelize raw-query)
-        _ (log/info (mapv identity query))
-        result (query/evaluate {:graph graph :search search} query)
-        out (string/join (map output result))]
-    (db/commit graph)
-    {:status 200
-     :headers {"content-type" "application/json"}
-     :body out}))
+(defn check-query-cache
+  [graph search cache query]
+  (if-let [cached (get @cache query)]
+    cached
+    (let [result (query/evaluate {:graph graph :search search} query)
+          out (mapv output result)]
+      (swap! cache assoc query out)
+      out)))
+
+;; (defn vertex-query-handler-straight
+;;   [graph search cache request]
+;;   (let [raw-query (json/parse-stream (InputStreamReader. (:body request)) keyword)
+;;         query (query/delabelize raw-query)
+;;         _ (log/info (mapv identity query))
+;;         ;; result (query/evaluate {:graph graph :search search} query)
+;;         ;; out (string/join (map output result))
+;;         out (check-query-cache graph search cache query)]
+;;     (db/commit graph)
+;;     {:status 200
+;;      :headers {"content-type" "application/json"}
+;;      :body out}))
 
 (defn vertex-query-handler
-  [graph search request]
+  [graph search cache request]
   (let [raw-query (json/parse-stream (InputStreamReader. (:body request)) keyword)
         query (query/delabelize raw-query)
         _ (log/info (mapv identity query))
-        result (query/evaluate {:graph graph :search search} query)
-        out (map output result)
+        out (check-query-cache graph search cache query)
+        ;; result (query/evaluate {:graph graph :search search} query)
+        ;; out (map output result)
         source (stream/->source out)]
     (stream/on-drained
      source
@@ -136,8 +147,9 @@
 
 (defn vertex-query
   [graph search]
-  (fn [request]
-    (#'vertex-query-handler graph search request)))
+  (let [cache (atom {})]
+    (fn [request]
+      (#'vertex-query-handler graph search cache request))))
 
 (defn find-edge
   [graph]

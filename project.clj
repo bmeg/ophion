@@ -32,4 +32,4 @@
                  ["sonatype releases"
                   "https://oss.sonatype.org/content/repositories/releases"]]
   :jvm-opts ["-Xmx4g" "-Xms4g"]
-  :main ophion.aleph)
+  :main ophion.core)

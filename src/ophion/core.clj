@@ -2,9 +2,9 @@
   (:require
    [clojure.string :as string]
    [clojure.java.io :as io]
-   ;; [manifold.stream :as stream]
-   ;; [aleph.http :as http]
-   [org.httpkit.server :as http]
+   [manifold.stream :as stream]
+   [aleph.http :as http]
+   ;; [org.httpkit.server :as http]
    [cheshire.core :as json]
    [taoensso.timbre :as log]
    [ring.middleware.resource :as resource]
@@ -71,36 +71,39 @@
       (swap! cache assoc query out)
       out)))
 
-;; (defn vertex-query-handler
-;;   [graph search cache request]
-;;   (let [raw-query (json/parse-stream (InputStreamReader. (:body request)) keyword)
-;;         query (query/delabelize raw-query)
-;;         _ (log/info (mapv identity query))
-;;         out (check-query-cache graph search cache query)
-;;         ;; result (query/evaluate {:graph graph :search search} query)
-;;         ;; out (map output result)
-;;         source (stream/->source out)]
-;;     (stream/on-drained
-;;      source
-;;      (fn []
-;;        (log/debug "query complete")
-;;        (db/commit graph)
-;;        (db/rollback graph)))
-;;     {:status 200
-;;      :headers {"content-type" "application/json"}
-;;      :body source}))
-
-(defn vertex-query-handler-straight
+(defn vertex-query-handler
   [graph search cache request]
   (let [raw-query (json/parse-stream (InputStreamReader. (:body request)) keyword)
         query (query/delabelize raw-query)
         _ (log/info (mapv identity query))
-        out (check-query-cache graph search cache query)]
-    (db/commit graph)
-    (db/rollback graph)
+        ;; out (check-query-cache graph search cache query)
+        transaction (.newTransaction graph)
+        db {:graph graph :search search :transaction transaction}
+        result (query/evaluate db query)
+        out (map output result)
+        source (stream/->source out)]
+    (stream/on-drained
+     source
+     (fn []
+       (log/debug "query complete")
+       ;; (db/commit graph)
+       ;; (db/rollback graph)
+       (.commit transaction)))
     {:status 200
      :headers {"content-type" "application/json"}
-     :body out}))
+     :body source}))
+
+;; (defn vertex-query-handler-straight
+;;   [graph search cache request]
+;;   (let [raw-query (json/parse-stream (InputStreamReader. (:body request)) keyword)
+;;         query (query/delabelize raw-query)
+;;         _ (log/info (mapv identity query))
+;;         out (check-query-cache graph search cache query)]
+;;     (db/commit graph)
+;;     (db/rollback graph)
+;;     {:status 200
+;;      :headers {"content-type" "application/json"}
+;;      :body out}))
 
 (defn find-edge-handler
   [graph request]
@@ -149,7 +152,7 @@
   [graph search]
   (let [cache (atom {})]
     (fn [request]
-      (#'vertex-query-handler-straight graph search cache request))))
+      (#'vertex-query-handler graph search cache request))))
 
 (defn find-edge
   [graph]
@@ -199,7 +202,7 @@
                 (resource/wrap-resource "public")
                 (keyword/wrap-keyword-params)
                 (params/wrap-params))]
-    (http/run-server app {:port (or (:port config) 4443)})))
+    (http/start-server app {:port (or (:port config) 4443)})))
 
 (defn -main
   []

@@ -470,8 +470,8 @@
   #{:searchEdge :search-edge})
 
 (defn evaluate
-  [{:keys [graph search]} query]
-  (let [source (traversal graph)
+  [{:keys [graph search transaction]} query]
+  (let [source (traversal (or transaction graph))
         begin (first query)
         now (-> begin keys first)
         search? (search-origins now)]

@@ -1,6 +1,6 @@
 {
   "name": "ophion",
-  "version": "0.0.24",
+  "version": "0.0.28",
   "description": "a schema and api for graph queries and operations",
   "main": "ophion.js",
   "scripts": {

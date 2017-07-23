@@ -23,7 +23,6 @@ function value(x) {
 
 function OphionQuery(parent) {
   var parent = parent
-  var query = []
 
   function labels(l) {
     if (!l) {
@@ -46,113 +45,113 @@ function OphionQuery(parent) {
     }
   }
 
-  var operations = {
-    query: query,
+  return {
+    query: [],
 
     V: function(l) {
-      query.push({'V': labels(l)})
+      this.query.push({'V': labels(l)})
       return this
     },
 
     E: function(l) {
-      query.push({'E': labels(l)})
+      this.query.push({'E': labels(l)})
       return this
     },
 
     searchVertex: function(term, search) {
       if (search) {
-        query.push({'searchVertex': {'term': term, 'search': search}})
+        this.query.push({'searchVertex': {'term': term, 'search': search}})
       } else {
-        query.push({'searchVertex': {'search': term}})
+        this.query.push({'searchVertex': {'search': term}})
       }
 
       return this
     },
 
     incoming: function(l) {
-      query.push({'in': labels(l)})
+      this.query.push({'in': labels(l)})
       return this
     },
 
     outgoing: function(l) {
-      query.push({'out': labels(l)})
+      this.query.push({'out': labels(l)})
       return this
     },
 
     inEdge: function(l) {
-      query.push({'inEdge': labels(l)})
+      this.query.push({'inEdge': labels(l)})
       return this
     },
 
     outEdge: function(l) {
-      query.push({'outEdge': labels(l)})
+      this.query.push({'outEdge': labels(l)})
       return this
     },
 
     inVertex: function(l) {
-      query.push({'inVertex': labels(l)})
+      this.query.push({'inVertex': labels(l)})
       return this
     },
 
     outVertex: function(l) {
-      query.push({'outVertex': labels(l)})
+      this.query.push({'outVertex': labels(l)})
       return this
     },
 
     identity: function() {
-      query.push({'identity': true})
+      this.query.push({'identity': true})
       return this
     },
 
     mark: function(l) {
-      query.push({'as': labels(l)})
+      this.query.push({'as': labels(l)})
       return this
     },
 
     select: function(l) {
-      query.push({'select': labels(l)})
+      this.query.push({'select': labels(l)})
       return this
     },
 
     by: function(key) {
       // a key is either a string or an inner query that has already been
       // built and passed in.
-      query.push({'by': _.isString(key) ? {'key': key} : {'query': key.query}})
+      this.query.push({'by': _.isString(key) ? {'key': key} : {'query': key.query}})
       return this
     },
 
     id: function() {
-      query.push({'id': true})
+      this.query.push({'id': true})
       return this
     },
 
     label: function() {
-      query.push({'label': true})
+      this.query.push({'label': true})
       return this
     },
 
     values: function(l) {
-      query.push({'values': labels(l)})
+      this.query.push({'values': labels(l)})
       return this
     },
 
     properties: function(l) {
-      query.push({'properties': labels(l)})
+      this.query.push({'properties': labels(l)})
       return this
     },
 
     propertyMap: function(l) {
-      query.push({'propertyMap': labels(l)})
+      this.query.push({'propertyMap': labels(l)})
       return this
     },
 
     dedup: function(l) {
-      query.push({'dedup': labels(l)})
+      this.query.push({'dedup': labels(l)})
       return this
     },
 
     limit: function(l) {
-      query.push({'limit': l})
+      this.query.push({'limit': l})
       return this
     },
 
@@ -160,27 +159,27 @@ function OphionQuery(parent) {
       if (asc === undefined) {
         asc = true;
       }
-      query.push({'order': {'key': o, 'ascending': asc}})
+      this.query.push({'order': {'key': o, 'ascending': asc}})
       return this
     },
 
     range: function(lower, upper) {
-      query.push({'range': {'lower': lower, 'upper': upper}})
+      this.query.push({'range': {'lower': lower, 'upper': upper}})
       return this
     },
 
     count: function() {
-      query.push({'count': true})
+      this.query.push({'count': true})
       return this
     },
 
     path: function() {
-      query.push({'path': true})
+      this.query.push({'path': true})
       return this
     },
 
     aggregate: function(label) {
-      query.push({'aggregate': label})
+      this.query.push({'aggregate': label})
       return this
     },
 
@@ -191,12 +190,12 @@ function OphionQuery(parent) {
     // },
 
     groupCount: function(b) {
-      query.push({'groupCount': by(b)})
+      this.query.push({'groupCount': by(b)})
       return this
     },
 
     is: function(condition) {
-      query.push({'is': condition})
+      this.query.push({'is': condition})
       return this
     },
 
@@ -210,31 +209,33 @@ function OphionQuery(parent) {
         out['condition'] = h
       }
 
-      query.push({'has': out})
+      this.query.push({'has': out})
       return this
     },
 
     hasLabel: function(l) {
-      query.push({'hasLabel': labels(l)})
+      this.query.push({'hasLabel': labels(l)})
       return this
     },
 
     hasNot: function(key) {
-      query.push({'hasNot': key})
+      this.query.push({'hasNot': key})
       return this
     },
 
     match: function(queries) {
-      query.push({'match': {'queries': _.map(queries, function(query) {return query.query})}})
+      this.query.push({'match': {'queries': _.map(queries, function(query) {return query.query})}})
       return this
     },
 
     execute: function(callback) {
-      parent.execute(query, callback)
+      parent.execute(this.query, callback)
+    },
+
+    run: function() {
+      return parent.run(this.query)
     }
   }
-
-  return operations
 }
 
 function parseJson(s) {
@@ -249,6 +250,19 @@ function Ophion(site='') {
   var queryBase = '/vertex/query'
 
   return {
+    run: function(query) {
+      return fetch(site + queryBase, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
+        body: JSON.stringify(query),
+      }).then(function(response) {
+        return response.text()
+      }).then(function(text) {
+        var lines = text.replace(/^\s+|\s+$/g, '').split("\n")
+        return lines.map(parseJson)
+      })
+    },
+
     execute: function(query, callback) {
       fetch(site + queryBase, {
         method: 'POST',
@@ -326,4 +340,4 @@ function Ophion(site='') {
 }
 
 module.exports.Ophion = Ophion ;
-module.exports.Callsync = callsync.callsync ;
+module.exports.Callsync = callsync.callsync;

@@ -141,32 +141,38 @@
 (defn fetch-schema
   [schema]
   (fn [request]
+    (log/info "--> fetch schema")
     (#'fetch-schema-handler schema request)))
 
 (defn find-vertex
   [graph]
   (fn [request]
+    (log/info "--> find vertex")
     (#'find-vertex-handler graph request)))
 
 (defn vertex-query
   [graph search]
   (let [cache (atom {})]
     (fn [request]
+      (log/info "--> vertex query")
       (#'vertex-query-handler graph search cache request))))
 
 (defn find-edge
   [graph]
   (fn [request]
+    (log/info "--> find edge")
     (#'find-edge-handler graph request)))
 
 (defn edge-query
   [graph]
   (fn [request]
+    (log/info "--> edge query")
     (#'edge-query-handler graph request)))
 
 (defn search-counts
   [search]
   (fn [request]
+    (log/info "--> search counts")
     (#'search-counts-handler search request)))
 
 (defn home

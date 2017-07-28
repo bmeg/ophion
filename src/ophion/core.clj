@@ -86,9 +86,7 @@
      source
      (fn []
        (log/debug "query complete")
-       ;; (db/commit graph)
-       ;; (db/rollback graph)
-       (.commit transaction)))
+       (.rollback transaction)))
     {:status 200
      :headers {"content-type" "application/json"}
      :body source}))

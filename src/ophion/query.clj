@@ -114,7 +114,7 @@
 
 (defn V
   [^GraphTraversalSource g vs]
-  (.V g (into-array vs)))
+  (.V g (into-array (map long vs))))
 
 (defn E
   [^GraphTraversalSource g es]

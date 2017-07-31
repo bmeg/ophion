@@ -33,17 +33,17 @@
 
 (defn index-message
   [connection message]
-  (create connection (:graph message) message))
+  (create connection (:label message) message))
 
 (defn search
   ([{:keys [connection index]} mapping query]
    (map
     :_source
     (get-in
-     (document/search
+     (document/search-all-types
       connection
       (name index)
-      (name mapping)
+      ;; (name mapping)
       :query
       {:simple_query_string
        {:query query}}
@@ -62,7 +62,8 @@
       (name mapping)
       :query
       {:term
-       {(str "properties." (name term)) query}}
+       ;; {(str "properties." (name term)) query}
+       {(name term) query}}
       :size 1000)
      [:hits :hits]))))
 

@@ -1,10 +1,11 @@
 {:graph  {:database :janus
           :host "localhost"
-          :keyspace :animaltree}
+          :keyspace :pentomino}
  :server {:port 4443}
- :search {:index :animaltree
+ :search {:index :pentomino
           :indexed?
           #{"Individual"
+            "Evidence"
             "Biosample"
             "Project"
             "Cohort"

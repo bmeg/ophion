@@ -110,7 +110,7 @@
         (if term
           (search/search connection label term search)
           (search/search connection label search))]
-    (mapv :id results)))
+    (mapv :_janusId results)))
 
 (defn V
   [^GraphTraversalSource g vs]

@@ -27,30 +27,36 @@
 ;;   (log/info "ingest edge" data)
 ;;   (aggregate/add-edge! graph data))
 
+(defn lift-properties
+  [data]
+  (merge
+   (:properties data)
+   (dissoc data :properties)))
+
 (defn ingest-vertex
   [graph data]
   (let [vertex (query/add-vertex! graph data)
         id (.id vertex)]
-    {:id id
-     :data data
-     :label (:label data)
-     :graph "vertex"}))
+    (merge
+     (lift-properties data)
+     {:_janusId id
+      :_graph "vertex"})))
 
 (defn ingest-edge
   [graph data]
   (let [edge (query/add-edge! graph data)
         id (.id edge)
-        out-id (.getOutVertexId id)
+        from-id (.getOutVertexId id)
         type-id (.getTypeId id)
         edge-id (.getRelationId id)
-        in-id (.getInVertexId id)]
-    {:id edge-id
-     :graph "edge"
-     :label (:label data)
-     :data data
-     :out-id out-id
-     :label-id type-id
-     :in-id in-id}))
+        to-id (.getInVertexId id)]
+    (merge
+     (lift-properties data)
+     {:_janusId edge-id
+      :_graph "edge"
+      :_fromId from-id
+      :_labelId type-id
+      :_toId to-id})))
 
 (defn ingest-message
   [graph producer prefix continuation message]
@@ -149,7 +155,7 @@
         continuation (fn [message]
                        (when (indexed? (:label message))
                          (log/info "indexing" (:label message))
-                         (search/index-message search (dissoc message :label))))]
+                         (search/index-message search message)))]
     (if (:topic env)
       (ingest-topic config graph continuation)
       ;; (ingest-batches (:input env) graph)

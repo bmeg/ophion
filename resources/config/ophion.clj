@@ -1,8 +1,9 @@
 {:graph  {:database :janus
           :host "localhost"
           :keyspace :pentomino}
- :server {:port 4443}
- :search {:index :pentomino
+ :search {:host "localhost"
+          :port 9200
+          :index :pentomino
           :indexed?
           #{"Individual"
             "Evidence"
@@ -14,7 +15,8 @@
             "GeneDatabase"
             "OntologyTerm"
             "Compound"}}
- :protograph {:path "resources/config/protograph.yml"
-              :prefix "protograph"}
  :kafka {:host "localhost"
-         :port 9092}}
+         :port 9092}
+ :server {:port 4443}
+ :protograph {:path "resources/config/protograph.yml"
+              :prefix "protograph"}}

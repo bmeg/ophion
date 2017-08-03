@@ -11,8 +11,7 @@
    [ring.middleware.params :as params]
    [ring.middleware.keyword-params :as keyword]
    [polaris.core :as polaris]
-   [protograph.core :as protograph]
-   [protograph.kafka :as kafka]
+   [protograph.template :as protograph]
    [ophion.config :as config]
    [ophion.db :as db]
    [ophion.query :as query]
@@ -21,8 +20,7 @@
    [ophion.aggregate :as aggregate])
   (:import
    [java.io InputStreamReader]
-   [ch.qos.logback.classic Logger Level]
-   [protograph Protograph]))
+   [ch.qos.logback.classic Logger Level]))
 
 (.setLevel
  (org.slf4j.LoggerFactory/getLogger
@@ -51,7 +49,7 @@
   [schema request]
   {:status 200
    :headers {"content-type" "application/json"}
-   :body schema})
+   :body (json/generate-string schema)})
 
 (defn find-vertex-handler
   [graph request]
@@ -198,14 +196,16 @@
         protograph (protograph/load-protograph
                     (or
                      (get-in config [:protograph :path])
-                     "config/protograph.yml"))
-        schema (Protograph/writeJSON (.graphStructure protograph))
+                     "resources/config/protograph.yml"))
+        schema (protograph/graph-structure protograph)
+        ;; (Protograph/writeJSON (.graphStructure protograph))
         routes (polaris/build-routes (ophion-routes graph search schema))
         router (resource/wrap-resource (polaris/router routes) "public")
         app (-> router
                 (resource/wrap-resource "public")
                 (keyword/wrap-keyword-params)
                 (params/wrap-params))]
+    (log/info schema)
     (http/start-server app {:port (or (:port config) 4443)})))
 
 (defn -main

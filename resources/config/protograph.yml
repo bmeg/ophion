@@ -1,258 +1,264 @@
 - label: Project
-  role: Vertex
-  gid: "project:{{name}}"
-  actions:
-    - field: hasMember
-      remote_edges:
-        edge_label: hasMember
-        destination_label: Individual
+  vertexes:
+    - label: Project
+      gid: "project:{{name}}"
+      merge: true
+      filter:
+        - hasMember
+  edges:
+    - index: hasMember
+      fromLabel: Project
+      label: hasMember
+      toLabel: Individual
+      from: "project:{{name}}"
+      to: "{{_index}}"
 
 - label: Individual
-  role: Vertex
-  gid: "individual:{{datasetId}}:{{name}}"
-  actions:
-    - field: info
-      splice_map:
-        lift_fields: true
+  vertexes:
+    - label: Individual
+      gid: "individual:{{datasetId}}:{{name}}"
+      merge: true
+      splice:
+        - info
 
 - label: Cohort
-  role: Vertex
-  gid: "cohort:{{name}}"
-  actions:
-    - field: hasMember
-      remote_edges:
-        edge_label: hasSample
-        destination_label: Biosample
+  vertexes:
+    - label: Cohort
+      gid: "cohort:{{name}}"
+      merge: true
+      filter:
+        - hasMember
+  edges:
+    - index: hasMember
+      fromLabel: Cohort
+      label: hasSample
+      toLabel: Biosample
+      from: "cohort:{{name}}"
+      to: "{{_index}}"
 
 - label: Biosample
-  role: Vertex
-  gid: "biosample:{{datasetId}}:{{name}}"
-  actions:
-    - field: info
-      splice_map:
-        prefix: ""
-    - field: individualId
-      remote_edges:
-        edge_label: biosampleOfIndividual
-        destination_label: Individual
-    - field: disease
-      inner_vertex:
-        edge_label: termForDisease
-        destination_label: OntologyTerm
-        outer_id: biosampleId
+  vertexes:
+    - label: Biosample
+      gid: "biosample:{{datasetId}}:{{name}}"
+      merge: true
+      filter:
+        - disease
+      splice:
+        - info
+    - label: OntologyTerm
+      gid: "term:{{disease.term}}"
+      splice:
+        - disease
+  edges:
+    - fromLabel: Biosample
+      label: sampleOf
+      toLabel: Individual
+      from: "biosample:{{datasetId}}:{{name}}"
+      to: "{{individualId}}"
+    - fromLabel: Biosample
+      label: hasDisease
+      toLabel: OntologyTerm
+      from: "biosample:{{datasetId}}:{{name}}"
+      to: "term:{{disease.term}}"
+  embedded:
+    - label: OntologyTerm
+      path: disease
 
 - label: CallSet
-  role: Edge
-  gid: "callSet:{{name}}"
-  actions:
-    - field: biosampleId
-      edge_terminal:
-        edge_label: variantInBiosample
-        destination_label: Biosample
+  edges:
+    - fromLabel: Variant
+      label: variantFor
+      toLabel: Biosample
+      to: "{{biosampleId}}"
+      lookup: "callSet:{{name}}"
 
 - label: Variant
-  role: Vertex
-  gid: "variant:{{referenceName}}:{{start}}:{{end}}:{{referenceBases}}:{{alternateBases}}"
-  actions: 
-    - field: info
-      splice_map:
-        prefix: ""
-    - field: calls
-      link_through:
-        edge_label: variantInBiosample
-        destination_label: Biosample
-        embedded_in: callSetId
-    - field: alternateBases
-      join_list:
-        delimiter: ","
+  vertexes:
+    - label: Variant
+      gid: "variant:{{referenceName}}:{{start}}:{{end}}:{{referenceBases}}:{{alternateBases|join:,}}"
+      merge: true
+      filter:
+        - calls
+      splice:
+        - info
+      properties:
+        alternateBases: "{{alternateBases|join:,}}"
+  edges:
+    - index: calls
+      fromLabel: Variant
+      label: variantFor
+      toLabel: Biosample
+      from: "variant:{{referenceName}}:{{start}}:{{end}}:{{referenceBases}}:{{alternateBases|join:,}}"
+      lookup: "{{_index.callSetId}}"
 
 - label: VariantAnnotation
-  role: Edge
-  gid: "variantAnnotation:{{variantId}}:{{annotationSetId}}"
-  actions:
-    - field: transcriptEffects
-      embedded_terminals:
-        edge_label: variantInGene
-        destination_label: Gene
-        embedded_in: featureId
-        lift_fields: [effects]
-    - field: variantId
-      edge_source:
-        edge_label: variantInGene
-        destination_label: Variant
-    - field: variantId
-      store_field:
-        store: true
-
-- label: TranscriptEffect
-  role: Edge
-  gid: "transcriptEffect:{{featureId}}:{{annotationId}}:{{alternateBases}}"
-  actions:
-    - field: featureId
-      edge_terminal:
-        edge_label: variantInGene
-        destination_label: Gene
-    - field: effects
-      lift_fields: true
-
-- label: OntologyTerm
-  role: Vertex
-  gid: "ontologyTerm:{{term}}"
+  edges:
+    - index: transcriptEffects
+      fromLabel: Variant
+      label: variantIn
+      toLabel: Gene
+      from: "{{variantId}}"
+      to: "{{_index.featureId}}"
+      properties:
+        effects: "{{_index.effects|each:term|join:,}}"
 
 - label: ResponseCurve
-  role: Edge
-  gid: "responseCurve:{{sample}}:{{compound}}"
-  actions:
-    - field: summary
-      serialize_field:
-        serialized_name: responseSummary
-    - field: values
-      serialize_field:
-        serialized_name: responseValues
-    - field: sample
-      edge_source:
-        edge_label: responseToCompound
-        destination_label: Biosample
-    - field: compound
-      edge_terminal:
-        edge_label: responseToCompound
-        destination_label: Compound
+  edges:
+    - fromLabel: Biosample
+      label: responseTo
+      toLabel: Compound
+      from: "{{sample}}"
+      to: "{{compound}}"
+      merge: true
 
 - label: Compound
-  role: Vertex
-  gid: "compound:{{name}}"
-  actions:
-    - field: synonyms
-      remote_edges:
-        edge_label: synonymForCompound
-        destination_label: Compound
-    - field: target
-      remote_edges:
-        edge_label: compoundTargetsGene
-        destination_label: Gene
+  vertexes:
+    - label: Compound
+      gid: "compound:{{name}}"
+      merge: true
+      filter:
+        - synonyms
+  edges:
+    - fromLabel: Compound
+      label: targetsGene
+      toLabel: Gene
+      from: "compound:{{name}}"
+      to: "{{target}}"
+    - index: synonyms
+      fromLabel: Compound
+      label: sameAs
+      toLabel: Compound
+      from: "{{_index}}"
+      to: "compound:{{name}}"
 
 - label: Gene
-  role: Vertex
-  gid: "gene:{{symbol}}"
-  actions:
-    - field: inFamily
-      remote_edges:
-        edge_label: geneInFamily
-        destination_label: GeneFamily
-    - field: citedFrom
-      remote_edges:
-        edge_label: citedFrom
-        destination_label: Pubmed
+  vertexes:
+    - label: Gene
+      gid: "gene:{{symbol}}"
+      merge: true
+      filter:
+        - inFamily
+        - citedFrom
+  edges:
+    - index: citedFrom
+      fromLabel: Gene
+      label: citedFrom
+      toLabel: Pubmed
+      from: "gene:{{symbol}}"
+      to: "{{_index}}"
+    - index: inFamily
+      fromLabel: Gene
+      label: inFamily
+      toLabel: GeneFamily
+      from: "gene:{{symbol}}"
+      to: "{{_index}}"
 
 - label: GeneSynonym
-  role: Edge
-  gid: "geneSynonym:{{symbol}}"
-  actions:
-    - field: synonymFor
-      edge_terminal:
-        edge_label: synonymForGene
-        destination_label: Gene
-    - field: inDatabase
-      edge_source:
-        edge_label: synonymForGene
-        destination_label: GeneDatabase
-    - field: info
-      splice_map:
-        prefix: ""
+  edges:
+    - index: inDatabase
+      fromLabel: GeneDatabase
+      label: synonymFor
+      toLabel: Gene
+      from: "{{_index}}"
+      to: "{{synonymFor|first}}"
+      splice:
+        - info
 
 - label: GeneDatabase
-  role: Vertex
-  gid: "geneDatabase:{{name}}"
+  vertexes:
+    - label: GeneDatabase
+      gid: "geneDatabase:{{name}}"
+      merge: true
 
 - label: GeneFamily
-  role: Vertex
-  gid: "geneFamily:{{tag}}"
+  vertexes:
+    - label: GeneFamily
+      gid: "geneFamily:{{tag}}"
+      merge: true
 
 - label: GeneExpression
-  role: Vertex
-  gid: "geneExpression:{{biosampleId}}"
-  actions:
-    - field: expressions
-      serialize_field:
-        serialized_name: serializedExpressions
-    - field: biosampleId
-      remote_edges:
-        edge_label: expressionForSample
-        destination_label: Biosample
-    - field: biosampleId
-      store_field:
-        store: true
+  vertexes:
+    - label: GeneExpression
+      gid: "geneExpression:{{biosampleId}}"
+      merge: true
+  edges:
+    - fromLabel: GeneExpression
+      label: expressionFor
+      toLabel: Biosample
+      from: "geneExpression:{{biosampleId}}"
+      to: "{{biosampleId}}"
 
 - label: Pubmed
-  role: Vertex
-  gid: "pubmed:{{pmid}}"
+  vertexes:
+    - label: Pubmed
+      gid: "pubmed:{{pmid}}"
+      merge: true
 
 - label: CNACallSet
-  role: Edge
-  gid: "cnaCallSet:{{bioSampleId}}"
-  actions:
-    - field: bioSampleId
-      edge_terminal:
-        edge_label: segmentOfSample
-        destination_label: Biosample
-
+  edges:
+    - fromLabel: CNASegment
+      label: segmentOf
+      toLabel: Biosample
+      to: "{{bioSampleId}}"
+      lookup: "cnaCallSet:{{bioSampleId}}"
+      
 - label: CNASegment
-  role: Vertex
-  gid: "cnaSegment:{{callSetId}}:{{referenceName}}:{{start}}:{{end}}:{{value}}"
-  actions:
-    - field: callSetId
-      link_through:
-        edge_label: segmentOfSample
-        destination_label: Biosample
-    - field: genes
-      remote_edges:
-        edge_label: segmentInGene
-        destination_label: Gene
+  vertexes:
+    - label: CNASegment
+      gid: "cnaSegment:{{callSetId}}:{{referenceName}}:{{start}}:{{end}}:{{value}}"
+      merge: true
+      filter:
+        - genes
+  edges:
+    - fromLabel: CNASegment
+      label: segmentOf
+      toLabel: Biosample
+      from: "cnaSegment:{{callSetId}}:{{referenceName}}:{{start}}:{{end}}:{{value}}"
+      lookup: "{{callSetId}}"
+    - index: genes
+      fromLabel: CNASegment
+      label: segmentIn
+      toLabel: Gene
+      from: "cnaSegment:{{callSetId}}:{{referenceName}}:{{start}}:{{end}}:{{value}}"
+      to: "{{_index}}"
 
-- label: Predictor
-  role: Vertex
-  gid: "{{id}}"
-  actions:
-    - field: environmental_contexts
-      remote_edges:
-        edge_label: predictorForCompound
-        destination_label: Compound
-        embedded_in: description
-    - field: phenotype
-      inner_vertex:
-        edge_label: predictorHasPhenotype
-        destination_label: PhenotypeInstance
-    - field: model_id
-      remote_edges:
-        edge_label: predictorHasModel
-        destination_label: LinearSignature
-
-- label: PredictorAssociation
-  role: Edge
-  gid: "predictorAssociation:{{sample_id}}:{{predictor_id}}"
-  actions:
-    - field: sample_id
-      edge_terminal:
-        edge_label: sample
-        destination_label: Biosample
-    - field: predictor_id
-      edge_source:
-        edge_label: sample
-        destination_label: Predictor
-
-- label: PhenotypeInstance
-  role: Vertex
-  gid: "phenotypeInstance:{{#type}}{{term}}{{/type}}:{{#qualifier}}{{term}}{{/qualifier}}"
-  actions:
-    - field: qualifier
-      inner_vertex:
-        edge_label: qualifier
-        destination_label: OntologyTerm
-
-- label: LinearSignature
-  role: Vertex
-  gid: "{{id}}"
-  actions:
-    - field: coefficients
-      serialize_field:
-        serialized_name: modelCoefficients
+- label: Evidence
+  vertexes:
+    - label: Evidence
+      gid: "evidence:{{genes|sort|join:,}}:{{association.phenotype.description}}"
+      properties:
+        source: "{{source}}"
+        genotype: "{{genes|sort|join:,}}"
+        phenotype: "{{association.phenotype.description}}"
+    - label: OntologyTerm
+      gid: "term:{{association.phenotype.description}}"
+      properties:
+        term: "{{association.phenotype.description}}"
+  edges:
+    - index: features
+      fromLabel: Evidence
+      label: genotype
+      toLabel: Gene
+      from: "evidence:{{genes|sort|join:,}}:{{association.phenotype.description}}"
+      to: "gene:{{_index.geneSymbol}}"
+      splice:
+        - _index
+    - index: association.environmentalContexts
+      fromLabel: Evidence
+      label: environmentalContext
+      toLabel: Compound
+      from: "evidence:{{genes|sort|join:,}}:{{association.phenotype.description}}"
+      to: "{{_index.id}}"
+      properties:
+        response: "{{association.response_type}}"
+    - index: association.evidence.0.info.publications|flatten
+      fromLabel: Evidence
+      label: evidence
+      toLabel: Pubmed
+      from: "evidence:{{genes|sort|join:,}}:{{association.phenotype.description}}"
+      to: "pubmed:{{_index|split:/|last}}"
+    - fromLabel: Evidence
+      label: phenotype
+      toLabel: OntologyTerm
+      from: "evidence:{{genes|sort|join:,}}:{{association.phenotype.description}}"
+      to: "term:{{association.phenotype.description}}"

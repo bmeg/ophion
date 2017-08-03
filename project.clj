@@ -10,9 +10,10 @@
                  [com.taoensso/timbre "4.8.0"]
                  ;; [org.immutant/web "2.1.7"]
                  [http-kit "2.2.0"]
-                 [protograph "0.0.4-SNAPSHOT"
-                  :exclusions [org.scala-lang.modules/scala-xml_2.11
-                               org.slf4j/slf4j-log4j12]]
+                 [protograph "0.0.6"]
+                 ;; [protograph "0.0.4-SNAPSHOT"
+                 ;; :exclusions [org.scala-lang.modules/scala-xml_2.11
+                 ;;              org.slf4j/slf4j-log4j12]]
                  [clojurewerkz/elastisch "2.2.1"]
                  [com.novemberain/monger "3.1.0"]
                  ;; [clojurewerkz/propertied "1.2.0"]

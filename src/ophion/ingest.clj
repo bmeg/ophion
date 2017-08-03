@@ -6,8 +6,6 @@
    [clojure.pprint :as pprint]
    [taoensso.timbre :as log]
    [cheshire.core :as json]
-   [protograph.kafka :as kafka]
-   [protograph.core :as protograph]
    [ophion.db :as db]
    [ophion.query :as query]
    [ophion.config :as config]
@@ -15,8 +13,7 @@
    [ophion.mongo :as mongo]
    [ophion.aggregate :as aggregate])
   (:import
-   [com.mongodb BulkWriteException]
-   [protograph Protograph]))
+   [com.mongodb BulkWriteException]))
 
 ;; (defn ingest-vertex
 ;;   [graph data]

@@ -6,6 +6,7 @@
    [clojure.pprint :as pprint]
    [taoensso.timbre :as log]
    [cheshire.core :as json]
+   [protograph.kafka :as kafka]
    [ophion.db :as db]
    [ophion.query :as query]
    [ophion.config :as config]

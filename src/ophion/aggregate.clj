@@ -150,13 +150,13 @@
   ([state query]
    (let [warp (map (partial apply-step steps) query)
          attired (conj (vec warp) [{:$project {:_id false}}])]
-     (vec (apply concat attired)))))
+     (reduce into [] attired))))
 
 (defn evaluate
   ([db query] (evaluate db :vertex query))
   ([db collection query]
    (let [aggregate (translate query)]
-     (mongo/aggregate db collection aggregate))))
+     (mongo/aggregate db collection aggregate {:allow-disk-use true :cursor true}))))
 
 (defn flat
   "this will squash properties if they are in the reserved set"

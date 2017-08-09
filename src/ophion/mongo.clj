@@ -49,10 +49,15 @@
   [db collection where]
   (mongo/count db (name collection) where))
 
+(defn mapply
+  [f & args]
+  (apply f (apply concat (butlast args) (last args))))
+
 (defn aggregate
-  [db collection pipeline]
-  (log/info collection pipeline)
-  (mongo/aggregate db (name collection) pipeline))
+  ([db collection pipeline] (aggregate db collection pipeline {}))
+  ([db collection pipeline opts]
+   (log/info collection pipeline)
+   (mapply mongo/aggregate db (name collection) pipeline opts)))
 
 (defn extract-failures
   [^BulkWriteException e]

@@ -131,24 +131,64 @@
   [{:$group {:_id (str "$" path) :count {:$sum 1}}}
    {:$project {:key "$_id" :count "$count"}}])
 
+(defn unwind
+  [label]
+  [{:$unwind (str "$" label)}])
+
+(defn group-set
+  [label]
+  [{:$group {:_id "$_id" label {:$push (str "$" label ".gid")}}}])
+
+(defn element-at
+  [label]
+  {:$arrayElemAt [(str "$" label) 0]})
+
 (declare translate)
+
+(defn build-queries
+  [queries]
+  (reduce
+   (fn [out q]
+     (let [label (first q)
+           query (concat
+                  [{:mark label}]
+                  (rest q)
+                  [{:select [label]}])
+           aggregation (translate query)
+           un (unwind label)
+           group (group-set label)]
+       (assoc out label (concat aggregation un group))))
+   {} queries))
 
 (defn match
   [sub]
-  (let [queries
-        (reduce
-         (fn [queries s]
-           (let [label (first s)
-                 query (concat
-                        [{:mark label}]
-                        (rest s)
-                        [{:select [label]}
-                         {:root label}])]
-             (assoc queries label (translate query))))
-         {} sub)]
-    [{:$facet queries}]))
-
-     ;; {:$setIntersection (mapv (comp (partial str "$") first) queries)}
+  (let [queries (build-queries sub)
+        labels (mapv first sub)
+        pluck (into {} (map (juxt identity element-at) labels))]
+    [{:$facet (merge {:_root [{:$match {}}]} queries)}
+     {:$project (merge {:_root true} pluck)}
+     {:$project
+      {:_root true
+       :matches
+       {:$setIntersection
+        (map
+         (fn [label]
+           (str "$" label "." label))
+         labels)}}}
+     {:$unwind "$_root"}
+     {:$redact
+      {:$cond
+       {"if"
+        {:$setIsSubset
+         [{:$map
+           {:input
+            {:$literal ["yes"]}
+            :as "a"
+            :in "$_root.gid"}}
+          "$matches"]}
+        "then" "$$KEEP"
+        "else" "$$PRUNE"}}}
+     {:$replaceRoot {:newRoot "$_root"}}]))
 
 (def steps
   {:from-edge from-edge
@@ -186,6 +226,7 @@
 (defn evaluate
   ([db query] (evaluate db :vertex query))
   ([db collection query]
+   (log/info query)
    (let [aggregate (translate query)]
      (log/info aggregate)
      (mongo/aggregate db collection aggregate {:allow-disk-use true :cursor {:batch-size 1000}}))))
@@ -282,3 +323,12 @@
 ;;  {:$replaceRoot {:newRoot "$to"}}
 ;;  {:$group {:_id "$name", :count {:$sum 1}}}
 ;;  {:$project {:key "$_id", :count "$count"}}]
+
+
+
+
+
+
+
+
+

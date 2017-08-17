@@ -122,6 +122,10 @@
   [fields]
   [{:$sort fields}])
 
+(defn root
+  [in]
+  [{:$replaceRoot {:newRoot (str "$" in)}}])
+
 (defn group-count
   [path]
   [{:$group {:_id (str "$" path) :count {:$sum 1}}}
@@ -135,12 +139,16 @@
         (reduce
          (fn [queries s]
            (let [label (first s)
-                 query (concat [{:mark label}] (rest s) [{:select [label]}])]
+                 query (concat
+                        [{:mark label}]
+                        (rest s)
+                        [{:select [label]}
+                         {:root label}])]
              (assoc queries label (translate query))))
          {} sub)]
     [{:$facet queries}]))
-     ;; {:$setIntersection (map (comp #(str "$" % "." %) first) queries)}
 
+     ;; {:$setIntersection (mapv (comp (partial str "$") first) queries)}
 
 (def steps
   {:from-edge from-edge
@@ -149,6 +157,7 @@
    :to-vertex to-vertex
    :from from
    :to to
+   :root root
    :where where
    :match match
    :values values

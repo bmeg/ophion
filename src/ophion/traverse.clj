@@ -111,6 +111,12 @@
   [{:$group {:_id (str "$" path) :count {:$sum 1}}}
    {:$project {:key "$_id" :count "$count"}}])
 
+(declare translate)
+
+(defn match
+  [queries]
+  )
+
 (def order-map
   {:asc 1
    :desc -1})

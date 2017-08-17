@@ -127,14 +127,28 @@
   [{:$group {:_id (str "$" path) :count {:$sum 1}}}
    {:$project {:key "$_id" :count "$count"}}])
 
+(declare translate)
+
+(defn match
+  [sub]
+  (let [queries
+        (reduce
+         (fn [queries s]
+           (let [label (first s)
+                 query (rest s)]
+             (assoc queries label (translate query))))
+         {} sub)]
+    [{:$facet queries}]))
+
 (def steps
-  {:where where
-   :from-edge from-edge
+  {:from-edge from-edge
    :to-edge to-edge
    :from-vertex from-vertex
    :to-vertex to-vertex
    :from from
    :to to
+   :where where
+   :match match
    :values values
    :mark mark
    :select select

@@ -135,10 +135,12 @@
         (reduce
          (fn [queries s]
            (let [label (first s)
-                 query (rest s)]
+                 query (concat [{:mark label}] (rest s) [{:select [label]}])]
              (assoc queries label (translate query))))
          {} sub)]
     [{:$facet queries}]))
+     ;; {:$setIntersection (map (comp #(str "$" % "." %) first) queries)}
+
 
 (def steps
   {:from-edge from-edge

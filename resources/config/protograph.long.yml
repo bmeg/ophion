@@ -1,0 +1,264 @@
+- label: Project
+  vertexes:
+    - label: Project
+      gid: "project:{{name}}"
+      merge: true
+      filter:
+        - hasMember
+  edges:
+    - index: hasMember
+      fromLabel: Project
+      label: hasMember
+      toLabel: Individual
+      from: "project:{{name}}"
+      to: "{{_index}}"
+
+- label: Individual
+  vertexes:
+    - label: Individual
+      gid: "individual:{{datasetId}}:{{name}}"
+      merge: true
+      splice:
+        - info
+
+- label: Cohort
+  vertexes:
+    - label: Cohort
+      gid: "cohort:{{name}}"
+      merge: true
+      filter:
+        - hasMember
+  edges:
+    - index: hasMember
+      fromLabel: Cohort
+      label: hasSample
+      toLabel: Biosample
+      from: "cohort:{{name}}"
+      to: "{{_index}}"
+
+- label: Biosample
+  vertexes:
+    - label: Biosample
+      gid: "biosample:{{datasetId}}:{{name}}"
+      merge: true
+      filter:
+        - disease
+      splice:
+        - info
+    - label: OntologyTerm
+      gid: "term:{{disease.term}}"
+      splice:
+        - disease
+  edges:
+    - fromLabel: Biosample
+      label: biosampleOfIndividual
+      toLabel: Individual
+      from: "biosample:{{datasetId}}:{{name}}"
+      to: "{{individualId}}"
+    - fromLabel: Biosample
+      label: termForDisease
+      toLabel: OntologyTerm
+      from: "biosample:{{datasetId}}:{{name}}"
+      to: "term:{{disease.term}}"
+  embedded:
+    - label: OntologyTerm
+      path: disease
+
+- label: CallSet
+  edges:
+    - fromLabel: Variant
+      label: variantInBiosample
+      toLabel: Biosample
+      to: "{{biosampleId}}"
+      lookup: "callSet:{{name}}"
+
+- label: Variant
+  vertexes:
+    - label: Variant
+      gid: "variant:{{referenceName}}:{{start}}:{{end}}:{{referenceBases}}:{{alternateBases|join:,}}"
+      merge: true
+      filter:
+        - calls
+      splice:
+        - info
+      properties:
+        alternateBases: "{{alternateBases|join:,}}"
+  edges:
+    - index: calls
+      fromLabel: Variant
+      label: variantInBiosample
+      toLabel: Biosample
+      from: "variant:{{referenceName}}:{{start}}:{{end}}:{{referenceBases}}:{{alternateBases|join:,}}"
+      lookup: "{{_index.callSetId}}"
+
+- label: VariantAnnotation
+  edges:
+    - index: transcriptEffects
+      fromLabel: Variant
+      label: variantInGene
+      toLabel: Gene
+      from: "{{variantId}}"
+      to: "{{_index.featureId}}"
+      properties:
+        effects: "{{_index.effects|each:term|join:,}}"
+
+- label: ResponseCurve
+  edges:
+    - fromLabel: Biosample
+      label: responseToCompound
+      toLabel: Compound
+      from: "{{sample}}"
+      to: "{{compound}}"
+      merge: true
+
+- label: Compound
+  vertexes:
+    - label: Compound
+      gid: "compound:{{name}}"
+      merge: true
+      filter:
+        - synonyms
+  edges:
+    - fromLabel: Compound
+      label: compoundTargetsGene
+      toLabel: Gene
+      from: "compound:{{name}}"
+      to: "{{target}}"
+    - index: synonyms
+      fromLabel: Compound
+      label: synonymForCompound
+      toLabel: Compound
+      from: "{{_index}}"
+      to: "compound:{{name}}"
+
+- label: Gene
+  vertexes:
+    - label: Gene
+      gid: "gene:{{symbol}}"
+      merge: true
+      filter:
+        - inFamily
+        - citedFrom
+  edges:
+    - index: citedFrom
+      fromLabel: Gene
+      label: citedFrom
+      toLabel: Pubmed
+      from: "gene:{{symbol}}"
+      to: "{{_index}}"
+    - index: inFamily
+      fromLabel: Gene
+      label: geneInFamily
+      toLabel: GeneFamily
+      from: "gene:{{symbol}}"
+      to: "{{_index}}"
+
+- label: GeneSynonym
+  edges:
+    - index: inDatabase
+      fromLabel: GeneDatabase
+      label: synonymForGene
+      toLabel: Gene
+      from: "{{_index}}"
+      to: "{{synonymFor|first}}"
+      splice:
+        - info
+
+- label: GeneDatabase
+  vertexes:
+    - label: GeneDatabase
+      gid: "geneDatabase:{{name}}"
+      merge: true
+
+- label: GeneFamily
+  vertexes:
+    - label: GeneFamily
+      gid: "geneFamily:{{tag}}"
+      merge: true
+
+- label: GeneExpression
+  vertexes:
+    - label: GeneExpression
+      gid: "geneExpression:{{biosampleId}}"
+      merge: true
+  edges:
+    - fromLabel: GeneExpression
+      label: expressionForSample
+      toLabel: Biosample
+      from: "geneExpression:{{biosampleId}}"
+      to: "{{biosampleId}}"
+
+- label: Pubmed
+  vertexes:
+    - label: Pubmed
+      gid: "pubmed:{{pmid}}"
+      merge: true
+
+- label: CNACallSet
+  edges:
+    - fromLabel: CNASegment
+      label: segmentOf
+      toLabel: Biosample
+      to: "{{bioSampleId}}"
+      lookup: "cnaCallSet:{{bioSampleId}}"
+      
+- label: CNASegment
+  vertexes:
+    - label: CNASegment
+      gid: "cnaSegment:{{callSetId}}:{{referenceName}}:{{start}}:{{end}}:{{value}}"
+      merge: true
+      filter:
+        - genes
+  edges:
+    - fromLabel: CNASegment
+      label: segmentOf
+      toLabel: Biosample
+      from: "cnaSegment:{{callSetId}}:{{referenceName}}:{{start}}:{{end}}:{{value}}"
+      lookup: "{{callSetId}}"
+    - index: genes
+      fromLabel: CNASegment
+      label: segmentIn
+      toLabel: Gene
+      from: "cnaSegment:{{callSetId}}:{{referenceName}}:{{start}}:{{end}}:{{value}}"
+      to: "{{_index}}"
+
+- label: Evidence
+  vertexes:
+    - label: Evidence
+      gid: "evidence:{{genes|sort|join:,}}:{{association.phenotype.description}}"
+      properties:
+        source: "{{source}}"
+        genotype: "{{genes|sort|join:,}}"
+        phenotype: "{{association.phenotype.description}}"
+    - label: OntologyTerm
+      gid: "term:{{association.phenotype.description}}"
+      properties:
+        term: "{{association.phenotype.description}}"
+  edges:
+    - index: features
+      fromLabel: Evidence
+      label: genotype
+      toLabel: Gene
+      from: "evidence:{{genes|sort|join:,}}:{{association.phenotype.description}}"
+      to: "gene:{{_index.geneSymbol}}"
+      splice:
+        - _index
+    - index: association.environmentalContexts
+      fromLabel: Evidence
+      label: environmentalContext
+      toLabel: Compound
+      from: "evidence:{{genes|sort|join:,}}:{{association.phenotype.description}}"
+      to: "{{_index.id}}"
+      properties:
+        response: "{{association.response_type}}"
+    - index: association.evidence.0.info.publications|flatten
+      fromLabel: Evidence
+      label: evidence
+      toLabel: Pubmed
+      from: "evidence:{{genes|sort|join:,}}:{{association.phenotype.description}}"
+      to: "pubmed:{{_index|split:/|last}}"
+    - fromLabel: Evidence
+      label: phenotype
+      toLabel: OntologyTerm
+      from: "evidence:{{genes|sort|join:,}}:{{association.phenotype.description}}"
+      to: "term:{{association.phenotype.description}}"

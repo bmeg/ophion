@@ -18,5 +18,5 @@
  :kafka {:host "localhost"
          :port 9092}
  :server {:port 4443}
- :protograph {:path "resources/config/protograph.yml"
+ :protograph {:path "resources/config/protograph.long.yml"
               :prefix "protograph"}}

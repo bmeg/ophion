@@ -6,81 +6,77 @@
    [taoensso.timbre :as log]
    [ophion.mongo :as mongo]))
 
+(def document-limit 10000)
+
 (defn where
   [where]
   [{:$match where}])
 
 (defn from-edge
-  [label]
+  [{:keys [label where]}]
   [{:$lookup
     {:from "edge"
      :localField "gid"
      :foreignField "to"
      :as "from"}}
-   {:$project
-    {:history "$_history"
-     :from
-     {:$filter
-      {:input "$from"
-       :as "o"
-       :cond
-       {:$eq ["$$o.label" label]}}}}}
    {:$unwind "$from"}
-   {:$addFields {"from._history" "$history"}}
+   {:$match
+    (merge
+     where
+     {:from.label label})}
+   {:$addFields {"from._history" "$_history"}}
    {:$replaceRoot {:newRoot "$from"}}])
 
 (defn to-edge
-  [label]
+  [{:keys [label where]}]
   [{:$lookup
     {:from "edge"
      :localField "gid"
      :foreignField "from"
      :as "to"}}
-   {:$project
-    {:history "$_history"
-     :to
-     {:$filter
-      {:input "$to"
-       :as "o"
-       :cond
-       {:$eq ["$$o.label" label]}}}}}
    {:$unwind "$to"}
-   {:$addFields {"to._history" "$history"}}
+   {:$match
+    (merge
+     where
+     {:to.label label})}
+   {:$addFields {"to._history" "$_history"}}
    {:$replaceRoot {:newRoot "$to"}}])
 
 (defn from-vertex
-  [none]
+  [{:keys [where]}]
   [{:$lookup
     {:from "vertex"
      :localField "from"
      :foreignField "gid"
      :as "from"}}
    {:$unwind "$from"}
+   {:$match (or where {})}
    {:$addFields {"from._history" "$_history"}}
    {:$replaceRoot {:newRoot "$from"}}])
 
 (defn to-vertex
-  [none]
+  [{:keys [where]}]
   [{:$lookup
     {:from "vertex"
      :localField "to"
      :foreignField "gid"
      :as "to"}}
    {:$unwind "$to"}
+   {:$match (or where {})}
    {:$addFields {"to._history" "$_history"}}
    {:$replaceRoot {:newRoot "$to"}}])
 
 (defn from
-  ([label]
+  ([what]
    (concat
-    (from-edge label)
-    (from-vertex label))))
+    (from-edge (select-keys what [:label]))
+    (from-vertex (select-keys what [:where])))))
 
 (defn to
-  ([label]
+  ([what]
    (concat
-    (to-edge label)
-    (to-vertex label))))
+    (to-edge (select-keys what [:label]))
+    (to-vertex (select-keys what [:where])))))
 
 (defn values
   [values]
@@ -110,18 +106,26 @@
   [n]
   [{:$limit n}])
 
-(defn group-count
-  [path]
-  [{:$group {:_id (str "$" path) :count {:$sum 1}}}
-   {:$project {:key "$_id" :count "$count"}}])
-
 (def order-map
   {:asc 1
    :desc -1})
 
+(defn qount
+  [label]
+  [{:$count label}])
+
+(defn offset
+  [n]
+  [{:$skip n}])
+
 (defn order
   [fields]
   [{:$sort fields}])
+
+(defn group-count
+  [path]
+  [{:$group {:_id (str "$" path) :count {:$sum 1}}}
+   {:$project {:key "$_id" :count "$count"}}])
 
 (def steps
   {:where where
@@ -136,6 +140,8 @@
    :select select
    :limit limit
    :order order
+   :offset offset
+   :count qount
    :group-count group-count})
 
 (defn apply-step
@@ -156,7 +162,8 @@
   ([db query] (evaluate db :vertex query))
   ([db collection query]
    (let [aggregate (translate query)]
-     (mongo/aggregate db collection aggregate {:allow-disk-use true :cursor true}))))
+     (log/info aggregate)
+     (mongo/aggregate db collection aggregate {:allow-disk-use true :cursor {:batch-size 1000}}))))
 
 (defn flat
   "this will squash properties if they are in the reserved set"
@@ -200,6 +207,8 @@
   (doseq [edge edges]
     (add-edge! db edge)))
 
+
+
 (def gods-graph
   {:vertexes
    [{:label "location" :gid "sky" :properties {:name "sky"}}
@@ -235,3 +244,16 @@
     {:from-label "monster" :from "hercules" :label "battled" :to-label "monster" :to "cerberus" :properties {:trial 12}}
     {:from-label "monster" :from "cerberus" :label "lives" :to-label "location" :to "tartarus"}]})
 
+;; [{:$match {:label "Biosample"}}
+;;  {:$lookup {:from "edge", :localField "gid", :foreignField "to", :as "to"}}
+;;  {:$unwind "$to"}
+;;  {:$match {:to.label "hasSample"}}
+;;  {:$addFields {"to._history" "$history"}}
+;;  {:$replaceRoot {:newRoot "$to"}}
+;;  {:$lookup {:from "vertex", :localField "from", :foreignField "gid", :as "to"}}
+;;  {:$unwind "$to"}
+;;  {:$match {}}
+;;  {:$addFields {"to._history" "$_history"}}
+;;  {:$replaceRoot {:newRoot "$to"}}
+;;  {:$group {:_id "$name", :count {:$sum 1}}}
+;;  {:$project {:key "$_id", :count "$count"}}]

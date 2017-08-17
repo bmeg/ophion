@@ -56,7 +56,7 @@
 (defn aggregate
   ([db collection pipeline] (aggregate db collection pipeline {}))
   ([db collection pipeline opts]
-   (log/info collection pipeline)
+   ;; (log/info collection pipeline)
    (mapply mongo/aggregate db (name collection) pipeline opts)))
 
 (defn extract-failures

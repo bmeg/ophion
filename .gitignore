@@ -8,3 +8,4 @@ client/js/node_modules
 .lein-failures
 node_modules
 npm-debug.log
+.repl

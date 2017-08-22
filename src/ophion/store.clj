@@ -3,13 +3,22 @@
    [ophion.mongo :as db]))
 
 (defn store-query
-  [db {:keys [user key focus query]}]
+  [db {:keys [user key focus path query]}]
   (db/insert!
    db :ophionquery
    {:user user
     :key key
     :focus focus
+    :path path
     :query query}))
+
+(defn all-queries
+  [db]
+  (let [queries
+        (map
+         #(dissoc % :_id)
+         (db/find-all db :ophionquery))]
+    (group-by :focus queries)))
 
 (defn load-query
   [db {:keys [user key]}]

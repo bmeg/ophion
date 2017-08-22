@@ -13,8 +13,9 @@
 
 (defn connect!
   [config]
-  (let [connection (db/connect)]
-    (db/get-db connection (name (:database config)))))
+  (let [connection (db/connect (select-keys config [:host :port]))
+        database (name (:database config))]
+    (db/get-db connection database)))
 
 (defn insert!
   [db collection what]

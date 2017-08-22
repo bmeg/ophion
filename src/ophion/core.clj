@@ -17,6 +17,7 @@
    [ophion.query :as query]
    [ophion.search :as search]
    [ophion.mongo :as mongo]
+   [ophion.store :as store]
    [ophion.aggregate :as aggregate])
   (:import
    [java.io InputStreamReader]
@@ -117,6 +118,23 @@
    :headers {"content-type" "application/json"}
    :body "found"})
 
+(defn save-query-handler
+  [mongo request]
+  (let [query (json/parse-stream (InputStreamReader. (:body request)) keyword)
+        relevant (select-keys query [:user :key :focus :path :query])]
+    (log/info query)
+    (store/store-query mongo relevant)
+    {:status 200
+     :headers {"content-type" "application/json"}
+     :body (json/generate-string (store/all-queries mongo))}))
+
+(defn all-queries-handler
+  [mongo request]
+  (let [queries (store/all-queries mongo)]
+    {:status 200
+     :headers {"content-type" "application/json"}
+     :body (json/generate-string queries)}))
+
 (defn parse-int
   ([n] (parse-int n 0))
   ([n default]
@@ -171,6 +189,18 @@
     (log/info "--> search counts")
     (#'search-counts-handler search request)))
 
+(defn save-query
+  [mongo]
+  (fn [request]
+    (log/info "--> save query")
+    (#'save-query-handler mongo request)))
+
+(defn all-queries
+  [mongo]
+  (fn [request]
+    (log/info "--> all queries")
+    (#'all-queries-handler mongo request)))
+
 (defn home
   [request]
   {:status 200
@@ -178,14 +208,16 @@
    :body (config/read-resource "public/index.html")})
 
 (defn ophion-routes
-  [graph search protograph]
+  [graph search protograph mongo]
   [["/" :home #'home]
    ["/schema/protograph" :schema (fetch-schema protograph)]
    ["/vertex/find/:gid" :vertex-find (find-vertex graph)]
    ["/vertex/query" :vertex-query (vertex-query graph search)]
    ["/edge/find/:from/:label/:to" :edge-find (find-edge graph)]
    ["/edge/query" :edge-query (edge-query graph)]
-   ["/search/counts" :search-counts (search-counts search)]])
+   ["/search/counts" :search-counts (search-counts search)]
+   ["/query/save" :save-query (save-query mongo)]
+   ["/query/all" :all-queries (all-queries mongo)]])
 
 (defn start
   []
@@ -198,8 +230,9 @@
                      (get-in config [:protograph :path])
                      "resources/config/protograph.yml"))
         schema (protograph/graph-structure protograph)
+        mongo (mongo/connect! (get config :mongo))
         ;; (Protograph/writeJSON (.graphStructure protograph))
-        routes (polaris/build-routes (ophion-routes graph search schema))
+        routes (polaris/build-routes (ophion-routes graph search schema mongo))
         router (resource/wrap-resource (polaris/router routes) "public")
         app (-> router
                 (resource/wrap-resource "public")

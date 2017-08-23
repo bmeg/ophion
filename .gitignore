@@ -9,3 +9,4 @@ client/js/node_modules
 node_modules
 npm-debug.log
 .repl
+*_pb2.py

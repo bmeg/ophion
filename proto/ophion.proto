@@ -123,16 +123,16 @@ message Traversal {
 message Vertex {
   string label = 1;
   string gid = 2;
-  google.protobuf.Struct properties = 3;
+  google.protobuf.Struct data = 3;
 }
 
 message Edge {
   string label = 1;
-  string inLabel = 2;
-  string in = 3;
-  string outLabel = 4;
-  string out = 5;
-  google.protobuf.Struct properties = 6;
+  string fromLabel = 2;
+  string from = 3;
+  string toLabel = 4;
+  string to = 5;
+  google.protobuf.Struct data = 6;
 }
 
 message Function {

@@ -50,12 +50,12 @@ message Traversal {
     string V = 1;
     string E = 2;
     string label = 3;
-    repeated string in = 6;
-    repeated string out = 7;
-    string inEdge = 8;
-    string outEdge = 9;
-    string inVertex = 10;
-    string outVertex = 11;
+    Labels from = 6;
+    Labels to = 7;
+    string toEdge = 8;
+    string fromEdge = 9;
+    string toVertex = 10;
+    string fromVertex = 11;
 
     // traversal manipulation
     Labels as = 5;
@@ -96,7 +96,6 @@ message Traversal {
     //methods with side effects, these should be ignored for read-only graphs
     string addV = 100;
     string addE = 102;
-    string to = 103;
     string drop = 104;
     google.protobuf.Struct property = 101;
   }

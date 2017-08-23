@@ -61,13 +61,13 @@ message Traversal {
     // sheer graph traversal
     Labels V = 1;
     Labels E = 2;
-    Labels in = 3;
-    Labels out = 4;
+    Labels from = 3;
+    Labels to = 4;
     Labels both = 5;
-    Labels inEdge = 6;
-    Labels outEdge = 7;
-    bool inVertex = 8;
-    bool outVertex = 9;
+    Labels fromEdge = 6;
+    Labels toEdge = 7;
+    bool fromVertex = 8;
+    bool toVertex = 9;
     Search search = 99;
 
     // traversal manipulation
@@ -115,7 +115,6 @@ message Traversal {
     //methods with side effects, these should be ignored for read-only graphs
     Vertex addVertex = 100;
     Edge addEdge = 101;
-    string to = 102;
     string drop = 103;
     google.protobuf.Struct property = 104;
   }

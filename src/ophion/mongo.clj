@@ -120,7 +120,11 @@
    [[:gid {:unique true}]
     [:label {}]
     [:from {}]
-    [:to {}]]})
+    [:to {}]]
+   :ophionquery
+   [[:key {:unique true}]]
+   :ophionresults
+   [[:key {}]]})
 
 (defn -main
   [& args]

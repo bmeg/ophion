@@ -35,8 +35,8 @@
 (def output
   (comp
    append-newline
-   json/generate-string
-   query/translate))
+   json/generate-string))
+   ;; query/translate
 
 (defn default-graph
   []
@@ -73,19 +73,21 @@
 (defn vertex-query-handler
   [graph search cache request]
   (let [raw-query (json/parse-stream (InputStreamReader. (:body request)) keyword)
-        query (query/delabelize raw-query)
-        _ (log/info (mapv identity query))
+        ;; query (query/delabelize raw-query)
+        _ (log/info (mapv identity (query/delabelize raw-query)))
         ;; out (check-query-cache graph search cache query)
-        transaction (.newTransaction graph)
-        db {:graph graph :search search :transaction transaction}
-        result (query/evaluate db query)
-        out (map output result)
+        ;; transaction (.newTransaction graph)
+        ;; db {:graph graph :search search :transaction transaction}
+        ;; result (query/evaluate db query)
+        {:keys [results commit]} (query/perform {:graph graph :search search} raw-query)
+        out (map output results)
         source (stream/->source out)]
     (stream/on-drained
      source
      (fn []
        (log/debug "query complete")
-       (.rollback transaction)))
+       ;; (.rollback transaction)
+       (commit)))
     {:status 200
      :headers {"content-type" "application/json"}
      :body source}))
@@ -119,11 +121,11 @@
    :body "found"})
 
 (defn save-query-handler
-  [mongo request]
+  [graph search mongo request]
   (let [query (json/parse-stream (InputStreamReader. (:body request)) keyword)
         relevant (select-keys query [:user :key :focus :path :query])]
     (log/info query)
-    (store/store-query mongo relevant)
+    (store/store-query {:graph graph :search search} mongo relevant)
     {:status 200
      :headers {"content-type" "application/json"}
      :body (json/generate-string (store/all-queries mongo))}))
@@ -134,6 +136,14 @@
     {:status 200
      :headers {"content-type" "application/json"}
      :body (json/generate-string queries)}))
+
+(defn query-comparison-handler
+  [mongo request]
+  (let [queries (json/parse-stream (InputStreamReader. (:body request)) keyword)
+        comparison (store/query-comparison mongo queries)]
+    {:status 200
+     :headers {"content-type" "application/json"}
+     :body (json/generate-string comparison)}))
 
 (defn parse-int
   ([n] (parse-int n 0))
@@ -190,16 +200,22 @@
     (#'search-counts-handler search request)))
 
 (defn save-query
-  [mongo]
+  [graph search mongo]
   (fn [request]
     (log/info "--> save query")
-    (#'save-query-handler mongo request)))
+    (#'save-query-handler graph search mongo request)))
 
 (defn all-queries
   [mongo]
   (fn [request]
     (log/info "--> all queries")
     (#'all-queries-handler mongo request)))
+
+(defn query-comparison
+  [mongo]
+  (fn [request]
+    (log/info "--> query comparison")
+    (#'query-comparison-handler mongo request)))
 
 (defn home
   [request]
@@ -216,8 +232,9 @@
    ["/edge/find/:from/:label/:to" :edge-find (find-edge graph)]
    ["/edge/query" :edge-query (edge-query graph)]
    ["/search/counts" :search-counts (search-counts search)]
-   ["/query/save" :save-query (save-query mongo)]
-   ["/query/all" :all-queries (all-queries mongo)]])
+   ["/query/save" :save-query (save-query graph search mongo)]
+   ["/query/all" :all-queries (all-queries mongo)]
+   ["/query/compare" :query-comparison (query-comparison mongo)]])
 
 (defn start
   []

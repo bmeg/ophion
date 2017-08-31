@@ -658,3 +658,11 @@
     (partial extract :labels)
     (partial extract :queries))
    query))
+
+(defn perform
+  [{:keys [graph search] :as db} raw]
+  (let [query (delabelize raw)
+        transaction (.newTransaction graph)
+        results (evaluate (assoc db :transaction transaction) query)]
+    {:results (map translate results)
+     :commit (fn [] (.rollback transaction))}))

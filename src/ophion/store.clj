@@ -16,7 +16,7 @@
       :query pure})
     (let [{:keys [results commit]} (query/perform graph pure)
           index (map-indexed
-                 (fn [result index]
+                 (fn [index result]
                    {:key key
                     :order index
                     :result result})

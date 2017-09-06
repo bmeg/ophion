@@ -5,11 +5,11 @@
    [monger.core :as db]
    [monger.conversion :as convert]
    [monger.collection :as mongo])
- (:import
-  [com.mongodb.client.model InsertManyOptions BulkWriteOptions]
-  [com.mongodb DB WriteResult DBObject WriteConcern BulkWriteException]
-  [java.util List Map]
-  [org.bson.types ObjectId]))
+  (:import
+   [com.mongodb.client.model InsertManyOptions BulkWriteOptions]
+   [com.mongodb DB WriteResult DBObject WriteConcern BulkWriteException]
+   [java.util List Map]
+   [org.bson.types ObjectId]))
 
 (defn connect!
   [config]
@@ -57,8 +57,25 @@
 (defn aggregate
   ([db collection pipeline] (aggregate db collection pipeline {}))
   ([db collection pipeline opts]
-   ;; (log/info collection pipeline)
    (mapply mongo/aggregate db (name collection) pipeline opts)))
+
+(def document-limit 10000)
+
+(defn bufferize-query
+  ([db collection query buffer] (bufferize-query db collection query buffer 0))
+  ([db collection query buffer page]
+   (let [buffered-query (concat query [{:$skip (* buffer page)} {:$limit buffer}])
+         results (aggregate
+                  db collection
+                  buffered-query
+                  {:allow-disk-use true
+                   :cursor {:batch-size document-limit}})]
+     (if (or (empty? results) (< (count results) buffer))
+       results
+       (lazy-seq
+        (concat
+         results
+         (bufferize-query db collection query buffer (inc page))))))))
 
 (defn extract-failures
   [^BulkWriteException e]

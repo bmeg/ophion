@@ -6,8 +6,6 @@
    [taoensso.timbre :as log]
    [ophion.mongo :as mongo]))
 
-(def document-limit 10000)
-
 (defn where
   [where]
   [{:$match where}])

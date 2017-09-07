@@ -44,9 +44,9 @@
   [db key]
   (db/aggregate
    db :ophionresults
-   {:$match {:key key}}
-   {:$sort {:order 1}}
-   {:$replaceRoot {:newRoot "$result"}}))
+   [{:$match {:key key}}
+    {:$sort {:order 1}}
+    {:$replaceRoot {:newRoot "$result"}}]))
 
 (defn queries-for-focus
   [db focus]
@@ -73,6 +73,10 @@
 (defn query-comparison
   [db queries]
   (let [results (results-map db queries)
-        intersect (apply set/intersection (map :gid (vals results-map)))
-        counts (into {} (map (fn [[k v]] [k (count v)])))]
+        sets (map
+              (fn [result]
+                (set (map :gid result)))
+              (vals results))
+        intersect (apply set/intersection sets)
+        counts (into {} (map (fn [[k v]] [k (count v)]) results))]
     (assoc counts :_intersection (count intersect))))

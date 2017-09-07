@@ -140,7 +140,8 @@
 (defn query-comparison-handler
   [mongo request]
   (let [queries (json/parse-stream (InputStreamReader. (:body request)) keyword)
-        comparison (store/query-comparison mongo queries)]
+        comparison (store/query-comparison mongo (:queries queries))]
+    (log/info "queries" queries)
     {:status 200
      :headers {"content-type" "application/json"}
      :body (json/generate-string comparison)}))

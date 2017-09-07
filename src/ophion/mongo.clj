@@ -47,8 +47,9 @@
   (mongo/find-maps db (name collection)))
 
 (defn count
-  [db collection where]
-  (mongo/count db (name collection) where))
+  ([db collection] (count db collection {}))
+  ([db collection where]
+   (mongo/count db (name collection) where)))
 
 (defn mapply
   [f & args]

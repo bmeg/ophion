@@ -192,13 +192,13 @@
 - label: GeneExpression
   vertexes:
     - label: GeneExpression
-      gid: "geneExpression:{{biosampleId}}"
+      gid: "geneExpression:{{biosampleId}}:{{type}}"
       merge: true
   edges:
     - fromLabel: GeneExpression
       label: expressionFor
       toLabel: Biosample
-      from: "geneExpression:{{biosampleId}}"
+      from: "geneExpression:{{biosampleId}}:{{type}}"
       to: "{{biosampleId}}"
 
 - label: Pubmed

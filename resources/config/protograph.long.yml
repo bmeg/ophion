@@ -237,7 +237,7 @@
   edges:
     - index: features
       fromLabel: Evidence
-      label: genotype
+      label: genotypeOf
       toLabel: Gene
       from: "evidence:{{genes|sort|join:,}}:{{association.phenotype.description}}"
       to: "gene:{{_index.geneSymbol}}"
@@ -245,7 +245,7 @@
         - _index
     - index: association.environmentalContexts
       fromLabel: Evidence
-      label: environmentalContext
+      label: environmentalContextFor
       toLabel: Compound
       from: "evidence:{{genes|sort|join:,}}:{{association.phenotype.description}}"
       to: "{{_index.id}}"
@@ -253,12 +253,12 @@
         response: "{{association.response_type}}"
     - index: association.evidence.0.info.publications|flatten
       fromLabel: Evidence
-      label: evidence
+      label: evidenceFor
       toLabel: Pubmed
       from: "evidence:{{genes|sort|join:,}}:{{association.phenotype.description}}"
       to: "pubmed:{{_index|split:/|last}}"
     - fromLabel: Evidence
-      label: phenotype
+      label: phenotypeOf
       toLabel: OntologyTerm
       from: "evidence:{{genes|sort|join:,}}:{{association.phenotype.description}}"
       to: "term:{{association.phenotype.description}}"

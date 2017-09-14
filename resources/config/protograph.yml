@@ -71,6 +71,8 @@
       toLabel: Biosample
       to: "{{biosampleId}}"
       lookup: "callSet:{{name}}"
+      properties:
+        callset: "{{name}}"
 
 - label: Variant
   vertexes:
@@ -83,6 +85,7 @@
         - info
       properties:
         alternateBases: "{{alternateBases|join:,}}"
+        chromosome: "{{referenceName}}"
   edges:
     - index: calls
       fromLabel: Variant
@@ -90,6 +93,14 @@
       toLabel: Biosample
       from: "variant:{{referenceName}}:{{start}}:{{end}}:{{referenceBases}}:{{alternateBases|join:,}}"
       lookup: "{{_index.callSetId}}"
+      merge: true
+      filter:
+        - calls
+      splice:
+        - info
+      properties:
+        alternateBases: "{{alternateBases|join:,}}"
+        chromosome: "{{referenceName}}"
 
 - label: VariantAnnotation
   edges:
@@ -101,6 +112,8 @@
       to: "{{_index.featureId}}"
       properties:
         effects: "{{_index.effects|each:term|join:,}}"
+        gene: "{{_index.featureId}}"
+        bases: "{{_index.alternateBases}}"
 
 - label: ResponseCurve
   edges:

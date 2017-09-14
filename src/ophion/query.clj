@@ -666,3 +666,4 @@
         results (evaluate (assoc db :transaction transaction) query)]
     {:results (map translate results)
      :commit (fn [] (.rollback transaction))}))
+

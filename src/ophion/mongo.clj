@@ -2,6 +2,7 @@
   (:require
    [clojure.string :as string]
    [taoensso.timbre :as log]
+   [ophion.config :as config]
    [monger.core :as db]
    [monger.conversion :as convert]
    [monger.collection :as mongo])
@@ -146,7 +147,8 @@
 
 (defn -main
   [& args]
-  (let [db (connect! {:database (or (second args) "ophion")})]
+  (let [config (config/read-config "config/ophion.clj")
+        db (connect! (get config :mongo))]
     (condp = (first args)
       "list"
       (do

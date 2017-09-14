@@ -148,7 +148,12 @@
    [{:id String}
     {:gid String}
     {:type String}
+    {:refseq String}
+    {:accession String}
     {:name String}
+    {:tag String}
+    {:term String}
+    {:pmid String}
     {:symbol String}
     {:gender String}
     {:featureId String}

@@ -1,0 +1,6 @@
+* G2p
+** query for a gene or feature name [feature.0.name] plus other information
+** get back association.*: phenotype.description, evidence_label, drug_labels, evidence.info.publications, description, response_type
+* variants
+** list of chromosome positions
+** see if there were any samples which variants at that position

@@ -152,7 +152,14 @@
     {:symbol String}
     {:gender String}
     {:featureId String}
-    {:chromosome String :start String :end String}]
+    {:referenceName String}
+    {:chromosome String}
+    {:start String}
+    {:end String}
+    {:genotype String}
+    {:phenotype String}
+    {:chromosome String :start String :end String}
+    {:referenceName String :start String :end String}]
    :edges
    [{:variantInGene {:featureId String}}]})
 

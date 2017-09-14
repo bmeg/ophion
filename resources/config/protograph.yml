@@ -243,6 +243,11 @@
         source: "{{source}}"
         genotype: "{{genes|sort|join:,}}"
         phenotype: "{{association.phenotype.description}}"
+        evidenceLabel: "{{association.evidence_label}}"
+        evidenceLevel: "{{association.evidence_level}}"
+        description: "{{association.description}}"
+        publicationUrl: "{{assocation.publication_url}}"
+        responseType: "{{association.response_type}}"
     - label: OntologyTerm
       gid: "term:{{association.phenotype.description}}"
       properties:

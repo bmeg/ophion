@@ -5,15 +5,15 @@
    [ophion.query :as query]))
 
 (defn store-query
-  [graph db {:keys [user key focus path query]}]
-  (let [pure (query/delabelize query)]
-    (db/insert!
-     db :ophionquery
-     {:user user
-      :key key
-      :focus focus
-      :path path
-      :query pure})
+  [graph db {:keys [user key focus path query current]}]
+  (let [pure (query/delabelize query)
+        insert {:user user
+                :key key
+                :focus focus
+                :path path
+                :current current
+                :query pure}]
+    (db/insert! db :ophionquery insert)
     (let [{:keys [results commit]} (query/perform graph pure)
           index (map-indexed
                  (fn [index result]

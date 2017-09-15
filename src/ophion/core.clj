@@ -123,7 +123,7 @@
 (defn save-query-handler
   [graph search mongo request]
   (let [query (json/parse-stream (InputStreamReader. (:body request)) keyword)
-        relevant (select-keys query [:user :key :focus :path :query])]
+        relevant (select-keys query [:user :key :focus :path :query :current])]
     (log/info query)
     (store/store-query {:graph graph :search search} mongo relevant)
     {:status 200

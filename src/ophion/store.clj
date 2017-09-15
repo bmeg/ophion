@@ -42,11 +42,20 @@
 
 (defn load-results
   [db key]
-  (db/aggregate
-   db :ophionresults
-   [{:$match {:key key}}
-    {:$sort {:order 1}}
-    {:$replaceRoot {:newRoot "$result"}}]))
+  (map
+   :result
+   (db/aggregate
+    db :ophionresults
+    [{:$match {:key key}}
+     {:$sort {:order 1}}])))
+
+;; (defn load-results
+;;   [db key]
+;;   (db/aggregate
+;;    db :ophionresults
+;;    [{:$match {:key key}}
+;;     {:$sort {:order 1}}
+;;     {:$replaceRoot {:newRoot "$result"}}]))
 
 (defn queries-for-focus
   [db focus]

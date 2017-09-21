@@ -46,6 +46,21 @@
     (.dataType
      (.makePropertyKey manage (name key)) type))))
 
+(defn property-type
+  [value]
+  (if (coll? val)
+    Object
+    (cond
+      (string? val) String
+      (float? val) Double
+      (number? val) Long
+      :else Object)))
+
+;; (defn janus-set-property
+;;   [manage element key value]
+;;   (let [type (property-type value)
+;;         property (janus-get-property-key manage [key type])]))
+
 (defn janus-get-edge-label
   [manage edge-label]
   (or

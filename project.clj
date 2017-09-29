@@ -11,20 +11,22 @@
                  ;; [org.immutant/web "2.1.7"]
                  [http-kit "2.2.0"]
                  [protograph "0.0.7"]
-                 [clojurewerkz/elastisch "2.2.1"]
+                 [clojurewerkz/elastisch "2.2.1" :exclusions [commons-codec]]
                  [com.novemberain/monger "3.1.0"]
-                 ;; [clojurewerkz/propertied "1.2.0"]
-                 [org.apache.tinkerpop/tinkergraph-gremlin "3.2.3"]
-                 [org.janusgraph/janusgraph-core "0.2.0-SNAPSHOT"
+                 [org.janusgraph/janusgraph-core "0.2.0-20170924.171957-19"
+                  ;; org.janusgraph/janusgraph-core "0.2.0-SNAPSHOT"
                   :exclusions [org.slf4j/slf4j-api
                                org.yaml/snakeyaml]]
-                 [org.janusgraph/janusgraph-cassandra "0.2.0-SNAPSHOT"
+                 [org.janusgraph/janusgraph-cassandra "0.2.0-20170924.172029-17"
                   :exclusions [org.xerial.snappy/snappy-java
                                org.slf4j/slf4j-api
-                               org.yaml/snakeyaml]]
-                 [org.janusgraph/janusgraph-es "0.2.0-SNAPSHOT"
-                  :exclusions [org.slf4j/slf4j-api
                                org.yaml/snakeyaml]]]
+
+
+                 ;; [org.janusgraph/janusgraph-es "0.2.0-20170924.171957-19"
+                 ;;  :exclusions [org.slf4j/slf4j-api
+                 ;;               org.yaml/snakeyaml]]
+
   :repositories [["sonatype snapshots"
                   "https://oss.sonatype.org/content/repositories/snapshots"]
                  ["sonatype releases"

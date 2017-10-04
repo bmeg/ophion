@@ -50,7 +50,6 @@
         type-id (.getTypeId id)
         edge-id (.getRelationId id)
         to-id (.getInVertexId id)]
-    (log/info "ingesting" (.getName file))
     (merge
      (lift-properties data)
      {:_janusId edge-id

@@ -33,6 +33,7 @@
 
 (defn ingest-vertex
   [graph data]
+  (log/info "vertex" (:gid data))
   (let [vertex (query/add-vertex! graph data)
         id (.id vertex)]
     (merge
@@ -42,12 +43,14 @@
 
 (defn ingest-edge
   [graph data]
+  (log/info "edge" (:gid data))
   (let [edge (query/add-edge! graph data)
         id (.id edge)
         from-id (.getOutVertexId id)
         type-id (.getTypeId id)
         edge-id (.getRelationId id)
         to-id (.getInVertexId id)]
+    (log/info "ingesting" (.getName file))
     (merge
      (lift-properties data)
      {:_janusId edge-id
@@ -84,6 +87,7 @@
 (defn ingest-file
   [path graph continuation]
   (doseq [file (kafka/dir->files path)]
+    (log/info "ingesting" (.getName file))
     (let [label (kafka/path->label (.getName file))
           lines (line-seq (io/reader file))]
       (doseq [line lines]

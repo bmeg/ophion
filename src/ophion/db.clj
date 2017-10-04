@@ -156,6 +156,7 @@
 (defn connect-graph
   [path]
   (let [config (config/read-config path)]
+    (log/info "connecting to" (:graph config))
     (connect (:graph config))))
 
 (def indexes
@@ -181,13 +182,15 @@
     {:chromosome String :start String :end String}
     {:referenceName String :start String :end String}]
    :edges
-   [{:variantInGene {:featureId String}}]})
+   [{:variantIn {:featureId String}}]})
 
 (defn -main
   [& args]
   (let [graph (connect-graph "config/ophion.clj")
         indexes indexes]
     (doseq [vertex (:vertexes indexes)]
+      (log/info "creating index" vertex)
       (janus-property-index graph vertex))
     (doseq [edge (:edges indexes)]
+      (log/info "creating edge index" edge)
       (janus-edge-index graph (first (keys edge)) (first (vals edge))))))

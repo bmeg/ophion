@@ -157,4 +157,5 @@
     (if (:topic env)
       (ingest-topic config graph continuation)
       ;; (ingest-batches (:input env) graph)
-      (ingest-file (:input env) graph continuation))))
+      (ingest-file (:input env) graph continuation))
+    (log/info "ingest complete")))

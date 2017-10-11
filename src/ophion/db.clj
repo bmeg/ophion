@@ -175,14 +175,18 @@
     {:featureId String}
     {:referenceName String}
     {:chromosome String}
+    {:level Double}
     {:start String}
     {:end String}
     {:genotype String}
     {:phenotype String}
-    {:chromosome String :start String :end String}
-    {:referenceName String :start String :end String}]
+    [:chromosome String :start String :end String]
+    [:referenceName String :start String :end String]]
    :edges
-   [{:variantIn {:featureId String}}]})
+   [{:variantIn {:featureId String}}
+    {:expressionLevel {:level Double}}
+    {:expressionLevel {:gene String}}
+    {:expressionLevel {:sample String}}]})
 
 (defn -main
   [& args]

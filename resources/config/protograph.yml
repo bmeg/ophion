@@ -200,6 +200,16 @@
       toLabel: Biosample
       from: "geneExpression:{{biosampleId}}:{{type}}"
       to: "{{biosampleId}}"
+    - index: expressions
+      fromLabel: Biosample
+      label: expressionFor
+      toLabel: Gene
+      from: "{{biosampleId}}"
+      to: "{{_index.0|name}}"
+      properties:
+        sample: "{{biosampleId}}"
+        gene: "{{_index.0}}"
+        level.float: "{{_index.1}}"
 
 - label: Pubmed
   vertexes:

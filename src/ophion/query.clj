@@ -456,7 +456,9 @@
    (fn [g step]
      (let [key (-> step keys first)
            operation (get operations (camelize-key key))]
-       (operation g (get step key))))
+       (try
+         (operation g (get step key))
+         (catch Exception e (log/info "operation" operation "does not exist?")))))
    traversal
    query))
 

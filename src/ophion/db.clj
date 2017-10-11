@@ -27,7 +27,7 @@
 
 (defn property-index-name
   [index]
-  (string/join "-" (concat (map name (keys index)) ["index"])))
+  (string/join "-" (concat (map name (map first index)) ["index"])))
 
 (defn edge-index-name
   [edge-label index]
@@ -35,7 +35,7 @@
    "-"
    (concat
     [(name edge-label)]
-    (sort (map name (keys index)))
+    (sort (map name (map first index)))
     ["vertex-centric-index"])))
 
 (defn janus-get-property-key
@@ -180,8 +180,8 @@
     {:end String}
     {:genotype String}
     {:phenotype String}
-    [:chromosome String :start String :end String]
-    [:referenceName String :start String :end String]]
+    [[:chromosome String] [:start String] [:end String]]
+    [[:referenceName String] [:start String] [:end String]]]
    :edges
    [{:variantIn {:featureId String}}
     {:expressionLevel {:level Double}}

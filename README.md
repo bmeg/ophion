@@ -2,7 +2,7 @@
 
 Language for making graph queries from data
 
-![OPHION](https://github.com/bmeg/ophion/blob/master/resources/ophion.jpg)
+![OPHION](https://github.com/bmeg/ophion/blob/master/resources/img/ophion.png)
 
 ## Usage
 

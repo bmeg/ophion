@@ -21,5 +21,5 @@
          :port 27017
          :database "pentomino"}
  :server {:port 4443}
- :protograph {:path "resources/config/protograph.long.yml"
+ :protograph {:path "resources/config/protograph.yml"
               :prefix "protograph"}}

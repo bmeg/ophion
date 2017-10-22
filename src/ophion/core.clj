@@ -249,7 +249,6 @@
                      "resources/config/protograph.yml"))
         schema (protograph/graph-structure protograph)
         mongo (mongo/connect! (get config :mongo))
-        ;; (Protograph/writeJSON (.graphStructure protograph))
         routes (polaris/build-routes (ophion-routes graph search schema mongo))
         router (resource/wrap-resource (polaris/router routes) "public")
         app (-> router

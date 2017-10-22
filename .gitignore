@@ -10,3 +10,4 @@ node_modules
 npm-debug.log
 .repl
 *_pb2.py
+pom.xml*

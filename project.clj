@@ -10,7 +10,7 @@
                  [com.taoensso/timbre "4.8.0"]
                  ;; [org.immutant/web "2.1.7"]
                  [http-kit "2.2.0"]
-                 [protograph "0.0.7"]
+                 [protograph "0.0.8"]
                  [clojurewerkz/elastisch "2.2.1" :exclusions [commons-codec]]
                  [com.novemberain/monger "3.1.0"]
                  [;;org.janusgraph/janusgraph-core "0.2.0-20170924.171957-19"

@@ -1,6 +1,5 @@
 project/target/
 target/
-*.pyc
 client/js/build/ophion.js
 client/js/node_modules
 .lein-repl-history
@@ -11,3 +10,15 @@ npm-debug.log
 .repl
 *_pb2.py
 pom.xml*
+
+# Python temps
+__pycache__/
+*.py[cod]
+*$py.class
+build/
+dist/
+eggs/
+.eggs/
+*.egg-info/
+*.egg
+.tox/

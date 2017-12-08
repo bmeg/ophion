@@ -23,7 +23,7 @@ print.ophion.query <- function(x) {
 append.ophion.query <- function(x, values, after = length(x)) {
   q <- attr(x, "query")
   after <- length(q)
-  q[[after + 1]] <- values  
+  q[[after + 1]] <- values
   attr(x, "query") <- q
   x
 }
@@ -36,12 +36,19 @@ render <- function(q) {
 #' @export
 execute <- function(q) {
   body <- render(q)
-  print(attributes(q))
   response <- httr::POST(url = paste(attr(q, "host"), "/vertex/query", sep = ""),
                          body = body,
-                         httr::content_type_json(),
+                         encode = "json",
+                         httr::add_headers("Content-Type"="application/json",
+                                           "Accept"="application/json"),
                          httr::verbose())
-  httr::content(response, type="application/json", as="parsed")
+  httr::content(response, as="text") %>%
+    trimws() %>%
+    strsplit("\n") %>%
+    unlist() %>%
+    lapply(function(x) {
+        jsonlite::fromJSON(x)
+    })
 }
 
 #' @export

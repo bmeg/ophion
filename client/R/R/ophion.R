@@ -192,8 +192,8 @@ group <- function(q, bys) {
 }
 
 #' @export
-group_count <- function(q, label) {
-  if (length(label) == 0) {
+group_count <- function(q, label=NULL) {
+  if (is.null(label)) {
     append.ophion.query(q, list("groupCount", c()))
   } else {
     append.ophion.query(q, list("groupCount", list("key" = label)))

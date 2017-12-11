@@ -121,41 +121,37 @@ class OphionQuery:
         self.parent = parent
 
     # traversals
-    def incoming(self, *args):
-        if len(args) == 0:
+    def incoming(self, labels=None):
+        if labels is None:
             self.query.append({'in': []})
-        elif len(args) == 1:
-            labels = args[0]
+        else:
             if not isinstance(labels, list):
                 labels = [labels]
             self.query.append({'in': {'labels': labels}})
         return self
 
-    def outgoing(self, *args):
-        if len(args) == 0:
+    def outgoing(self, labels=None):
+        if labels is None:
             self.query.append({'out': []})
-        elif len(args) == 1:
-            labels = args[0]
+        else:
             if not isinstance(labels, list):
                 labels = [labels]
             self.query.append({'out': {'labels': labels}})
         return self
 
-    def inEdge(self, *args):
-        if len(args) == 0:
+    def inEdge(self, labels=None):
+        if labels is None:
             self.query.append({'inEdge': []})
-        elif len(args) == 1:
-            labels = args[0]
+        else:
             if not isinstance(labels, list):
                 labels = [labels]
             self.query.append({'inEdge': {'labels': labels}})
         return self
 
-    def outEdge(self, *args):
-        if len(args) == 0:
+    def outEdge(self, labels=None):
+        if labels is None:
             self.query.append({'outEdge': []})
-        elif len(args) == 1:
-            labels = args[0]
+        else:
             if not isinstance(labels, list):
                 labels = [labels]
             self.query.append({'outEdge': {'labels': labels}})
@@ -233,11 +229,10 @@ class OphionQuery:
         self.query.append({'group': {'bys': map(lambda by: {'key': by})}})
         return self
 
-    def groupCount(self, *args):
-        if len(args) == 0:
+    def groupCount(self, label=None):
+        if label is None:
             self.query.append({'groupCount': {}})
         else:
-            label = args[0]
             self.query.append({'groupCount': {'key': label}})
         return self
 
@@ -245,15 +240,13 @@ class OphionQuery:
         self.query.append({'is': wrapValue(condition)})
         return self
 
-    def has(self, key, *args):
+    def has(self, key, value=None):
         outer = {'key': key}
-        if len(args) > 0:
-            value = args[0]
+        if value is not None:
             v = wrapValue(value)
             outer = {'key': key}
             if isinstance(value, dict):
                 outer['condition'] = v
-                # elif: isinstance(value, OphionQuery);
             else:
                 outer['value'] = v
         self.query.append({'has': outer})
@@ -267,24 +260,17 @@ class OphionQuery:
         self.query.append({'match': {'queries': queries}})
         return self
 
-    def searchArgs(self, args):
-        out = {}
-
-        if len(args) > 1:
-            out['term'] = args[0]
-            out['search'] = args[1]
-        else:
-            out['search'] = args[0]
-
-        return out
-
-    def searchVertex(self, *args):
-        opts = self.searchArgs(args)
+    def searchVertex(self, search, term=None):
+        opts = {'search': search}
+        if term is not None:
+            opts['term'] = term
         self.query.append({'searchVertex': opts})
         return self
 
-    def searchEdge(self, *args):
-        opts = self.searchArgs(args)
+    def searchEdge(self, search, term=None):
+        opts = {'search': search}
+        if term is not None:
+            opts['term'] = term
         self.query.append({'searchEdge': opts})
         return self
 

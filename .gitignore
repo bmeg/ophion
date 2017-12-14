@@ -11,3 +11,7 @@ npm-debug.log
 .repl
 *_pb2.py
 pom.xml*
+client/R/*.tar.gz
+.Rproj.user
+.Rhistory
+.RData

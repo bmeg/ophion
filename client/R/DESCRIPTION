@@ -1,0 +1,18 @@
+Package: ophion
+Type: Package
+Title: Ophion - A Graph Database Client Library
+Version: 0.0.6
+Author: Adam Struck
+Maintainer: Adam Struck <strucka@ohsu.edu>
+License: MIT
+Description: Given a graph adhering to the tinkerpop interface, Ophion provides 
+             a json-encoded schema for making graph queries as data. Queries are 
+             defined using a series of step operations provided by Ophion. 
+Encoding: UTF-8
+LazyData: true
+RoxygenNote: 6.0.1
+Imports:
+  httr,
+  jsonlite
+Suggests:
+  magrittr

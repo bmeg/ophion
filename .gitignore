@@ -10,7 +10,6 @@ npm-debug.log
 .repl
 *_pb2.py
 pom.xml*
-
 # Python temps
 __pycache__/
 *.py[cod]
@@ -22,3 +21,7 @@ eggs/
 *.egg-info/
 *.egg
 .tox/
+client/R/*.tar.gz
+.Rproj.user
+.Rhistory
+.RData

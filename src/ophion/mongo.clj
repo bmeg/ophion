@@ -1,6 +1,7 @@
 (ns ophion.mongo
   (:require
    [clojure.string :as string]
+   [clojure.tools.cli :as cli]
    [taoensso.timbre :as log]
    [ophion.config :as config]
    [monger.core :as db]
@@ -145,15 +146,23 @@
    :ophionresults
    [[:key {}]]})
 
+(def parse-args
+  [["-c" "--config CONFIG" "path to config file"]
+   ["-i" "--input INPUT" "input file or directory"]])
+
 (defn -main
   [& args]
-  (let [config (config/read-config "config/ophion.clj")
+  (let [env (:options (cli/parse-opts args parse-args))
+        path (or (:config env) "config/ophion.clj")
+        config (config/read-config path)
         db (connect! (get config :mongo))]
-    (condp = (first args)
-      "list"
-      (do
-        (println (list-indexes db :vertex))
-        (println (list-indexes db :edge)))
+    (build-indexes db base-indexes)))
 
-      "build"
-      (build-indexes db base-indexes))))
+    ;; (condp = (first args)
+    ;;   "list"
+    ;;   (do
+    ;;     (println (list-indexes db :vertex))
+    ;;     (println (list-indexes db :edge)))
+
+    ;;   "build"
+    ;;   (build-indexes db base-indexes))

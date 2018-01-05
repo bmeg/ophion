@@ -11,3 +11,4 @@ npm-debug.log
 .repl
 *_pb2.py
 pom.xml*
+resources/config/event.clj

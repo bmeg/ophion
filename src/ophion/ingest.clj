@@ -96,42 +96,6 @@
                        "Edge" (ingest-edge graph data))]
           (continuation result))))))
 
-(defn ingest-batches
-  [path graph]
-  (doseq [file (kafka/dir->files path)]
-    (let [label (kafka/path->label (.getName file))
-          lines (line-seq (io/reader file))
-          processed (map
-                     (comp
-                      (if (= label "Vertex")
-                        aggregate/process-vertex
-                        aggregate/process-edge)
-                      #(json/parse-string % keyword))
-                     lines)]
-      (doseq [lines (partition-all 1000 processed)]
-        (pprint/pprint
-         (mongo/bulk-insert! graph (string/lower-case label) lines))))))
-
-(defn ingest-batches-carefully
-  [path graph]
-  (doseq [file (kafka/dir->files path)]
-    (let [label (kafka/path->label (.getName file))
-          lines (line-seq (io/reader file))
-          processed (map
-                     (comp
-                      (if (= label "Vertex")
-                        aggregate/process-vertex
-                        aggregate/process-edge)
-                      #(json/parse-string % keyword))
-                     lines)
-          groups (group-by :gid processed)
-          merged (map
-                  (fn [[gid parts]]
-                    (apply merge parts))
-                  groups)]
-      (pprint/pprint
-       (mongo/bulk-insert! graph (string/lower-case label) merged)))))
-
 (def parse-args
   [["-k" "--kafka KAFKA" "host for kafka server"
     :default "localhost:9092"]

@@ -2,8 +2,13 @@
   (:require
    [clojure.walk :as walk]
    [clojure.string :as string]
+   [clojure.tools.cli :as cli]
+   [clojure.pprint :as pprint]
+   [clojure.java.io :as io]
    [cheshire.core :as json]
    [taoensso.timbre :as log]
+   [protograph.kafka :as kafka]
+   [ophion.config :as config]
    [ophion.mongo :as mongo]))
 
 (defn where
@@ -230,11 +235,11 @@
      (mongo/aggregate db collection aggregate {:allow-disk-use true :cursor {:batch-size 1000}}))))
 
 (defn flat
-  "this will squash properties if they are in the reserved set"
+  "this will squash data if they are in the reserved set"
   [element]
   (merge
-   (:properties element)
-   (dissoc element :properties)))
+   (:data element)
+   (dissoc element :data)))
 
 (defn edge-gid
   [edge]
@@ -271,42 +276,103 @@
   (doseq [edge edges]
     (add-edge! db edge)))
 
-
-
 (def gods-graph
   {:vertexes
-   [{:label "location" :gid "sky" :properties {:name "sky"}}
-    {:label "location" :gid "sea" :properties {:name "sea"}}
-    {:label "location" :gid "tartarus" :properties {:name "tartarus"}}
-    {:label "titan" :gid "saturn" :properties {:name "saturn" :age 5000}}
-    {:label "titan" :gid "saturn" :properties {:name "saturn" :age 10000}}
-    {:label "god" :gid "jupiter" :properties {:name "jupiter" :age 5000}}
-    {:label "god" :gid "neptune" :properties {:name "neptune" :age 4500}}
-    {:label "god" :gid "pluto" :properties {:name "pluto"}}
-    {:label "god" :gid "pluto" :properties {:age 4000}}
-    {:label "demigod" :gid "hercules" :properties {:name "hercules" :age 30}}
-    {:label "human" :gid "alcmene" :properties {:name "alcmene" :age 45}}
-    {:label "monster" :gid "nemean" :properties {:name "nemean"}}
-    {:label "monster" :gid "hydra" :properties {:name "hydra"}}
-    {:label "monster" :gid "cerberus" :properties {:name "cerberus"}}]
+   [{:label "location" :gid "sky" :data {:name "sky"}}
+    {:label "location" :gid "sea" :data {:name "sea"}}
+    {:label "location" :gid "tartarus" :data {:name "tartarus"}}
+    {:label "titan" :gid "saturn" :data {:name "saturn" :age 5000}}
+    {:label "titan" :gid "saturn" :data {:name "saturn" :age 10000}}
+    {:label "god" :gid "jupiter" :data {:name "jupiter" :age 5000}}
+    {:label "god" :gid "neptune" :data {:name "neptune" :age 4500}}
+    {:label "god" :gid "pluto" :data {:name "pluto"}}
+    {:label "god" :gid "pluto" :data {:age 4000}}
+    {:label "demigod" :gid "hercules" :data {:name "hercules" :age 30}}
+    {:label "human" :gid "alcmene" :data {:name "alcmene" :age 45}}
+    {:label "monster" :gid "nemean" :data {:name "nemean"}}
+    {:label "monster" :gid "hydra" :data {:name "hydra"}}
+    {:label "monster" :gid "cerberus" :data {:name "cerberus"}}]
    :edges
    [{:from-label "god" :from "jupiter" :label "father" :to-label "god" :to "saturn"}
     {:from-label "god" :from "jupiter" :label "brother" :to-label "god" :to "neptune"}
     {:from-label "god" :from "jupiter" :label "brother" :to-label "god" :to "neptune"}
     {:from-label "god" :from "jupiter" :label "brother" :to-label "god" :to "pluto"}
-    {:from-label "god" :from "jupiter" :label "lives" :to-label "location" :to "sky" :properties {:reason "likes wind" :much 0.3}}
+    {:from-label "god" :from "jupiter" :label "lives" :to-label "location" :to "sky" :data {:reason "likes wind" :much 0.3}}
     {:from-label "god" :from "neptune" :label "brother" :to-label "god" :to "jupiter"}
     {:from-label "god" :from "neptune" :label "brother" :to-label "god" :to "pluto"}
-    {:from-label "god" :from "neptune" :label "lives" :to-label "location" :to "sea" :properties {:reason "likes waves" :much 0.4}}
+    {:from-label "god" :from "neptune" :label "lives" :to-label "location" :to "sea" :data {:reason "likes waves" :much 0.4}}
     {:from-label "god" :from "pluto" :label "brother" :to-label "god" :to "jupiter"}
     {:from-label "god" :from "pluto" :label "brother" :to-label "god" :to "neptune"}
-    {:from-label "god" :from "pluto" :label "lives" :to-label "location" :to "tartarus" :properties {:reason "likes death" :much 0.5}}
+    {:from-label "god" :from "pluto" :label "lives" :to-label "location" :to "tartarus" :data {:reason "likes death" :much 0.5}}
     {:from-label "demigod" :from "hercules" :label "father" :to-label "god" :to "jupiter"}
     {:from-label "demigod" :from "hercules" :label "mother" :to-label "human" :to "alcmene"}
-    {:from-label "demigod" :from "hercules" :label "battled" :to-label "monster" :to "nemean" :properties {:trial 1}}
-    {:from-label "demigod" :from "hercules" :label "battled" :to-label "monster" :to "hydra" :properties {:trial 2}}
-    {:from-label "monster" :from "hercules" :label "battled" :to-label "monster" :to "cerberus" :properties {:trial 12}}
+    {:from-label "demigod" :from "hercules" :label "battled" :to-label "monster" :to "nemean" :data {:trial 1}}
+    {:from-label "demigod" :from "hercules" :label "battled" :to-label "monster" :to "hydra" :data {:trial 2}}
+    {:from-label "monster" :from "hercules" :label "battled" :to-label "monster" :to "cerberus" :data {:trial 12}}
     {:from-label "monster" :from "cerberus" :label "lives" :to-label "location" :to "tartarus"}]})
+
+(defn ingest-incrementally
+  [path graph]
+  (doseq [file (kafka/dir->files path)]
+    (let [label (kafka/path->label (.getName file))
+          lines (line-seq (io/reader file))
+          process (if (= label "Vertex")
+                    add-vertex!
+                    add-edge!)]
+      (doseq [line lines]
+        (let [message (json/parse-string line keyword)]
+          (process graph message)
+          (print message))))))
+
+(defn ingest-batches
+  [path graph]
+  (doseq [file (kafka/dir->files path)]
+    (let [label (kafka/path->label (.getName file))
+          lines (line-seq (io/reader file))
+          processed (map
+                     (comp
+                      (if (= label "Vertex")
+                        process-vertex
+                        process-edge)
+                      #(json/parse-string % keyword))
+                     lines)]
+      (doseq [lines (partition-all 1000 processed)]
+        (pprint/pprint
+         (mongo/bulk-insert! graph (string/lower-case label) lines))))))
+
+(defn ingest-batches-carefully
+  [path graph]
+  (doseq [file (kafka/dir->files path)]
+    (let [label (kafka/path->label (.getName file))
+          lines (line-seq (io/reader file))
+          processed (map
+                     (comp
+                      (if (= label "Vertex")
+                        process-vertex
+                        process-edge)
+                      #(json/parse-string % keyword))
+                     lines)
+          groups (group-by :gid processed)
+          merged (map
+                  (fn [[gid parts]]
+                    (apply merge parts))
+                  groups)]
+      (pprint/pprint
+       (mongo/bulk-insert! graph (string/lower-case label) merged)))))
+
+(def parse-args
+  [["-c" "--config CONFIG" "path to config file"]
+   ["-i" "--input INPUT" "input file or directory"]])
+
+(defn -main
+  [& args]
+  (let [env (:options (cli/parse-opts args parse-args))
+        path (or (:config env) "config/ophion.clj")
+        config (config/read-config path)
+        graph (mongo/connect! (:mongo config))]
+    (ingest-incrementally (:input env) graph)
+    ;; (ingest-batches (:input env) graph)
+    (log/info "ingest complete")))
 
 ;; [{:$match {:label "Biosample"}}
 ;;  {:$lookup {:from "edge", :localField "gid", :foreignField "to", :as "to"}}
@@ -321,12 +387,6 @@
 ;;  {:$replaceRoot {:newRoot "$to"}}
 ;;  {:$group {:_id "$name", :count {:$sum 1}}}
 ;;  {:$project {:key "$_id", :count "$count"}}]
-
-
-
-
-
-
 
 
 

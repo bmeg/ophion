@@ -332,10 +332,10 @@
   element)
 
 (defn create-vertex!
-  [graph {:keys [label gid properties]}]
+  [graph {:keys [label gid data]}]
   (let [vertex (.addVertex graph label)]
     (set-property! vertex :gid gid)
-    (set-properties! vertex properties)
+    (set-properties! vertex data)
     (db/commit graph)
     vertex))
 
@@ -350,12 +350,12 @@
 
 (defn find-or-create-vertex
   ([graph label gid] (find-or-create-vertex graph label gid {}))
-  ([graph label gid properties]
+  ([graph label gid data]
    (if-let [found (find-vertex graph gid)]
      (do
-       (set-properties! found properties)
+       (set-properties! found data)
        found)
-     (create-vertex! graph {:label label :gid gid :properties properties}))))
+     (create-vertex! graph {:label label :gid gid :data data}))))
 
 (defn get-vertex
   [graph label gid-or-vertex]
@@ -380,8 +380,8 @@
    "->(" to ")"))
 
 (defn add-edge!
-  [graph {:keys [gid label fromLabel from-label toLabel to-label from to properties] :as data}]
-  (let [gid (or gid (build-edge-gid data))]
+  [graph {:keys [gid label fromLabel from-label toLabel to-label from to data] :as message}]
+  (let [gid (or gid (build-edge-gid message))]
     (if-let [edge (find-edge graph gid)]
       edge
       (let [from-label (or fromLabel from-label)
@@ -389,15 +389,15 @@
             out-vertex (get-vertex graph from-label from)
             in-vertex (get-vertex graph to-label to)
             edge (.addEdge out-vertex (name label) in-vertex (into-array []))]
-        (set-properties! edge (assoc properties :gid gid))
+        (set-properties! edge (assoc data :gid gid))
         (db/commit graph)
         edge))))
 
 (defn add-vertex!
-  [graph {:keys [label gid properties] :as data}]
+  [graph {:keys [label gid data] :as message}]
   (let [type-gid (str "type:" label)
         type-vertex (find-or-create-vertex graph "type" type-gid {:symbol label})
-        vertex (find-or-create-vertex graph label gid properties)
+        vertex (find-or-create-vertex graph label gid data)
         edge-data {:label "hasInstance" :from-label "type" :to-label label :from type-gid :to gid}
         type-edge (add-edge! graph edge-data)]
     vertex))
@@ -536,7 +536,7 @@
   (let [label (.label edge)
         props (element-properties edge)]
     {"label" label
-     "properties" props}))
+     "data" props}))
 
 (defn edge-connections
   [edge]
@@ -579,7 +579,7 @@
           props (element-properties vertex)]
       {"label" label
        "gid" (get props "gid")
-       "properties" (dissoc props "gid")})
+       "data" (dissoc props "gid")})
     {}))
 
 (defn vertex-connections

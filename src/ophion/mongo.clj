@@ -23,11 +23,11 @@
   [db collection what]
   (mongo/insert db (name collection) what))
 
-(defn upsert!
+(defn merge!
   [db collection what]
   (mongo/update db (name collection) {:gid (:gid what)} {:$set what} {:upsert true}))
 
-(defn update!
+(defn upsert!
   [db collection where values]
   (mongo/update db (name collection) where values {:upsert true}))
 
@@ -146,15 +146,16 @@
    :ophionresults
    [[:key {}]]})
 
+;; check to see if indexes exist on boot
+
 (def parse-args
-  [["-c" "--config CONFIG" "path to config file"]
-   ["-i" "--input INPUT" "input file or directory"]])
+  [["-c" "--config CONFIG" "path to config file"]])
 
 (defn -main
   [& args]
   (let [env (:options (cli/parse-opts args parse-args))
-        path (or (:config env) "config/ophion.clj")
-        config (config/read-config path)
+        path (or (:config env) "resources/config/ophion.clj")
+        config (config/read-path path)
         db (connect! (get config :mongo))]
     (build-indexes db base-indexes)))
 

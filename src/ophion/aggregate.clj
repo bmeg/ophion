@@ -260,13 +260,13 @@
 (defn add-vertex!
   [db vertex]
   (let [ingest (process-vertex vertex)]
-    (mongo/upsert! db :vertex ingest)
+    (mongo/merge! db :vertex ingest)
     ingest))
 
 (defn add-edge!
   [db edge]
   (let [ingest (process-edge edge)]
-    (mongo/upsert! db :edge ingest)
+    (mongo/merge! db :edge ingest)
     ingest))
 
 (defn ingest-graph!
@@ -275,6 +275,69 @@
     (add-vertex! db vertex))
   (doseq [edge edges]
     (add-edge! db edge)))
+
+(defn ingest-incrementally
+  [graph path]
+  (doseq [file (kafka/dir->files path)]
+    (let [label (kafka/path->label (.getName file))
+          lines (line-seq (io/reader file))
+          process (if (= label "Vertex")
+                    add-vertex!
+                    add-edge!)]
+      (doseq [line lines]
+        (let [message (json/parse-string line keyword)]
+          (process graph message)
+          (print message))))))
+
+(defn ingest-batches
+  [graph path]
+  (doseq [file (kafka/dir->files path)]
+    (let [label (kafka/path->label (.getName file))
+          lines (line-seq (io/reader file))
+          processed (map
+                     (comp
+                      (if (= label "Vertex")
+                        process-vertex
+                        process-edge)
+                      #(json/parse-string % keyword))
+                     lines)]
+      (doseq [lines (partition-all 1000 processed)]
+        (pprint/pprint
+         (mongo/bulk-insert! graph (string/lower-case label) lines))))))
+
+(defn ingest-batches-carefully
+  [graph path]
+  (doseq [file (kafka/dir->files path)]
+    (let [label (kafka/path->label (.getName file))
+          lines (line-seq (io/reader file))
+          processed (map
+                     (comp
+                      (if (= label "Vertex")
+                        process-vertex
+                        process-edge)
+                      #(json/parse-string % keyword))
+                     lines)
+          groups (group-by :gid processed)
+          merged (map
+                  (fn [[gid parts]]
+                    (apply merge parts))
+                  groups)]
+      (pprint/pprint
+       (mongo/bulk-insert! graph (string/lower-case label) merged)))))
+
+(def parse-args
+  [["-c" "--config CONFIG" "path to config file"]
+   ["-i" "--input INPUT" "input file or directory"]])
+
+(defn -main
+  [& args]
+  (let [env (:options (cli/parse-opts args parse-args))
+        path (or (:config env) "resources/config/ophion.clj")
+        config (config/read-path path)
+        graph (mongo/connect! (:mongo config))]
+    (ingest-incrementally graph (:input env))
+    ;; (ingest-batches (:input env) graph)
+    (log/info "ingest complete")))
 
 (def gods-graph
   {:vertexes
@@ -310,69 +373,6 @@
     {:from-label "demigod" :from "hercules" :label "battled" :to-label "monster" :to "hydra" :data {:trial 2}}
     {:from-label "monster" :from "hercules" :label "battled" :to-label "monster" :to "cerberus" :data {:trial 12}}
     {:from-label "monster" :from "cerberus" :label "lives" :to-label "location" :to "tartarus"}]})
-
-(defn ingest-incrementally
-  [path graph]
-  (doseq [file (kafka/dir->files path)]
-    (let [label (kafka/path->label (.getName file))
-          lines (line-seq (io/reader file))
-          process (if (= label "Vertex")
-                    add-vertex!
-                    add-edge!)]
-      (doseq [line lines]
-        (let [message (json/parse-string line keyword)]
-          (process graph message)
-          (print message))))))
-
-(defn ingest-batches
-  [path graph]
-  (doseq [file (kafka/dir->files path)]
-    (let [label (kafka/path->label (.getName file))
-          lines (line-seq (io/reader file))
-          processed (map
-                     (comp
-                      (if (= label "Vertex")
-                        process-vertex
-                        process-edge)
-                      #(json/parse-string % keyword))
-                     lines)]
-      (doseq [lines (partition-all 1000 processed)]
-        (pprint/pprint
-         (mongo/bulk-insert! graph (string/lower-case label) lines))))))
-
-(defn ingest-batches-carefully
-  [path graph]
-  (doseq [file (kafka/dir->files path)]
-    (let [label (kafka/path->label (.getName file))
-          lines (line-seq (io/reader file))
-          processed (map
-                     (comp
-                      (if (= label "Vertex")
-                        process-vertex
-                        process-edge)
-                      #(json/parse-string % keyword))
-                     lines)
-          groups (group-by :gid processed)
-          merged (map
-                  (fn [[gid parts]]
-                    (apply merge parts))
-                  groups)]
-      (pprint/pprint
-       (mongo/bulk-insert! graph (string/lower-case label) merged)))))
-
-(def parse-args
-  [["-c" "--config CONFIG" "path to config file"]
-   ["-i" "--input INPUT" "input file or directory"]])
-
-(defn -main
-  [& args]
-  (let [env (:options (cli/parse-opts args parse-args))
-        path (or (:config env) "config/ophion.clj")
-        config (config/read-config path)
-        graph (mongo/connect! (:mongo config))]
-    (ingest-incrementally (:input env) graph)
-    ;; (ingest-batches (:input env) graph)
-    (log/info "ingest complete")))
 
 ;; [{:$match {:label "Biosample"}}
 ;;  {:$lookup {:from "edge", :localField "gid", :foreignField "to", :as "to"}}

@@ -23,3 +23,8 @@
   (edn/read
    (java.io.PushbackReader.
     (resource path))))
+
+(defn read-path
+  [path]
+  (edn/read-string
+   (slurp path)))

@@ -97,9 +97,10 @@
           (continuation result))))))
 
 (def parse-args
-  [["-k" "--kafka KAFKA" "host for kafka server"
-    :default "localhost:9092"]
+  [["-c" "--config CONFIG" "path to config file"]
    ["-i" "--input INPUT" "input file or directory"]
+   ["-k" "--kafka KAFKA" "host for kafka server"
+    :default "localhost:9092"]
    ["-x" "--prefix PREFIX" "input topic prefix"]])
 
 (defn assoc-env
@@ -112,7 +113,8 @@
 (defn -main
   [& args]
   (let [env (:options (cli/parse-opts args parse-args))
-        config (config/read-config "config/ophion.clj")
+        path (or (:config env) "resources/config/ophion.clj")
+        config (config/read-path path)
         graph (db/connect (:graph config))
         ;; graph (mongo/connect! {:database "pillar"})
         search (search/connect (merge search/default-config (:search config)))

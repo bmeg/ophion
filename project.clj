@@ -1,4 +1,4 @@
-(defproject ophion "0.0.6"
+(defproject ophion "0.0.7"
   :description "graph queries as data"
   :url "http://github.com/bmeg/ophion"
   :license {:name "Eclipse Public License"

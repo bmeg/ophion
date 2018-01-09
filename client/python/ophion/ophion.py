@@ -1,8 +1,10 @@
+from __future__ import absolute_import, print_function
+
 import sys
 import json
 import urllib2
-import requests
 import traceback
+
 
 class Ophion:
     def __init__(self, host):
@@ -56,7 +58,8 @@ class Ophion:
     # remote calls
     def vertex(self, gid):
         url = self.host + "/vertex/find/" + gid
-        headers = {'Content-Type': 'application/json', 'Accept': 'application/json'}
+        headers = {'Content-Type': 'application/json',
+                   'Accept': 'application/json'}
         request = urllib2.Request(url, headers=headers)
         response = urllib2.urlopen(request)
         result = response.read()
@@ -72,7 +75,7 @@ class Ophion:
         try:
             payload = query.render()
 
-            ################ streaming request attempt
+            # streaming request attempt
             # response = requests.post(self.url, data=payload, stream=True)
             # v = []
             # # if response.encoding is None:
@@ -81,7 +84,8 @@ class Ophion:
             #     v.append(item)
             # return v
 
-            headers = {'Content-Type': 'application/json', 'Accept': 'application/json'}
+            headers = {'Content-Type': 'application/json',
+                       'Accept': 'application/json'}
             request = urllib2.Request(self.url, payload, headers=headers)
             response = urllib2.urlopen(request)
             result = response.read()
@@ -94,6 +98,7 @@ class Ophion:
                     'exception': e
                 }
             }
+
 
 def wrapValue(value):
     v = value
@@ -109,47 +114,44 @@ def wrapValue(value):
         v = {k: wrapValue(v) for k, v in value.iteritems()}
     return v
 
+
 class OphionQuery:
     def __init__(self, parent=None):
         self.query = []
         self.parent = parent
 
     # traversals
-    def incoming(self, *args):
-        if len(args) == 0:
+    def incoming(self, labels=None):
+        if labels is None:
             self.query.append({'in': []})
-        elif len(args) == 1:
-            labels = args[0]
+        else:
             if not isinstance(labels, list):
                 labels = [labels]
             self.query.append({'in': {'labels': labels}})
         return self
 
-    def outgoing(self, *args):
-        if len(args) == 0:
+    def outgoing(self, labels=None):
+        if labels is None:
             self.query.append({'out': []})
-        elif len(args) == 1:
-            labels = args[0]
+        else:
             if not isinstance(labels, list):
                 labels = [labels]
             self.query.append({'out': {'labels': labels}})
         return self
 
-    def inEdge(self, *args):
-        if len(args) == 0:
+    def inEdge(self, labels=None):
+        if labels is None:
             self.query.append({'inEdge': []})
-        elif len(args) == 1:
-            labels = args[0]
+        else:
             if not isinstance(labels, list):
                 labels = [labels]
             self.query.append({'inEdge': {'labels': labels}})
         return self
 
-    def outEdge(self, *args):
-        if len(args) == 0:
+    def outEdge(self, labels=None):
+        if labels is None:
             self.query.append({'outEdge': []})
-        elif len(args) == 1:
-            labels = args[0]
+        else:
             if not isinstance(labels, list):
                 labels = [labels]
             self.query.append({'outEdge': {'labels': labels}})
@@ -173,7 +175,7 @@ class OphionQuery:
     def select(self, labels):
         if not isinstance(labels, list):
             labels = [labels]
-        self.query.append({'select' : {'labels': labels}})
+        self.query.append({'select': {'labels': labels}})
         return self
 
     def by(self, label):
@@ -227,11 +229,10 @@ class OphionQuery:
         self.query.append({'group': {'bys': map(lambda by: {'key': by})}})
         return self
 
-    def groupCount(self, *args):
-        if len(args) == 0:
+    def groupCount(self, label=None):
+        if label is None:
             self.query.append({'groupCount': {}})
         else:
-            label = args[0]
             self.query.append({'groupCount': {'key': label}})
         return self
 
@@ -239,15 +240,13 @@ class OphionQuery:
         self.query.append({'is': wrapValue(condition)})
         return self
 
-    def has(self, key, *args):
+    def has(self, key, value=None):
         outer = {'key': key}
-        if len(args) > 0:
-            value = args[0]
+        if value is not None:
             v = wrapValue(value)
             outer = {'key': key}
             if isinstance(value, dict):
                 outer['condition'] = v
-                # elif: isinstance(value, OphionQuery);
             else:
                 outer['value'] = v
         self.query.append({'has': outer})
@@ -261,24 +260,17 @@ class OphionQuery:
         self.query.append({'match': {'queries': queries}})
         return self
 
-    def searchArgs(self, args):
-        out = {}
-
-        if len(args) > 1:
-            out['term'] = args[0]
-            out['search'] = args[1]
-        else:
-            out['search'] = args[0]
-
-        return out
-
-    def searchVertex(self, *args):
-        opts = self.searchArgs(args)
+    def searchVertex(self, search, term=None):
+        opts = {'search': search}
+        if term is not None:
+            opts['term'] = term
         self.query.append({'searchVertex': opts})
         return self
 
-    def searchEdge(self, *args):
-        opts = self.searchArgs(args)
+    def searchEdge(self, search, term=None):
+        opts = {'search': search}
+        if term is not None:
+            opts['term'] = term
         self.query.append({'searchEdge': opts})
         return self
 
@@ -312,11 +304,15 @@ class OphionQuery:
 
 
 # SAMPLE x EXPRESSION matrix
-# O.query().has("gid", "cohort:CCLE").outgoing("hasSample").mark("sample").incoming("expressionForSample").mark("expression").select(["sample", "expression"]).count().execute()
+# O.query().has("gid", "cohort:CCLE").outgoing("hasSample").mark("sample").\
+#     incoming("expressionForSample").mark("expression").\
+#     select(["sample", "expression"]).count().execute()
 
 
 # SAMPLE x RESPONSE matrix
-# O.query().has("gid", "cohort:CCLE").outgoing("hasSample").mark("sample").outEdge("responseToCompound").mark("response").select(["sample", "response"]).count().execute()
+# O.query().has("gid", "cohort:CCLE").outgoing("hasSample").mark("sample").\
+#     outEdge("responseToCompound").mark("response").\
+#     select(["sample", "response"]).count().execute()
 
 # FIND ALL SAMPLExEXPRESSIONxRESPONSE TRIPLES FOR CCLE COHORT
 # O.query().has("gid", "cohort:CCLE").outgoing("hasSample").match([

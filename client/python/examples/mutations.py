@@ -1,24 +1,32 @@
+from __future__ import print_function
+
 import os
 import csv
 import ophion
 import argparse
 
-VERVE='toprankedret.tsv'
-BMEG='http://bmeg.io'
+VERVE = 'toprankedret.tsv'
+BMEG = 'http://bmeg.io'
+
 
 def generate_analysis(bmeg, path):
     file = open(path)
     lines = csv.DictReader(file, quotechar='"', delimiter='\t')
-    samples = map(lambda line: line['gdc_cases.samples.portions.submitter_id'][:16], lines)
+    samples = map(
+        lambda l: l['gdc_cases.samples.portions.submitter_id'][:16], lines
+    )
 
-    O = ophion.Ophion(bmeg)
+    Op = ophion.Ophion(bmeg)
+
     def analyze(gene):
         errors = []
         results = []
 
         for sample in samples:
             print(sample)
-            result = O.query().has("gid", ['biosample:' + sample]).incoming("tumorSample").incoming("effectOf").outgoing("inGene").has("symbol", [gene]).count().execute()
+            result = Op.query().has("gid", ['biosample:' + sample]).\
+                incoming("tumorSample").incoming("effectOf").\
+                outgoing("inGene").has("symbol", [gene]).count().execute()
             if 'error' in result:
                 errors.append(sample)
             else:
@@ -28,15 +36,22 @@ def generate_analysis(bmeg, path):
 
     return analyze
 
+
 def reverse_analysis(bmeg, path):
     file = open(path)
     lines = csv.DictReader(file, quotechar='"', delimiter='\t')
-    samples = set(map(lambda line: line['gdc_cases.samples.portions.submitter_id'][:16], lines))
+    samples = set(map(
+        lambda l: l['gdc_cases.samples.portions.submitter_id'][:16], lines
+    ))
 
-    O = ophion.Ophion(bmeg)
+    Op = ophion.Ophion(bmeg)
+
     def analyze(gene):
-        results = O.query().has("gid", ["gene:" + gene]).incoming("inGene").outgoing("effectOf").outgoing("tumorSample").execute()
-        result_set = set(map(lambda result: result['properties']['barcode'][:16], results['result']))
+        results = Op.query().has("gid", ["gene:" + gene]).incoming(
+            "inGene").outgoing("effectOf").outgoing("tumorSample").execute()
+        result_set = set(map(
+            lambda res: res['properties']['barcode'][:16], results['result']
+        ))
         intersection = set.intersection(result_set, samples)
 
         print(len(intersection))
@@ -44,6 +59,7 @@ def reverse_analysis(bmeg, path):
         return intersection, []
 
     return analyze
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -62,4 +78,4 @@ if __name__ == '__main__':
         for line in results:
             handle.write(line + os.linesep)
 
-    print str(errors)
+    print(str(errors))

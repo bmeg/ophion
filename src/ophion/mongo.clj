@@ -4,7 +4,8 @@
    [clojure.tools.cli :as cli]
    [taoensso.timbre :as log]
    [ophion.config :as config]
-   [monger.core :as db]
+   [monger.core :as core]
+   [monger.db :as db]
    [monger.conversion :as convert]
    [monger.collection :as mongo])
   (:import
@@ -15,9 +16,9 @@
 
 (defn connect!
   [config]
-  (let [connection (db/connect (select-keys config [:host :port]))
+  (let [connection (core/connect (select-keys config [:host :port]))
         database (name (:database config))]
-    (db/get-db connection database)))
+    (core/get-db connection database)))
 
 (defn insert!
   [db collection what]
@@ -48,10 +49,14 @@
   [db collection]
   (mongo/find-maps db (name collection)))
 
-(defn count
-  ([db collection] (count db collection {}))
+(defn number
+  ([db collection] (number db collection {}))
   ([db collection where]
    (mongo/count db (name collection) where)))
+
+(defn collections
+  [db]
+  (db/get-collection-names db))
 
 (defn mapply
   [f & args]

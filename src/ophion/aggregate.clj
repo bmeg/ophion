@@ -18,56 +18,56 @@
 (defn from-edge
   [{:keys [label where]}]
   [{:$lookup
-    {:from "edge"
+    {:from label ;; "edge"
      :localField "gid"
      :foreignField "to"
-     :as "from"}}
-   {:$unwind "$from"}
-   {:$match
-    (merge
-     where
-     {:from.label label})}
-   {:$addFields {"from._history" "$_history"}}
-   {:$replaceRoot {:newRoot "$from"}}])
+     :as "edge"}}
+   {:$unwind "$edge"}
+   {:$match (or where {})}
+    ;; (merge
+    ;;  where
+    ;;  {:from.label label})
+   {:$addFields {"edge._history" "$_history"}}
+   {:$replaceRoot {:newRoot "$edge"}}])
 
 (defn to-edge
   [{:keys [label where]}]
   [{:$lookup
-    {:from "edge"
+    {:from label ;; "edge"
      :localField "gid"
      :foreignField "from"
-     :as "to"}}
-   {:$unwind "$to"}
-   {:$match
-    (merge
-     where
-     {:to.label label})}
-   {:$addFields {"to._history" "$_history"}}
-   {:$replaceRoot {:newRoot "$to"}}])
+     :as "edge"}}
+   {:$unwind "$edge"}
+   {:$match (or where {})}
+    ;; (merge
+    ;;  where
+    ;;  {:to.label label})
+   {:$addFields {"edge._history" "$_history"}}
+   {:$replaceRoot {:newRoot "$edge"}}])
 
 (defn from-vertex
   [{:keys [where]}]
   [{:$lookup
-    {:from "vertex"
+    {:from "$from-label" ;; "vertex"
      :localField "from"
      :foreignField "gid"
-     :as "from"}}
-   {:$unwind "$from"}
+     :as "vertex"}}
+   {:$unwind "$vertex"}
    {:$match (or where {})}
-   {:$addFields {"from._history" "$_history"}}
-   {:$replaceRoot {:newRoot "$from"}}])
+   {:$addFields {"vertex._history" "$_history"}}
+   {:$replaceRoot {:newRoot "$vertex"}}])
 
 (defn to-vertex
   [{:keys [where]}]
   [{:$lookup
-    {:from "vertex"
+    {:from "$to-label" ;; "vertex"
      :localField "to"
      :foreignField "gid"
-     :as "to"}}
-   {:$unwind "$to"}
+     :as "vertex"}}
+   {:$unwind "$vertex"}
    {:$match (or where {})}
-   {:$addFields {"to._history" "$_history"}}
-   {:$replaceRoot {:newRoot "$to"}}])
+   {:$addFields {"vertex._history" "$_history"}}
+   {:$replaceRoot {:newRoot "$vertex"}}])
 
 (defn from
   ([what]
@@ -295,12 +295,13 @@
 
 (defn ingest-batches!
   [graph element all]
-  (doseq [lines (partition-all 1000 all)]
-    (let [labels (group-by :label lines)]
-      (doseq [[label messages] labels]
-        (mongo/ensure-collection! graph element label)
-        (pprint/pprint
-         (mongo/bulk-insert! graph label messages))))))
+  (let [processed (map (if (= element "vertex") process-vertex process-edge) all)]
+    (doseq [lines (partition-all 1000 processed)]
+      (let [labels (group-by :label lines)]
+        (doseq [[label messages] labels]
+          (mongo/ensure-collection! graph element label)
+          (pprint/pprint
+           (mongo/bulk-insert! graph label messages)))))))
 
 (defn ingest-batches-from-path!
   [graph path]

@@ -18,37 +18,37 @@
 (defn from-edge
   [{:keys [label where]}]
   [{:$lookup
-    {:from label ;; "edge"
+    {:from "edge" ;; label
      :localField "gid"
      :foreignField "to"
      :as "edge"}}
    {:$unwind "$edge"}
-   {:$match (or where {})}
-    ;; (merge
-    ;;  where
-    ;;  {:from.label label})
+   {:$match
+    (merge
+     where
+     {:edge.label label})}
    {:$addFields {"edge._history" "$_history"}}
    {:$replaceRoot {:newRoot "$edge"}}])
 
 (defn to-edge
   [{:keys [label where]}]
   [{:$lookup
-    {:from label ;; "edge"
+    {:from "edge" ;; label
      :localField "gid"
      :foreignField "from"
      :as "edge"}}
    {:$unwind "$edge"}
-   {:$match (or where {})}
-    ;; (merge
-    ;;  where
-    ;;  {:to.label label})
+   {:$match
+    (merge
+     where
+     {:edge.label label})}
    {:$addFields {"edge._history" "$_history"}}
    {:$replaceRoot {:newRoot "$edge"}}])
 
 (defn from-vertex
   [{:keys [where]}]
   [{:$lookup
-    {:from "$from-label" ;; "vertex"
+    {:from "vertex" ;; "$$fromLabel"
      :localField "from"
      :foreignField "gid"
      :as "vertex"}}
@@ -60,7 +60,7 @@
 (defn to-vertex
   [{:keys [where]}]
   [{:$lookup
-    {:from "$to-label" ;; "vertex"
+    {:from "vertex" ;; "$$toLabel"
      :localField "to"
      :foreignField "gid"
      :as "vertex"}}
@@ -293,7 +293,7 @@
           (process graph message)
           (print message))))))
 
-(defn ingest-batches!
+(defn ingest-label-collections!
   [graph element all]
   (let [processed (map (if (= element "vertex") process-vertex process-edge) all)]
     (doseq [lines (partition-all 1000 processed)]
@@ -302,6 +302,13 @@
           (mongo/ensure-collection! graph element label)
           (pprint/pprint
            (mongo/bulk-insert! graph label messages)))))))
+
+(defn ingest-batches!
+  [graph element all]
+  (let [processed (map (if (= element "vertex") process-vertex process-edge) all)]
+    (doseq [messages (partition-all 1000 processed)]
+      (pprint/pprint
+       (mongo/bulk-insert! graph element messages)))))
 
 (defn ingest-batches-from-path!
   [graph path]
@@ -368,23 +375,23 @@
     {:label "monster" :gid "hydra" :data {:name "hydra"}}
     {:label "monster" :gid "cerberus" :data {:name "cerberus"}}]
    :edges
-   [{:from-label "god" :from "jupiter" :label "father" :to-label "god" :to "saturn"}
-    {:from-label "god" :from "jupiter" :label "brother" :to-label "god" :to "neptune"}
-    {:from-label "god" :from "jupiter" :label "brother" :to-label "god" :to "neptune"}
-    {:from-label "god" :from "jupiter" :label "brother" :to-label "god" :to "pluto"}
-    {:from-label "god" :from "jupiter" :label "lives" :to-label "location" :to "sky" :data {:reason "likes wind" :much 0.3}}
-    {:from-label "god" :from "neptune" :label "brother" :to-label "god" :to "jupiter"}
-    {:from-label "god" :from "neptune" :label "brother" :to-label "god" :to "pluto"}
-    {:from-label "god" :from "neptune" :label "lives" :to-label "location" :to "sea" :data {:reason "likes waves" :much 0.4}}
-    {:from-label "god" :from "pluto" :label "brother" :to-label "god" :to "jupiter"}
-    {:from-label "god" :from "pluto" :label "brother" :to-label "god" :to "neptune"}
-    {:from-label "god" :from "pluto" :label "lives" :to-label "location" :to "tartarus" :data {:reason "likes death" :much 0.5}}
-    {:from-label "demigod" :from "hercules" :label "father" :to-label "god" :to "jupiter"}
-    {:from-label "demigod" :from "hercules" :label "mother" :to-label "human" :to "alcmene"}
-    {:from-label "demigod" :from "hercules" :label "battled" :to-label "monster" :to "nemean" :data {:trial 1}}
-    {:from-label "demigod" :from "hercules" :label "battled" :to-label "monster" :to "hydra" :data {:trial 2}}
-    {:from-label "monster" :from "hercules" :label "battled" :to-label "monster" :to "cerberus" :data {:trial 12}}
-    {:from-label "monster" :from "cerberus" :label "lives" :to-label "location" :to "tartarus"}]})
+   [{:fromLabel "god" :from "jupiter" :label "father" :toLabel "god" :to "saturn"}
+    {:fromLabel "god" :from "jupiter" :label "brother" :toLabel "god" :to "neptune"}
+    {:fromLabel "god" :from "jupiter" :label "brother" :toLabel "god" :to "neptune"}
+    {:fromLabel "god" :from "jupiter" :label "brother" :toLabel "god" :to "pluto"}
+    {:fromLabel "god" :from "jupiter" :label "lives" :toLabel "location" :to "sky" :data {:reason "likes wind" :much 0.3}}
+    {:fromLabel "god" :from "neptune" :label "brother" :toLabel "god" :to "jupiter"}
+    {:fromLabel "god" :from "neptune" :label "brother" :toLabel "god" :to "pluto"}
+    {:fromLabel "god" :from "neptune" :label "lives" :toLabel "location" :to "sea" :data {:reason "likes waves" :much 0.4}}
+    {:fromLabel "god" :from "pluto" :label "brother" :toLabel "god" :to "jupiter"}
+    {:fromLabel "god" :from "pluto" :label "brother" :toLabel "god" :to "neptune"}
+    {:fromLabel "god" :from "pluto" :label "lives" :toLabel "location" :to "tartarus" :data {:reason "likes death" :much 0.5}}
+    {:fromLabel "demigod" :from "hercules" :label "father" :toLabel "god" :to "jupiter"}
+    {:fromLabel "demigod" :from "hercules" :label "mother" :toLabel "human" :to "alcmene"}
+    {:fromLabel "demigod" :from "hercules" :label "battled" :toLabel "monster" :to "nemean" :data {:trial 1}}
+    {:fromLabel "demigod" :from "hercules" :label "battled" :toLabel "monster" :to "hydra" :data {:trial 2}}
+    {:fromLabel "monster" :from "hercules" :label "battled" :toLabel "monster" :to "cerberus" :data {:trial 12}}
+    {:fromLabel "monster" :from "cerberus" :label "lives" :toLabel "location" :to "tartarus"}]})
 
 ;; [{:$match {:label "Biosample"}}
 ;;  {:$lookup {:from "edge", :localField "gid", :foreignField "to", :as "to"}}

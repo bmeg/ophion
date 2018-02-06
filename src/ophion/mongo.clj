@@ -155,11 +155,6 @@
   (doseq [[collection dexes] indexes]
     (build-collection! db collection dexes)))
 
-    ;; (doseq [index dexes]
-    ;;   (let [fields (butlast index)
-    ;;         opts (last index)]
-    ;;     (index! db collection fields opts)))
-
 (def base-indexes
   {:vertex
    [[:gid {:unique true}]

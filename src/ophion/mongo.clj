@@ -32,11 +32,6 @@
   [db collection where values]
   (mongo/update db (name collection) where values {:upsert true}))
 
-(defn purge!
-  ([db])
-  ([db collection]
-   (mongo/remove db (name collection))))
-
 (defn one
   [db collection gid]
   (mongo/find-one-as-map db (name collection) {:gid gid}))
@@ -56,7 +51,15 @@
 
 (defn collections
   [db]
-  (db/get-collection-names db))
+  (set (db/get-collection-names db)))
+
+(defn purge!
+  ([db]
+   (let [present (collections db)]
+     (doseq [collection present]
+       (purge! db collection))))
+  ([db collection]
+   (mongo/remove db (name collection))))
 
 (defn mapply
   [f & args]
@@ -95,13 +98,24 @@
        :document (.getDetails error)})
     (.getWriteErrors e))))
 
+(defn db-object
+  [m]
+  (convert/to-db-object m))
+
 (defn bulk-insert!
   [db collection documents]
   (try
     (let [coll (.getCollection db (name collection))
           op (.initializeUnorderedBulkOperation coll)]
       (doseq [document documents]
-        (.insert op (convert/to-db-object document)))
+        ;; (.insert op (convert/to-db-object document))
+        (.updateOne
+         (.upsert
+          (.find op (db-object {:gid (:gid document)})))
+         (db-object
+          {:$set
+           (db-object
+            (merge (dissoc document :data) (:data document)))})))
       (.execute op))
     (catch BulkWriteException e
       (extract-failures e))))
@@ -129,13 +143,22 @@
   [record]
   (.getTimestamp (:_id record)))
 
-(defn build-indexes
+(defn build-collection!
+  [db collection indexes]
+  (doseq [index indexes]
+    (let [fields (butlast index)
+          opts (last index)]
+      (index! db collection fields opts))))
+
+(defn build-indexes!
   [db indexes]
   (doseq [[collection dexes] indexes]
-    (doseq [index dexes]
-      (let [fields (butlast index)
-            opts (last index)]
-        (index! db collection fields opts)))))
+    (build-collection! db collection dexes)))
+
+    ;; (doseq [index dexes]
+    ;;   (let [fields (butlast index)
+    ;;         opts (last index)]
+    ;;     (index! db collection fields opts)))
 
 (def base-indexes
   {:vertex
@@ -151,6 +174,11 @@
    :ophionresults
    [[:key {}]]})
 
+(defn ensure-collection!
+  [db element label]
+  (if-not ((collections db) (name label))
+    (build-collection! db label ((keyword element) base-indexes))))
+
 ;; check to see if indexes exist on boot
 
 (def parse-args
@@ -162,13 +190,4 @@
         path (or (:config env) "resources/config/ophion.clj")
         config (config/read-path path)
         db (connect! (get config :mongo))]
-    (build-indexes db base-indexes)))
-
-    ;; (condp = (first args)
-    ;;   "list"
-    ;;   (do
-    ;;     (println (list-indexes db :vertex))
-    ;;     (println (list-indexes db :edge)))
-
-    ;;   "build"
-    ;;   (build-indexes db base-indexes))
+    (build-indexes! db base-indexes)))

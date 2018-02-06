@@ -280,7 +280,7 @@
   (doseq [edge edges]
     (add-edge! db edge)))
 
-(defn ingest-incrementally
+(defn ingest-incrementally!
   [graph path]
   (doseq [file (kafka/dir->files path)]
     (let [label (kafka/path->label (.getName file))
@@ -293,23 +293,30 @@
           (process graph message)
           (print message))))))
 
-(defn ingest-batches
+(defn ingest-batches!
+  [graph element all]
+  (doseq [lines (partition-all 1000 all)]
+    (let [labels (group-by :label lines)]
+      (doseq [[label messages] labels]
+        (mongo/ensure-collection! graph element label)
+        (pprint/pprint
+         (mongo/bulk-insert! graph label messages))))))
+
+(defn ingest-batches-from-path!
   [graph path]
   (doseq [file (kafka/dir->files path)]
-    (let [label (kafka/path->label (.getName file))
+    (let [element (string/lower-case (kafka/path->label (.getName file)))
           lines (line-seq (io/reader file))
           processed (map
                      (comp
-                      (if (= label "Vertex")
+                      (if (= element "vertex")
                         process-vertex
                         process-edge)
                       #(json/parse-string % keyword))
                      lines)]
-      (doseq [lines (partition-all 1000 processed)]
-        (pprint/pprint
-         (mongo/bulk-insert! graph (string/lower-case label) lines))))))
+      (ingest-batches! graph element processed))))
 
-(defn ingest-batches-carefully
+(defn ingest-batches-carefully!
   [graph path]
   (doseq [file (kafka/dir->files path)]
     (let [label (kafka/path->label (.getName file))
@@ -339,8 +346,8 @@
         path (or (:config env) "resources/config/ophion.clj")
         config (config/read-path path)
         graph (mongo/connect! (:mongo config))]
-    (ingest-incrementally graph (:input env))
-    ;; (ingest-batches (:input env) graph)
+    ;; (ingest-incrementally graph (:input env))
+    (ingest-batches-from-path! (:input env) graph)
     (log/info "ingest complete")))
 
 (def gods-graph

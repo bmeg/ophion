@@ -1,9 +1,9 @@
 {:graph  {:database :janus
           :host "localhost"
-          :keyspace :pentomino}
+          :keyspace :color}
  :search {:host "localhost"
           :port 9200
-          :index :pentomino
+          :index :color
           :indexed?
           #{"Individual"
             "Evidence"
@@ -19,7 +19,7 @@
          :port 9092}
  :mongo {:host "127.0.0.1"
          :port 27017
-         :database "pentomino"}
+         :database "color"}
  :server {:port 4443}
  :protograph {:path "resources/config/protograph.yml"
               :prefix "protograph"}}

@@ -28,6 +28,10 @@
 ;;   (Logger/ROOT_LOGGER_NAME))
 ;;  Level/INFO)
 
+(defn read-json
+  [body]
+  (json/parse-stream (InputStreamReader. body) keyword))
+
 (defn append-newline
   [s]
   (str s "\n"))
@@ -72,7 +76,7 @@
 
 (defn vertex-query-handler
   [graph search cache request]
-  (let [raw-query (json/parse-stream (InputStreamReader. (:body request)) keyword)
+  (let [raw-query (read-json (:body request))
         ;; query (query/delabelize raw-query)
         _ (log/info (mapv identity (query/delabelize raw-query)))
         ;; out (check-query-cache graph search cache query)
@@ -122,7 +126,7 @@
 
 (defn save-query-handler
   [graph search mongo request]
-  (let [query (json/parse-stream (InputStreamReader. (:body request)) keyword)
+  (let [query (read-json (:body request))
         relevant (select-keys query [:user :key :focus :path :query :current])]
     (log/info query)
     (store/store-query {:graph graph :search search} mongo relevant)
@@ -139,7 +143,7 @@
 
 (defn query-comparison-handler
   [mongo request]
-  (let [queries (json/parse-stream (InputStreamReader. (:body request)) keyword)
+  (let [queries (read-json (:body request))
         comparison (store/query-comparison mongo (:queries queries))]
     (log/info "queries" queries)
     {:status 200
@@ -250,7 +254,7 @@
         schema (protograph/graph-structure protograph)
         mongo (mongo/connect! (get config :mongo))
         routes (polaris/build-routes (ophion-routes graph search schema mongo))
-        router (resource/wrap-resource (polaris/router routes) "public")
+        router (polaris/router routes) "public"
         app (-> router
                 (resource/wrap-resource "public")
                 (keyword/wrap-keyword-params)

@@ -16,70 +16,70 @@
   [{:$match where}])
 
 (defn from-edge
-  [{:keys [label where]}]
-  [{:$lookup
-    {:from "edge" ;; label
-     :localField "gid"
-     :foreignField "to"
-     :as "edge"}}
-   {:$unwind "$edge"}
-   {:$match
-    (merge
-     where
-     {:edge.label label})}
-   {:$addFields {"edge._history" "$_history"}}
-   {:$replaceRoot {:newRoot "$edge"}}])
+  ([label] (from-edge label {}))
+  ([label where]
+   [{:$lookup
+     {:from label
+      :localField "gid"
+      :foreignField "to"
+      :as "edge"}}
+    {:$unwind "$edge"}
+    {:$match where}
+    {:$addFields {"edge._history" "$_history"}}
+    {:$replaceRoot {:newRoot "$edge"}}]))
 
 (defn to-edge
-  [{:keys [label where]}]
-  [{:$lookup
-    {:from "edge" ;; label
-     :localField "gid"
-     :foreignField "from"
-     :as "edge"}}
-   {:$unwind "$edge"}
-   {:$match
-    (merge
-     where
-     {:edge.label label})}
-   {:$addFields {"edge._history" "$_history"}}
-   {:$replaceRoot {:newRoot "$edge"}}])
+  ([label] (to-edge label {}))
+  ([label where]
+   [{:$lookup
+     {:from label
+      :localField "gid"
+      :foreignField "from"
+      :as "edge"}}
+    {:$unwind "$edge"}
+    {:$match where}
+    {:$addFields {"edge._history" "$_history"}}
+    {:$replaceRoot {:newRoot "$edge"}}]))
 
 (defn from-vertex
-  [{:keys [where]}]
-  [{:$lookup
-    {:from "vertex" ;; "$$fromLabel"
-     :localField "from"
-     :foreignField "gid"
-     :as "vertex"}}
-   {:$unwind "$vertex"}
-   {:$match (or where {})}
-   {:$addFields {"vertex._history" "$_history"}}
-   {:$replaceRoot {:newRoot "$vertex"}}])
+  ([label] (from-vertex label {}))
+  ([label where]
+   [{:$lookup
+     {:from label
+      :localField "from"
+      :foreignField "gid"
+      :as "vertex"}}
+    {:$unwind "$vertex"}
+    {:$match where}
+    {:$addFields {"vertex._history" "$_history"}}
+    {:$replaceRoot {:newRoot "$vertex"}}]))
 
 (defn to-vertex
-  [{:keys [where]}]
-  [{:$lookup
-    {:from "vertex" ;; "$$toLabel"
-     :localField "to"
-     :foreignField "gid"
-     :as "vertex"}}
-   {:$unwind "$vertex"}
-   {:$match (or where {})}
-   {:$addFields {"vertex._history" "$_history"}}
-   {:$replaceRoot {:newRoot "$vertex"}}])
+  ([label] (to-vertex label {}))
+  ([label where]
+   [{:$lookup
+     {:from label
+      :localField "to"
+      :foreignField "gid"
+      :as "vertex"}}
+    {:$unwind "$vertex"}
+    {:$match where}
+    {:$addFields {"vertex._history" "$_history"}}
+    {:$replaceRoot {:newRoot "$vertex"}}]))
 
 (defn from
-  ([what]
+  ([edge-label vertex-label] (from edge-label vertex-label {}))
+  ([edge-label vertex-label where]
    (concat
-    (from-edge (select-keys what [:label]))
-    (from-vertex (select-keys what [:where])))))
+    (from-edge edge-label)
+    (from-vertex vertex-label where))))
 
 (defn to
-  ([what]
+  ([edge-label vertex-label] (to edge-label vertex-label {}))
+  ([edge-label vertex-label where]
    (concat
-    (to-edge (select-keys what [:label]))
-    (to-vertex (select-keys what [:where])))))
+    (to-edge edge-label)
+    (to-vertex vertex-label where))))
 
 (defn values
   [values]
@@ -214,10 +214,10 @@
 
 (defn apply-step
   [steps step]
-  (let [step-key (-> step keys first)
-        about (-> step vals last)
+  (let [step-key (first step)
+        about (rest step)
         traverse (get steps step-key)]
-    (traverse about)))
+    (apply traverse about)))
 
 (defn translate
   ([query] (translate {} query))

@@ -21,5 +21,5 @@
          :port 27017
          :database "color"}
  :server {:port 4443}
- :protograph {:path "resources/config/protograph.yml"
+ :protograph {:path "../biostream/bmeg-etl/bmeg.protograph.yaml"
               :prefix "protograph"}}

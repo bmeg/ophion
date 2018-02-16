@@ -3,11 +3,12 @@
    [clojure.string :as string]
    [clojure.tools.cli :as cli]
    [taoensso.timbre :as log]
-   [ophion.config :as config]
    [monger.core :as core]
    [monger.db :as db]
    [monger.conversion :as convert]
-   [monger.collection :as mongo])
+   [monger.collection :as mongo]
+   [protograph.template :as protograph]
+   [ophion.config :as config])
   (:import
    [com.mongodb.client.model InsertManyOptions BulkWriteOptions]
    [com.mongodb DB WriteResult DBObject WriteConcern BulkWriteException]
@@ -174,6 +175,23 @@
   (if-not ((collections db) (name label))
     (build-collection! db label ((keyword element) base-indexes))))
 
+(defn label-indexes
+  [element {:keys [label fields]}]
+  (let [indexes (map (fn [f] [f {}]) fields)]
+    [label (concat (get base-indexes element) indexes)]))
+
+(defn message-indexes
+  [[key {:keys [vertexes edges]}]]
+  (let [v (map (partial label-indexes :vertex) vertexes)
+        e (map (partial label-indexes :edge) edges)]
+    (into
+     {}
+     (concat v e))))
+
+(defn protograph-indexes
+  [protograph]
+  (apply merge (map message-indexes protograph)))
+
 ;; check to see if indexes exist on boot
 
 (def parse-args
@@ -184,5 +202,10 @@
   (let [env (:options (cli/parse-opts args parse-args))
         path (or (:config env) "resources/config/ophion.clj")
         config (config/read-path path)
+        protograph (protograph/load-protograph
+                    (or
+                     (get-in config [:protograph :path])
+                     "resources/config/protograph.yml"))
+        indexes (protograph-indexes protograph)
         db (connect! (get config :mongo))]
-    (build-indexes! db base-indexes)))
+    (build-indexes! db indexes)))

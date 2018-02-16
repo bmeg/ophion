@@ -254,7 +254,7 @@
         schema (protograph/graph-structure protograph)
         mongo (mongo/connect! (get config :mongo))
         routes (polaris/build-routes (ophion-routes graph search schema mongo))
-        router (polaris/router routes) "public"
+        router (polaris/router routes)
         app (-> router
                 (resource/wrap-resource "public")
                 (keyword/wrap-keyword-params)

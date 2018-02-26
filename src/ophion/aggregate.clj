@@ -355,7 +355,7 @@
         config (config/read-path path)
         graph (mongo/connect! (:mongo config))]
     ;; (ingest-incrementally graph (:input env))
-    (ingest-batches-from-path! (:input env) graph)
+    (ingest-batches-from-path! graph (:input env))
     (log/info "ingest complete")))
 
 (def gods-graph

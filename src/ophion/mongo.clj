@@ -7,11 +7,19 @@
    [monger.db :as db]
    [monger.conversion :as convert]
    [monger.collection :as mongo]
+   [monger.util :as util]
    [protograph.template :as protograph]
    [ophion.config :as config])
   (:import
+;; (:import [com.mongodb Mongo DB DBCollection WriteResult DBObject WriteConcern
+;;             DBCursor MapReduceCommand MapReduceCommand$OutputType AggregationOutput
+;;             AggregationOptions AggregationOptions$OutputMode]
+
+
+   [java.util.concurrent TimeUnit]
    [com.mongodb.client.model InsertManyOptions BulkWriteOptions]
-   [com.mongodb DB WriteResult DBObject WriteConcern BulkWriteException]
+   [com.mongodb DB WriteResult DBObject WriteConcern BulkWriteException
+    AggregationOptions AggregationOptions$OutputMode]
    [java.util List Map]
    [org.bson.types ObjectId]))
 
@@ -54,6 +62,16 @@
   [db]
   (set (db/get-collection-names db)))
 
+(defn counts
+  [db]
+  (let [all (collections db)]
+    (into
+     {}
+     (map
+      (fn [collection]
+        [collection (number db collection)])
+      all))))
+
 (defn purge!
   ([db]
    (let [present (collections db)]
@@ -61,6 +79,10 @@
        (purge! db collection))))
   ([db collection]
    (mongo/remove db (name collection))))
+
+(defn drop!
+  [db collection]
+  (mongo/drop db (name collection)))
 
 (defn mapply
   [f & args]
@@ -70,6 +92,24 @@
   ([db collection pipeline] (aggregate db collection pipeline {}))
   ([db collection pipeline opts]
    (mapply mongo/aggregate db (name collection) pipeline opts)))
+
+(defn build-aggregation-options
+  ^AggregationOptions
+  [{:keys [^Boolean allow-disk-use cursor ^Long max-time]}]
+  (cond-> (AggregationOptions/builder)
+    allow-disk-use       (.allowDiskUse allow-disk-use)
+    cursor               (.outputMode AggregationOptions$OutputMode/CURSOR)
+    max-time             (.maxTime max-time TimeUnit/MILLISECONDS)
+    (:batch-size cursor) (.batchSize (int (:batch-size cursor)))
+    true                 .build))
+
+(defn raw-aggregate
+  ([db collection pipeline] (aggregate db collection pipeline {}))
+  ([db collection pipeline opts]
+   (let [coll (.getCollection db collection)
+         aggropts (build-aggregation-options opts)
+         pipe (util/into-array-list (convert/to-db-object pipeline))]
+     (.aggregate coll pipe aggropts))))
 
 (def document-limit 10000)
 
@@ -192,7 +232,7 @@
   [protograph]
   (apply merge (map message-indexes protograph)))
 
-;; check to see if indexes exist on boot
+;; check to see if indexes exist on boot?
 
 (def parse-args
   [["-c" "--config CONFIG" "path to config file"]])

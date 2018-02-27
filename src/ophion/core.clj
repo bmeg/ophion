@@ -141,6 +141,15 @@
      :headers {"content-type" "application/json"}
      :body (json/generate-string queries)}))
 
+(defn aggregate-query-handler
+  [mongo protograph request]
+  (let [query (read-json (:body request))
+        label (get-in request [:params :label])
+        result (aggregate/evaluate mongo label query)]
+    {:status 200
+     :headers {"content-type" "application/json"}
+     :body (stream/->source result)}))
+
 (defn query-comparison-handler
   [mongo request]
   (let [queries (read-json (:body request))
@@ -216,6 +225,12 @@
     (log/info "--> all queries")
     (#'all-queries-handler mongo request)))
 
+(defn aggregate-query
+  [mongo protograph]
+  (fn [request]
+    (log/info "--> aggregate query")
+    (#'aggregate-query-handler mongo protograph request)))
+
 (defn query-comparison
   [mongo]
   (fn [request]
@@ -237,6 +252,7 @@
    ["/edge/find/:from/:label/:to" :edge-find (find-edge graph)]
    ["/edge/query" :edge-query (edge-query graph)]
    ["/search/counts" :search-counts (search-counts search)]
+   ["/ophion/query/:label" :aggregate-query (aggregate-query mongo protograph)]
    ["/query/save" :save-query (save-query graph search mongo)]
    ["/query/all" :all-queries (all-queries mongo)]
    ["/query/compare" :query-comparison (query-comparison mongo)]])

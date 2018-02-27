@@ -235,8 +235,8 @@
      (mongo/raw-aggregate
       db collection
       aggregate
-       ;; :cursor {:batch-size 1000}
-      {:allow-disk-use true}))))
+      {:allow-disk-use true
+       :cursor {:batch-size 1000}}))))
 
 (defn flat
   "this will squash data if they are in the reserved set"

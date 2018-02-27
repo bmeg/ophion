@@ -214,7 +214,7 @@
 
 (defn apply-step
   [steps step]
-  (let [step-key (first step)
+  (let [step-key (keyword (first step))
         about (rest step)
         traverse (get steps step-key)]
     (apply traverse about)))

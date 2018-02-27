@@ -229,7 +229,7 @@
 (defn evaluate
   ([db query] (evaluate db :vertex query))
   ([db collection query]
-   (log/info query)
+   (log/info collection query)
    (let [aggregate (translate query)]
      (log/info aggregate)
      (mongo/raw-aggregate

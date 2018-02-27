@@ -51,7 +51,7 @@
 
 (defn aggregate-query-handler
   [mongo protograph request]
-  (let [query (read-json (:body request))
+  (let [query (mapv identity (read-json (:body request)))
         label (get-in request [:params :label])
         result (aggregate/evaluate mongo label query)]
     {:status 200

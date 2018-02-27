@@ -309,7 +309,7 @@
     (let [element (string/lower-case (kafka/path->label (.getName file)))
           lines (line-seq (io/reader file))
           parsed (map #(json/parse-string % keyword) lines)]
-      (ingest-batches! graph element parsed))))
+      (ingest-label-collections! graph element parsed))))
 
 (defn ingest-batches!
   [graph element all]

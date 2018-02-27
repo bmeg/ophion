@@ -194,10 +194,10 @@
      {:$replaceRoot {:newRoot "$_root"}}]))
 
 (def steps
-  {:from-edge from-edge
-   :to-edge to-edge
-   :from-vertex from-vertex
-   :to-vertex to-vertex
+  {:fromEdge from-edge
+   :toEdge to-edge
+   :fromVertex from-vertex
+   :toVertex to-vertex
    :from from
    :to to
    :root root
@@ -210,7 +210,7 @@
    :order order
    :offset offset
    :count qount
-   :group-count group-count})
+   :groupCount group-count})
 
 (defn apply-step
   [steps step]
@@ -296,12 +296,20 @@
 (defn ingest-label-collections!
   [graph element all]
   (let [processed (map (if (= element "vertex") process-vertex process-edge) all)]
-    (doseq [lines (partition-all 1000 processed)]
+    (doseq [lines (partition-all 2000 processed)]
       (let [labels (group-by :label lines)]
         (doseq [[label messages] labels]
+          (log/info "ingesting" (count messages) label)
           (mongo/ensure-collection! graph element label)
-          (pprint/pprint
-           (mongo/bulk-insert! graph label messages)))))))
+          (mongo/bulk-insert! graph label messages))))))
+
+(defn ingest-labels-from-path!
+  [graph path]
+  (doseq [file (kafka/dir->files path)]
+    (let [element (string/lower-case (kafka/path->label (.getName file)))
+          lines (line-seq (io/reader file))
+          parsed (map #(json/parse-string % keyword) lines)]
+      (ingest-batches! graph element parsed))))
 
 (defn ingest-batches!
   [graph element all]
@@ -355,7 +363,7 @@
         config (config/read-path path)
         graph (mongo/connect! (:mongo config))]
     ;; (ingest-incrementally graph (:input env))
-    (ingest-batches-from-path! graph (:input env))
+    (ingest-labels-from-path! graph (:input env))
     (log/info "ingest complete")))
 
 (def gods-graph

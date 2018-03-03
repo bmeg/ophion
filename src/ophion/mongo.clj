@@ -11,11 +11,6 @@
    [protograph.template :as protograph]
    [ophion.config :as config])
   (:import
-;; (:import [com.mongodb Mongo DB DBCollection WriteResult DBObject WriteConcern
-;;             DBCursor MapReduceCommand MapReduceCommand$OutputType AggregationOutput
-;;             AggregationOptions AggregationOptions$OutputMode]
-
-
    [java.util.concurrent TimeUnit]
    [com.mongodb.client.model InsertManyOptions BulkWriteOptions]
    [com.mongodb DB WriteResult DBObject WriteConcern BulkWriteException

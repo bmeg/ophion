@@ -99,7 +99,7 @@
     (to-vertex vertex-label where))))
 
 (defn from-unique
-  ([edge-label vertex-label] (from-dedup edge-label vertex-label {}))
+  ([edge-label vertex-label] (from-unique edge-label vertex-label {}))
   ([edge-label vertex-label where]
    (concat
     (from-edge edge-label)
@@ -107,7 +107,7 @@
     (from-vertex vertex-label where))))
 
 (defn to-unique
-  ([edge-label vertex-label] (to-dedup edge-label vertex-label {}))
+  ([edge-label vertex-label] (to-unique edge-label vertex-label {}))
   ([edge-label vertex-label where]
    (concat
     (to-edge edge-label)

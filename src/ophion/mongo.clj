@@ -104,7 +104,7 @@
    (let [coll (.getCollection db collection)
          aggropts (build-aggregation-options opts)
          pipe (util/into-array-list (convert/to-db-object pipeline))]
-     (.aggregate coll pipe aggropts))))
+     (iterator-seq (.aggregate coll pipe aggropts)))))
 
 (def document-limit 10000)
 

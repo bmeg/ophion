@@ -44,12 +44,14 @@
 (defn from-vertex
   ([label] (from-vertex label {}))
   ([label where]
-   [{:$lookup
+   [{:$group {:_id "$to" :to {:$first "$to"} :_history {:$addToSet "$_history"}}}
+    {:$lookup
      {:from label
       :localField "from"
       :foreignField "gid"
       :as "vertex"}}
     {:$unwind "$vertex"}
+    {:$unwind "$_history"}
     {:$match where}
     {:$addFields {"vertex._history" "$_history"}}
     {:$replaceRoot {:newRoot "$vertex"}}]))
@@ -57,12 +59,14 @@
 (defn to-vertex
   ([label] (to-vertex label {}))
   ([label where]
-   [{:$lookup
+   [{:$group {:_id "$to" :to {:$first "$to"} :_history {:$addToSet "$_history"}}}
+    {:$lookup
      {:from label
       :localField "to"
       :foreignField "gid"
       :as "vertex"}}
     {:$unwind "$vertex"}
+    {:$unwind "$_history"}
     {:$match where}
     {:$addFields {"vertex._history" "$_history"}}
     {:$replaceRoot {:newRoot "$vertex"}}]))

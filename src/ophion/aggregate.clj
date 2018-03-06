@@ -15,6 +15,19 @@
   [s]
   (str "$" (name s)))
 
+(defn dedup
+  []
+  [{:$group {:_id "$gid" :dedup {:$first "$$ROOT"}}}
+   {:$replaceRoot {:newRoot "$dedup"}}])
+
+(defn dedup-on
+  [field]
+  (let [path (dollar field)]
+    [{:$group {:_id path :dedup {:$first "$$ROOT"}}}
+     {:$replaceRoot {:newRoot "$dedup"}}]))
+
+    ;; {:$group {:_id dollar (keyword field) {:$first dollar} :_history {:$addToSet "$_history"}}}
+
 (defn where
   [where]
   [{:$match where}])
@@ -89,6 +102,22 @@
     (to-edge edge-label)
     (to-vertex vertex-label where))))
 
+(defn from-dedup
+  ([edge-label vertex-label] (from edge-label vertex-label {}))
+  ([edge-label vertex-label where]
+   (concat
+    (from-edge edge-label)
+    (dedup-on "from")
+    (from-vertex vertex-label where))))
+
+(defn to-dedup
+  ([edge-label vertex-label] (to edge-label vertex-label {}))
+  ([edge-label vertex-label where]
+   (concat
+    (to-edge edge-label)
+    (dedup-on "to")
+    (to-vertex vertex-label where))))
+
 (defn values
   [values]
   [{:$project
@@ -124,19 +153,6 @@
 (defn qount
   []
   [{:$count "count"}])
-
-(defn dedup
-  []
-  [{:$group {:_id "$gid" :dedup {:$first "$$ROOT"}}}
-   {:$replaceRoot {:newRoot "$dedup"}}])
-
-(defn dedup-on
-  [field]
-  (let [path (dollar field)]
-    [{:$group {:_id path :dedup {:$first "$$ROOT"}}}
-     {:$replaceRoot {:newRoot "$dedup"}}]))
-
-    ;; {:$group {:_id dollar (keyword field) {:$first dollar} :_history {:$addToSet "$_history"}}}
 
 (defn offset
   [n]
@@ -232,6 +248,8 @@
    :toVertex to-vertex
    :from from
    :to to
+   :fromDedup from-dedup
+   :toDedup to-dedup
    :root root
    :dedup dedup
    :dedupOn dedup-on

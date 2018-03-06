@@ -16,15 +16,11 @@
   (str "$" (name s)))
 
 (defn dedup
-  []
-  [{:$group {:_id "$gid" :dedup {:$first "$$ROOT"}}}
-   {:$replaceRoot {:newRoot "$dedup"}}])
-
-(defn dedup-on
-  [field]
-  (let [path (dollar field)]
-    [{:$group {:_id path :dedup {:$first "$$ROOT"}}}
-     {:$replaceRoot {:newRoot "$dedup"}}]))
+  ([] (dedup "gid"))
+  ([field]
+   (let [path (dollar field)]
+     [{:$group {:_id path :dedup {:$first "$$ROOT"}}}
+      {:$replaceRoot {:newRoot "$dedup"}}])))
 
     ;; {:$group {:_id dollar (keyword field) {:$first dollar} :_history {:$addToSet "$_history"}}}
 
@@ -102,20 +98,20 @@
     (to-edge edge-label)
     (to-vertex vertex-label where))))
 
-(defn from-dedup
+(defn from-unique
   ([edge-label vertex-label] (from-dedup edge-label vertex-label {}))
   ([edge-label vertex-label where]
    (concat
     (from-edge edge-label)
-    (dedup-on "from")
+    (dedup "from")
     (from-vertex vertex-label where))))
 
-(defn to-dedup
+(defn to-unique
   ([edge-label vertex-label] (to-dedup edge-label vertex-label {}))
   ([edge-label vertex-label where]
    (concat
     (to-edge edge-label)
-    (dedup-on "to")
+    (dedup "to")
     (to-vertex vertex-label where))))
 
 (defn values
@@ -200,9 +196,9 @@
    (fn [out q]
      (let [label (first q)
            query (concat
-                  [{:mark label}]
+                  [[:mark label]]
                   (rest q)
-                  [{:select [label]}])
+                  [[:select [label]]])
            aggregation (translate query)
            un (unwind label)
            group (group-set label)]
@@ -248,11 +244,10 @@
    :toVertex to-vertex
    :from from
    :to to
-   :fromDedup from-dedup
-   :toDedup to-dedup
+   :fromUnique from-unique
+   :toUnique to-unique
    :root root
    :dedup dedup
-   :dedupOn dedup-on
    :where where
    :match match
    :values values

@@ -11,6 +11,10 @@
    [ophion.config :as config]
    [ophion.mongo :as mongo]))
 
+(defn dollar
+  [s]
+  (str "$" (name s)))
+
 (defn where
   [where]
   [{:$match where}])
@@ -90,7 +94,7 @@
   [{:$project
     (reduce
      (fn [project value]
-       (assoc project value (str "$" (name value))))
+       (assoc project value (dollar value)))
      {} values)}])
 
 (defn mark
@@ -106,7 +110,7 @@
   [{:$project
     (reduce
      (fn [project label]
-       (assoc project label (str "$_history." label)))
+       (assoc project label (str "$_history." (name label))))
      {} labels)}])
 
 (defn limit
@@ -128,10 +132,11 @@
 
 (defn dedup-on
   [field]
-  (let [dollar (str "$" (name field))]
-    ;; {:$group {:_id dollar (keyword field) {:$first dollar} :_history {:$addToSet "$_history"}}}
-    [{:$group {:_id dollar :dedup {:$first "$$ROOT"}}}
+  (let [path (dollar field)]
+    [{:$group {:_id path :dedup {:$first "$$ROOT"}}}
      {:$replaceRoot {:newRoot "$dedup"}}]))
+
+    ;; {:$group {:_id dollar (keyword field) {:$first dollar} :_history {:$addToSet "$_history"}}}
 
 (defn offset
   [n]
@@ -143,11 +148,11 @@
 
 (defn root
   [in]
-  [{:$replaceRoot {:newRoot (str "$" in)}}])
+  [{:$replaceRoot {:newRoot (dollar in)}}])
 
 (defn group-count
   [path]
-  [{:$group {:_id (str "$" path) :count {:$sum 1}}}
+  [{:$group {:_id (dollar path) :count {:$sum 1}}}
    {:$project {:key "$_id" :count "$count"}}])
 
 (defn unwind
@@ -156,11 +161,11 @@
 
 (defn group-set
   [label]
-  [{:$group {:_id "$_id" label {:$push (str "$" label ".gid")}}}])
+  [{:$group {:_id "$_id" label {:$push (str "$" (name label) ".gid")}}}])
 
 (defn element-at
   [label]
-  {:$arrayElemAt [(str "$" label) 0]})
+  {:$arrayElemAt [(dollar label) 0]})
 
 (declare translate)
 
@@ -191,8 +196,10 @@
        :matches
        {:$setIntersection
         (map
-         (fn [label]
-           (str "$" label "." label))
+         (comp
+          (fn [label]
+            (str "$" label "." label))
+          name)
          labels)}}}
      {:$unwind "$_root"}
      {:$redact

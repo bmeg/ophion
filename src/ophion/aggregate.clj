@@ -122,8 +122,8 @@
    :desc -1})
 
 (defn qount
-  [label]
-  [{:$count label}])
+  []
+  [{:$count "count"}])
 
 (defn dedup
   []
@@ -166,6 +166,15 @@
 (defn element-at
   [label]
   {:$arrayElemAt [(dollar label) 0]})
+
+(defn sort-order
+  [direction]
+  (if (= "desc" (name direction)) -1 1))
+
+(defn sortBy
+  [field direction]
+  (let [order (sort-order direction)]
+    [{:$sort {(name field) order}}]))
 
 (declare translate)
 
@@ -235,6 +244,7 @@
    :order order
    :offset offset
    :count qount
+   :sort sortBy
    :groupCount group-count})
 
 (defn apply-step

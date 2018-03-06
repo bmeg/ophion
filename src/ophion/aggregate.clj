@@ -103,7 +103,7 @@
     (to-vertex vertex-label where))))
 
 (defn from-dedup
-  ([edge-label vertex-label] (from edge-label vertex-label {}))
+  ([edge-label vertex-label] (from-dedup edge-label vertex-label {}))
   ([edge-label vertex-label where]
    (concat
     (from-edge edge-label)
@@ -111,7 +111,7 @@
     (from-vertex vertex-label where))))
 
 (defn to-dedup
-  ([edge-label vertex-label] (to edge-label vertex-label {}))
+  ([edge-label vertex-label] (to-dedup edge-label vertex-label {}))
   ([edge-label vertex-label where]
    (concat
     (to-edge edge-label)

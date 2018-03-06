@@ -44,7 +44,7 @@
 (defn from-vertex
   ([label] (from-vertex label {}))
   ([label where]
-   [{:$group {:_id "$from" :to {:$first "$from"} :_history {:$addToSet "$_history"}}}
+   [;; {:$group {:_id "$from" :to {:$first "$from"} :_history {:$addToSet "$_history"}}}
     {:$lookup
      {:from label
       :localField "from"
@@ -59,7 +59,7 @@
 (defn to-vertex
   ([label] (to-vertex label {}))
   ([label where]
-   [{:$group {:_id "$to" :to {:$first "$to"} :_history {:$addToSet "$_history"}}}
+   [;; {:$group {:_id "$to" :to {:$first "$to"} :_history {:$addToSet "$_history"}}}
     {:$lookup
      {:from label
       :localField "to"
@@ -120,6 +120,18 @@
 (defn qount
   [label]
   [{:$count label}])
+
+(defn dedup
+  []
+  [{:$group {:_id "$gid" :dedup {:$first "$$ROOT"}}}
+   {:$replaceRoot {:newRoot "$dedup"}}])
+
+(defn dedup-on
+  [field]
+  (let [dollar (str "$" (name field))]
+    ;; {:$group {:_id dollar (keyword field) {:$first dollar} :_history {:$addToSet "$_history"}}}
+    [{:$group {:_id dollar :dedup {:$first "$$ROOT"}}}
+     {:$replaceRoot {:newRoot "$dedup"}}]))
 
 (defn offset
   [n]
@@ -205,6 +217,8 @@
    :from from
    :to to
    :root root
+   :dedup dedup
+   :dedupOn dedup-on
    :where where
    :match match
    :values values

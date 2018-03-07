@@ -125,23 +125,21 @@
        (assoc project value (dollar value)))
      {} values)}])
 
-(defn mark-field
+(def root-symbol "_")
+
+(defn mark
   [label]
   (if (map? label)
     (let [[key value] (first label)
           path (str "_history." key)]
-      {path (dollar value)})
+      (if (= value root-symbol)
+        [{:$addFields {path "$$ROOT"}}
+         {:$project
+          {(str path "._history") false
+           (str path "._id") false}}]
+        [{:$addFields {path (dollar value)}}]))
     (let [path (str "_history." label)]
-      {path "$$ROOT"})))
-
-(defn mark
-  [label]
-  (let [field (mark-field label)
-        path (first (keys field))]
-    [{:$addFields field}
-     {:$project
-      {(str path "._history") false
-       (str path "._id") false}}]))
+      [{:$addFields {path "$gid"}}])))
 
 (defn select
   [labels]

@@ -128,8 +128,7 @@
 (defn mark-field
   [label]
   (if (map? label)
-    (let [key (first label)
-          value (last label)
+    (let [[key value] (first label)
           path (str "_history." key)]
       {path (dollar value)})
     (let [path (str "_history." label)]

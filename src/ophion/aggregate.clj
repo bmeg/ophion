@@ -19,7 +19,10 @@
   ([] (dedup "gid"))
   ([field]
    (let [path (dollar field)]
-     [{:$group {:_id path :dedup {:$first "$$ROOT"}}}
+     [{:$project {:_id false}}
+      ;; {:$group {:_id path :dedup {:$addToSet "$$ROOT"}}}
+      ;; {:$unwind "$dedup"}
+      {:$group {:_id {field path "_history" "$_history"} :dedup {:$first "$$ROOT"}}}
       {:$replaceRoot {:newRoot "$dedup"}}])))
 
     ;; {:$group {:_id dollar (keyword field) {:$first dollar} :_history {:$addToSet "$_history"}}}
@@ -466,3 +469,71 @@
 
 
 
+;; [[:fromUnique "callSetOf" "CallSet"] [:fromUnique "variantOf" "Variant"] [:toUnique "featureOf" "G2PAssociation"] [:toUnique "environmentFor" "Compound"] [:from "responseTo" "ResponseCurve"] [:toUnique "responseFor" "Biosample"] [:count]]
+
+
+
+
+
+;; (def possibles
+;;   (time
+;;    (aggregate/evaluate
+;;     db
+;;     "Individual"
+;;     [[:mark "individual"]
+;;      [:from "sampleOf" "Biosample"]
+;;      [:from "callSetOf" "CallSet" {"vertex.method" "MUTECT"}]
+;;      [:from "variantOf" "Variant"]
+;;      [:to "variantIn" "Gene"]
+;;      [:mark "gene"]
+;;      [:select ["individual" "gene"]]])))
+
+
+
+
+
+;; (time
+;;  (aggregate/evaluate
+;;   db
+;;   "G2PAssociation"
+;;   [[:toUnique "genotypeOf" "Gene"]
+;;    [:from "variantIn" "Variant"]
+;;    [:toUnique "variantOf" "CallSet" {:vertex.method "MUTECT"}]
+;;    [:to "callSetOf" "Biosample"]
+;;    [:toUnique "sampleOf" "Individual"]
+;;    [:count]]))
+
+
+;;   [[:toUnique "genotypeOf" "Gene"]
+;;    [:from "variantIn" "Variant"]
+;;    [:toUnique "variantOf" "CallSet" {:vertex.method "MUTECT"}]
+;;    [:to "callSetOf" "Biosample"]
+;;    [:to "sampleOf" "Individual"]
+;;    [:toUnique "drugTherapyFrom" "Compound"]
+;;    [:count]]
+
+
+;; [{:$lookup {:from "genotypeOf", :localField "gid", :foreignField "from", :as "edge"}}
+;;  {:$unwind "$edge"}
+;;  {:$match {}}
+;;  {:$addFields {"edge._history" "$_history"}}
+;;  {:$replaceRoot {:newRoot "$edge"}}
+;;  {:$group {:_id "$to", :dedup {:$first "$$ROOT"}}}
+;;  {:$replaceRoot {:newRoot "$dedup"}}
+;;  {:$lookup {:from "Gene", :localField "to", :foreignField "gid", :as "vertex"}}
+;;  {:$unwind "$vertex"}
+;;  {:$match {}}
+;;  {:$addFields {"vertex._history" "$_history"}}
+;;  {:$replaceRoot {:newRoot "$vertex"}}
+;;  {:$lookup {:from "variantIn", :localField "gid", :foreignField "to", :as "edge"}}
+;;  {:$unwind "$edge"}
+;;  {:$match {}}
+;;  {:$addFields {"edge._history" "$_history"}}
+;;  {:$replaceRoot {:newRoot "$edge"}}
+;;  {:$lookup {:from "Variant", :localField "from", :foreignField "gid", :as "vertex"}}
+;;  {:$unwind "$vertex"}
+;;  {:$match {}}
+;;  {:$addFields {"vertex._history" "$_history"}}
+;;  {:$replaceRoot {:newRoot "$vertex"}}
+;;  {:$count "count"}
+;;  {:$project {:_id false}}]

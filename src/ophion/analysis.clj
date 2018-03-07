@@ -1,6 +1,7 @@
 (ns ophion.analysis
   (:require
    [clojure.set :as set]
+   [ophion.mongo :as mongo]
    [ophion.aggregate :as aggregate]))
 
 (def gods-graph
@@ -130,27 +131,44 @@
    initial targets))
 
 (defn individual-map
-  [variants compounds]
-  (-> {}
+  [variants compounds diseases]
+  (-> diseases
       (variant-map variants)
-      (compound-map compound)))
+      (compound-map compounds)))
+
+(defn disease-map
+  [db gids]
+  (let [records (mongo/query db "Individual" {:gid {:$in gids}})]
+    (into
+     {}
+     (map
+      (fn [individual]
+        [(:gid individual) {"disease" (:disease_code individual)}])
+      records))))
 
 (defn evaluate-individuals
-  [variants compounds targets]
-  (let [individuals (individual-map variants compounds)
+  [variants compounds targets diseases]
+  (let [individuals (individual-map variants compounds diseases)
         associations (target-map {} targets)]
     (map
-     (fn [[part individual]]
+     (fn [[key individual]]
        (let [genes (get individual "variants")]
          (if (empty? genes)
-           {:unsupported (count (get individual "compounds"))}
+           {:gid key
+            :disease (get individual "disease")
+            :variants (get individual "variants")
+            :supported #{}
+            :unsupported (get individual "compounds")
+            :potential #{}}
            (let [implied (apply set/union (map associations (get individual "variants")))
                  applied (get individual "compounds")]
-             {:supported (count (set/intersection applied implied))
-              :unsupported (count (set/difference applied implied))
-              :potential (count (set/difference implied applied))}))))
+             {:gid key
+              :disease (get individual "disease")
+              :variants (get individual "variants")
+              :supported (set/intersection applied implied)
+              :unsupported (set/difference applied implied)
+              :potential (set/difference implied applied)}))))
      individuals)))
-
 
 
 

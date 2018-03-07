@@ -137,7 +137,8 @@
 
 (defn mark
   [label]
-  (let [field (mark-field label)]
+  (let [field (mark-field label)
+        path (first field)]
     [{:$addFields field}
      {:$project
       {(str path "._history") false

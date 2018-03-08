@@ -269,3 +269,22 @@
 ;;  {:$replaceRoot {:newRoot "$vertex"}}
 ;;  {:$count "count"}
 ;;  {:$project {:_id false}}]
+
+
+;; (def possibles
+;;   (time
+;;    (aggregate/evaluate
+;;     db
+;;     "Compound"
+;;     [[:mark "compound"]
+;;      [:fromUnique "environmentFor" "G2PAssociation"]
+;;      [:toUnique "genotypeOf" "Gene"]
+;;      [:mark "gene"]
+;;      [:from "variantIn" "Variant"]
+;;      [:toUnique "variantOf" "CallSet" {:vertex.method "MUTECT"}]
+;;      [:to "callSetOf" "Biosample"]
+;;      [:toUnique "sampleOf" "Individual"]
+;;      [:mark "individual"]
+;;      [:select ["individual" "compound" "gene"]]])))
+
+

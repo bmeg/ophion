@@ -21,12 +21,8 @@
   ([field]
    (let [path (dollar field)]
      [{:$project {:_id false}}
-      ;; {:$group {:_id path :dedup {:$addToSet "$$ROOT"}}}
-      ;; {:$unwind "$dedup"}
       {:$group {:_id {field path "_history" "$_history"} :dedup {:$first "$$ROOT"}}}
       {:$replaceRoot {:newRoot "$dedup"}}])))
-
-    ;; {:$group {:_id dollar (keyword field) {:$first dollar} :_history {:$addToSet "$_history"}}}
 
 (defn where
   [where]
@@ -61,14 +57,12 @@
 (defn from-vertex
   ([label] (from-vertex label {}))
   ([label where]
-   [;; {:$group {:_id "$from" :to {:$first "$from"} :_history {:$addToSet "$_history"}}}
-    {:$lookup
+   [{:$lookup
      {:from label
       :localField "from"
       :foreignField "gid"
       :as "vertex"}}
     {:$unwind "$vertex"}
-    ;; {:$unwind "$_history"}
     {:$match where}
     {:$addFields {"vertex._history" "$_history"}}
     {:$replaceRoot {:newRoot "$vertex"}}]))
@@ -76,14 +70,12 @@
 (defn to-vertex
   ([label] (to-vertex label {}))
   ([label where]
-   [;; {:$group {:_id "$to" :to {:$first "$to"} :_history {:$addToSet "$_history"}}}
-    {:$lookup
+   [{:$lookup
      {:from label
       :localField "to"
       :foreignField "gid"
       :as "vertex"}}
     {:$unwind "$vertex"}
-    ;; {:$unwind "$_history"}
     {:$match where}
     {:$addFields {"vertex._history" "$_history"}}
     {:$replaceRoot {:newRoot "$vertex"}}]))
@@ -195,7 +187,7 @@
   [direction]
   (if (= "desc" (name direction)) -1 1))
 
-(defn sortBy
+(defn psort
   [field direction]
   (let [order (sort-order direction)]
     [{:$sort {(name field) order}}]))
@@ -249,6 +241,11 @@
         "else" "$$PRUNE"}}}
      {:$replaceRoot {:newRoot "$_root"}}]))
 
+(defn gather
+  [query-map]
+  (let [queries (into {} (map (fn [[k query]] [k (translate query)]) query-map))]
+    [{:$facet queries}]))
+
 (def steps
   {:fromEdge from-edge
    :toEdge to-edge
@@ -269,7 +266,8 @@
    :order order
    :offset offset
    :count qount
-   :sort sortBy
+   :sort psort
+   :gather gather
    :groupCount group-count})
 
 (defn apply-step
@@ -353,11 +351,14 @@
 (defn ingest-labels-from-path!
   [graph path]
   (doseq [file (kafka/dir->files path)]
-    (let [filename (.getName file)
-          element (string/lower-case (kafka/path->label filename))
-          lines (line-seq (io/reader file))
-          parsed (map #(json/parse-string % keyword) lines)]
-      (ingest-label-collections! graph element parsed filename))))
+    (try
+      (let [filename (.getName file)
+            element (string/lower-case (kafka/path->label filename))
+            lines (line-seq (io/reader file))
+            parsed (map #(json/parse-string % keyword) lines)]
+        (ingest-label-collections! graph element parsed filename))
+      (catch Exception e
+        (log/info "file failed to parse: " (.getName file))))))
 
 (def parse-args
   [["-c" "--config CONFIG" "path to config file"]

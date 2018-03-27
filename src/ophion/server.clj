@@ -54,7 +54,7 @@
   (let [query (mapv identity (read-json (:body request)))
         label (get-in request [:params :label])
         result (aggregate/evaluate mongo label query)
-        out (map output (iterator-seq result))]
+        out (map output result)]
     {:status 200
      :headers {"content-type" "application/json"}
      :body (stream/->source out)}))

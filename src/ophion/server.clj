@@ -75,7 +75,7 @@
   [request]
   {:status 200
    :headers {"content-type" "text/html"}
-   :body (config/read-resource "public/index.html")})
+   :body (config/read-resource "public/parallax.html")})
 
 (defn ophion-routes
   [graph protograph]

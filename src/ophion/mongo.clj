@@ -106,6 +106,13 @@
          pipe (util/into-array-list (convert/to-db-object pipeline))]
      (iterator-seq (.aggregate coll pipe aggropts)))))
 
+(defn disk-aggregate
+  [db collection pipeline]
+  (raw-aggregate
+   db collection pipeline
+   {:allow-disk-use true
+    :cursor {:batch-size 1000}}))
+
 (def document-limit 10000)
 
 (defn bufferize-query

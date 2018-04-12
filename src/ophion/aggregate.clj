@@ -290,11 +290,9 @@
    (log/info collection query)
    (let [aggregate (translate query)]
      (log/info aggregate)
-     (mongo/raw-aggregate
+     (mongo/disk-aggregate
       db collection
-      aggregate
-      {:allow-disk-use true
-       :cursor {:batch-size 1000}}))))
+      aggregate))))
 
 (defn flat
   "this will squash data if they are in the reserved set"

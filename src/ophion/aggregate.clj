@@ -246,6 +246,65 @@
   (let [queries (into {} (map (fn [[k query]] [k (translate query)]) query-map))]
     [{:$facet queries}]))
 
+(defn render-terms
+  [outer {:keys [key limit]}]
+  (let [k (str "$" (name (or key outer)))]
+    [outer [{:$sortByCount k} {:$limit (or limit 10)}]]))
+
+(defn render-percentile
+  [outer params]
+  [outer
+   {:$bucketAuto
+    {:groupBy (str "$" (name outer))
+     :buckets 100}}])
+
+(def do-percentile
+  [{:$facet
+    {:start
+     [{:$bucketAuto
+       {:groupBy "$start"
+        :buckets 100}}]}}
+   {:$project
+    {:start
+     {:$map
+      {:input [1 5 10]
+       :as "index"
+       :in
+       {:percentile "$$index"
+        :start
+        {:$arrayElemAt ["$start", "$$index"]}}}}}}
+   {:$project
+    {:start
+     {:$map
+      {:input "$start"
+       :as "index"
+       :in
+       {:percentile "$$index.percentile"
+        :start "$$index.start._id.max"}}}}}])
+
+;; (mongo/disk-aggregate
+;;  db "Gene"
+;;  [{:$facet
+;;    {:start
+;;     [{:$bucketAuto {:groupBy "$start" :buckets 100 :output {:start {:$max "$start"}}}} {:$project {:start "$start"}}]}} {:$project {:start {:$map {:input [1 5 10] :as "index" :in {:percentile "$$index" :start {:$arrayElemAt ["$start", "$$index"]}}}}}} {:$project {:start {:$map {:input "$start" :as "index" :in {:percentile "$$index.percentile" :start "$$index.start.start"}}}}}])
+
+(defn render-aggregate
+  [[key query]]
+  (let [op (keyword (first (keys query)))
+        params (first (vals query))]
+    (condp = op
+      :terms (render-terms key params)
+      :percentile (render-percentile key params)
+      :histogram (render-histogram key params))))
+
+(defn project-aggregate
+  [[key query]])
+
+(defn aggregate
+  [spec]
+  (let [queries (into {} (filter identity (map render-aggregate spec)))]
+    [{:$facet queries}]))
+
 (def steps
   {:fromEdge from-edge
    :toEdge to-edge
@@ -372,5 +431,15 @@
     (ingest-labels-from-path! graph (:input env))
     (log/info "ingest complete")))
 
-
-
+;; (defn check-association
+;;   [db id]
+;;   (let [gid (str "g2p:" id)
+;;         g2p (first (aggregate/evaluate db "G2PAssociation" [[:where {:id id}]]))
+;;         env (map (partial str "compound:") (get g2p "environments"))
+;;         fea (map (partial str "variant:") (get g2p "features"))
+;;         compounds (aggregate/evaluate db "Compound" [[:where {:gid {:$in env}}]])
+;;         variants (aggregate/evaluate db "Variant" [[:where {:gid {:$in fea}}]])
+;;         cedges (aggregate/evaluate db "environmentFor" [[:where {:from gid :to {:$in env}}]])
+;;         vedges (aggregate/evaluate db "featureOf" [[:where {:from gid :to {:$in fea}}]])]
+;;     {:environments [(count env) (count compounds) (count cedges)]
+;;      :features [(count fea) (count variants) (count vedges)]}))

@@ -25,3 +25,50 @@ class BMEG():
         response = urllib2.urlopen(request)
         body = response.read()
         return json.loads(body)
+
+
+
+# O
+# .V()
+# .label('Individual')
+# .aggregate({
+#     'genderAges': {
+#         'histogram': {
+#             'group': ['gender'],
+#             'field': 'age',
+#             'interval': 10
+#         }
+#     }
+# })
+
+# {'genderAges': {
+#     'MALE': {
+#         10: 111,
+#         20: 2717,
+#         30: ...,
+#     },
+#     'FEMALE': {
+#         10: 3294823,
+#         20: 187394862394862394,
+#         30: ...,
+#     }
+# }}
+
+# [['mark', 'individual'],
+#  ['to', 'variantCall', 'Variant'],
+#  ['to', 'variantIn', 'Gene'],
+#  ['where', {'symbol': 'BRCA1'}],
+#  ['mark', 'gene'],
+#  ['select', ['individual', 'gene']]
+#  ['aggregate', {
+#      'genesPerIndividual': {'terms': {'field': 'individual'}},
+#      'individualsPerGene': {'terms': {'field': 'gene'}}
+#  }]]
+
+# [['where']]
+
+# {'genesPerIndividual': {
+#     'Jack': 1818181,
+#     'Mary': 23846,
+#     'Joe': ....
+# }}

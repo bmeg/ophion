@@ -282,12 +282,6 @@
        {:percentile "$$index.percentile"
         :start "$$index.start._id.max"}}}}}])
 
-;; (mongo/disk-aggregate
-;;  db "Gene"
-;;  [{:$facet
-;;    {:start
-;;     [{:$bucketAuto {:groupBy "$start" :buckets 100 :output {:start {:$max "$start"}}}} {:$project {:start "$start"}}]}} {:$project {:start {:$map {:input [1 5 10] :as "index" :in {:percentile "$$index" :start {:$arrayElemAt ["$start", "$$index"]}}}}}} {:$project {:start {:$map {:input "$start" :as "index" :in {:percentile "$$index.percentile" :start "$$index.start.start"}}}}}])
-
 (defn render-aggregate
   [[key query]]
   (let [op (keyword (first (keys query)))

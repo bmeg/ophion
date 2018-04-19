@@ -10,6 +10,10 @@ Ophion queries are an array of graph operations. Each element of this array is i
 
 ### example
 
+Given this schema (this is the current BMEG schema):
+
+![SCHEMA](https://github.com/bmeg/ophion/blob/master/resources/public/bmeg-schema-march-2018.png)
+
 Here is an example query that starts from Individual vertexes from BRCA and traverses to all associated Variants called from MUTECT, and returns every Individual/Variant pair:
 
     [["where",{"disease_code":"BRCA"}],
@@ -48,7 +52,7 @@ Traversal operations help you navigate the graph:
 * fromUnique
 * toUnique
 
-### control
+### state
 
 Mark and select work together to keep track of state during traversals:
 
@@ -84,9 +88,7 @@ The two main traversal operations are `from` and `to`. Because Ophion works with
 
 One upshot of this is that in order to craft traversals, you need to know the schema of the graph you are querying. The raw schema is defined in a `protograph` file, for BMEG the [protograph file is here](https://github.com/biostream/bmeg-etl/blob/master/bmeg.protograph.yaml). This will show you all vertex labels and all edges they have to other labels.
 
-If you want a visual representation then you can use the [BMEG website code](https://github.com/bmeg/bmeg) to generate a schema in cytoscape. Here is the current BMEG schema as an example:
-
-![SCHEMA](https://github.com/bmeg/ophion/blob/master/resources/public/bmeg-schema-march-2018.png)
+If you want a visual representation then you can use the [BMEG website code](https://github.com/bmeg/bmeg) to generate a schema in cytoscape like the example above.
 
 Either way, once you have your schema you know a few key things:
 
@@ -120,4 +122,33 @@ The `toUnique` and `fromUnique` operations work exactly the same as their non-un
 
 ### toEdge/fromEdge, toVertex/fromVertex
 
-The *Edge and *Vertex traversals are for navigating to and from the actual edge records between vertexes.
+The *Edge and *Vertex traversals are for navigating to and from the edge records between vertexes. Here is an example of going step by step between Gene and Variant (starting on Gene):
+
+    [["fromEdge", "variantIn"],
+     ["fromVertex", "Variant"]]
+
+This might seem like just a more verbose way to get from Genes to Variants, but sometimes interesting information is stored on edges that you could filter on. And edges themselves may contain the information you are looking for, in which case you don't even need to continue the traversal.
+
+As you may have guessed, `to` and `from` are just shorthand for the sequence `toEdge/toVertex` or `fromEdge/fromVertex`.
+
+## state
+
+As you traverse through the graph sometimes you want to keep track of where you are. Also, often you care about what things are associated to what other things you were visiting previously. This is what `mark` and `select` are for.
+
+### mark/select
+
+To save the current point of your traversal you can call `mark` with a label, and at the end of the traversal you can `select` any of the `mark`s you made along the way:
+
+    [["mark","individual"],
+     ["from","sampleOf","Biosample"],
+     ["mark","biosample"],
+     ["select",["individual","biosample"]]]
+
+This traversal starts at Individual, marks it, then traverses to Biosample, marks that as well, then finally `select`s the two marked elements. This will return objects with the keys from the `select`, whose values are the gids of the marked elements.
+
+    ....
+    {"individual": "individual:TCGA-XE-ANJJ", "biosample": "biosample:tcga:TCGA-XE-ANJJ:normal"}
+    {"individual": "individual:TCGA-XE-ANJJ", "biosample": "biosample:tcga:TCGA-XE-ANJJ:tumor"}
+    ....
+
+## filters

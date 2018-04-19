@@ -155,3 +155,62 @@ This traversal starts at Individual, marks it, then traverses to Biosample, mark
     ....
 
 # filters
+
+Often you are making a query to find specific things, not just all vertexes or edges of one type. Filters allow you to craft what elements your traversal is concerned with.
+
+### where
+
+The `where` operation is the way to select specific elements during a traversal. For instance, if I start a query from Individual it will happily return all Individuals, but what if I am only concerned with Individuals with breast cancer? This is where `where` comes in:
+
+    ["where": {"disease_code": "BRCA"}]
+
+This will work with any property in the vertex:
+
+    ["where": {"gender": "MALE"}]
+
+and can even work with intersections (AND):
+
+    ["where": {"disease_code": "BRCA", "gender": "MALE"}] // probably zero results
+
+The `where` syntax is based off of [mongo conditionals](https://docs.mongodb.com/manual/tutorial/query-documents/#read-operations-query-argument), so anything they can do you can do. Here are a couple of other useful examples.
+
+Say you have a list of values and want to see if any of them match a given field. You can use `$in`:
+
+    ["where": {"disease_code": {"$in": ["BRCA", "SKCM", "LUAD"]}}]
+
+We can have multiple keys to do an AND, what about an OR?
+
+    ["where": {"$or" [{"disease_code": "BRCA"}, {"gender": "MALE"}]}] // more results this time
+
+That covers most of the use cases, but there are many more.
+
+### dedup
+
+The `dedup` operator will cull duplicate elements. This rarely needs to be called on its own since we have the `toUnique` and `fromUnique` operators which combine it with a traversal (when it is most efficient to do so), but is provided for the cases when it still makes sense to invoke directly.
+
+`dedup` can be called on its own with no arguments (in which case it deduplicates based on gid), or you can supply the field. For instance, if you ran
+
+    ["dedup", "gender"]
+
+on all Individuals you would be left with one record with MALE as gender and one with FEMALE.
+
+### limit/offset
+
+There are a large number of records in the db, and often times you don't need to return all of them. Use `limit` to limit the number of records returned:
+
+    ["limit", 10]
+
+This will return only the first 10. When combined with `offset` and `order` you can emulate pagination.
+
+`offset` will drop a given number of records and return the rest. This would get all of the records the `limit` above did not return:
+
+    ["offset", 10]
+
+### order
+
+The default ordering in the database is when the document was inserted (timestamp). If you want them to come back in a different order you can use the `order` operation:
+
+    ["order", {}]
+
+* match
+* values

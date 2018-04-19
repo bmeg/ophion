@@ -169,7 +169,7 @@
 (defn group-count
   [path]
   [{:$group {:_id (dollar path) :count {:$sum 1}}}
-   {:$project {:key "$_id" :count "$count"}}])
+   {:$project {(name path) "$_id" :count "$count"}}])
 
 (defn unwind
   [label]
@@ -256,9 +256,9 @@
        {:input dollar
         :as "index"
         :in
-        {:k "$$index._id"
-         :v "$$index.count"}}}
-      {:$arrayToObject dollar}]]))
+        {(keyword outer) "$$index._id"
+         :count "$$index.count"}}}
+      dollar]]))
 
 (defn render-percentile
   [outer percentiles]
@@ -293,8 +293,13 @@
             {:$divide
              [dollar interval]}}]}
          :count {:$sum 1}}}
-       {:$sort {"_id" -1}}]
-      dollar
+       {:$sort {"_id" 1}}]
+      {:$map
+       {:input dollar
+        :as "index"
+        :in
+        {(keyword outer) "$$index._id"
+         :count "$$index.count"}}}
       dollar]]))
 
 (defn render-aggregate

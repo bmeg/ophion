@@ -247,40 +247,50 @@
     [{:$facet queries}]))
 
 (defn render-terms
-  [outer {:keys [key limit]}]
-  (let [k (str "$" (name (or key outer)))]
-    [outer [{:$sortByCount k} {:$limit (or limit 10)}]]))
+  [outer limit]
+  (let [dollar (str "$" (name outer))]
+    [outer
+     [[{:$sortByCount dollar}
+       {:$limit (or limit 10)}]
+      dollar
+      dollar]]))
 
 (defn render-percentile
-  [outer params]
-  [outer
-   {:$bucketAuto
-    {:groupBy (str "$" (name outer))
-     :buckets 100}}])
+  [outer percentiles]
+  (let [key (keyword outer)
+        dollar (str "$" (name outer))]
+    [outer
+     [[{:$bucketAuto
+        {:groupBy dollar
+         :buckets 100}}]
+      {:$map
+       {:input percentiles
+        :as "index"
+        :in
+        {:percentile "$$index"
+         key {:$arrayElemAt [dollar, "$$index"]}}}}
+      {:$map
+       {:input dollar
+        :as "index"
+        :in
+        {:percentile "$$index.percentile"
+         :start (str "$$index." (name outer) "._id.max")}}}]]))
 
-(def do-percentile
-  [{:$facet
-    {:start
-     [{:$bucketAuto
-       {:groupBy "$start"
-        :buckets 100}}]}}
-   {:$project
-    {:start
-     {:$map
-      {:input [1 5 10]
-       :as "index"
-       :in
-       {:percentile "$$index"
-        :start
-        {:$arrayElemAt ["$start", "$$index"]}}}}}}
-   {:$project
-    {:start
-     {:$map
-      {:input "$start"
-       :as "index"
-       :in
-       {:percentile "$$index.percentile"
-        :start "$$index.start._id.max"}}}}}])
+(defn render-histogram
+  [outer interval]
+  (let [dollar (str "$" (name outer))])
+  [outer
+   [[{:$group
+      {:_id
+       {:$multiply
+        [interval
+         {:$ceil
+          {:$divide
+           [dollar interval]}}]}
+       :count {:$sum 1}}}
+     {:$sort {"_id" -1}}]
+    dollar
+    dollar]])
 
 (defn render-aggregate
   [[key query]]
@@ -291,13 +301,24 @@
       :percentile (render-percentile key params)
       :histogram (render-histogram key params))))
 
-(defn project-aggregate
-  [[key query]])
+(defn assemble-stages
+  [stages queries]
+  (reduce
+   (fn [outs [key query]]
+     (map
+      (fn [out stage]
+        (assoc out key query))
+      outs query))
+   (map (fn [_] {}) stages) queries))
 
 (defn aggregate
   [spec]
   (let [queries (into {} (filter identity (map render-aggregate spec)))]
-    [{:$facet queries}]))
+    (assemble-stages
+     [:$facet
+      :$project
+      :$project]
+     queries)))
 
 (def steps
   {:fromEdge from-edge
@@ -421,7 +442,6 @@
         path (or (:config env) "resources/config/ophion.clj")
         config (config/read-path path)
         graph (mongo/connect! (:mongo config))]
-    ;; (ingest-incrementally graph (:input env))
     (ingest-labels-from-path! graph (:input env))
     (log/info "ingest complete")))
 
@@ -437,3 +457,31 @@
 ;;         vedges (aggregate/evaluate db "featureOf" [[:where {:from gid :to {:$in fea}}]])]
 ;;     {:environments [(count env) (count compounds) (count cedges)]
 ;;      :features [(count fea) (count variants) (count vedges)]}))
+
+
+;; (def do-percentile
+;;   [{:$facet
+;;     {:start
+;;      [{:$bucketAuto
+;;        {:groupBy "$start"
+;;         :buckets 100}}]}}
+;;    {:$project
+;;     {:start
+;;      {:$map
+;;       {:input [1 5 10]
+;;        :as "index"
+;;        :in
+;;        {:percentile "$$index"
+;;         :start
+;;         {:$arrayElemAt ["$start", "$$index"]}}}}}}
+;;    {:$project
+;;     {:start
+;;      {:$map
+;;       {:input "$start"
+;;        :as "index"
+;;        :in
+;;        {:percentile "$$index.percentile"
+;;         :start "$$index.start._id.max"}}}}}])
+
+;; [{:$group {:_id {:$multiply [100000 {:$ceil {:$divide ["$end" 100000]}}]} :count {:$sum 1}}} {:$sort {"_id" -1}}]
+

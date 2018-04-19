@@ -303,13 +303,18 @@
 
 (defn assemble-stages
   [stages queries]
-  (reduce
-   (fn [outs [key query]]
-     (map
-      (fn [out stage]
-        (assoc out key query))
-      outs query))
-   (map (fn [_] {}) stages) queries))
+  (into
+   {}
+   (map
+    vector
+    stages
+    (reduce
+     (fn [outs [key query]]
+       (map
+        (fn [out stage]
+          (assoc out key stage))
+        outs query))
+     (map (fn [_] {}) stages) queries))))
 
 (defn aggregate
   [spec]
@@ -486,3 +491,46 @@
 
 ;; [{:$group {:_id {:$multiply [100000 {:$ceil {:$divide ["$end" 100000]}}]} :count {:$sum 1}}} {:$sort {"_id" -1}}]
 
+[{:start
+  [[{:$bucketAuto
+     {:groupBy "$start",
+      :buckets 100}}]
+   {:$map
+    {:input [1 5 70 85],
+     :as "index",
+     :in
+     {:percentile "$$index",
+      :start {:$arrayElemAt ["$start" "$$index"]}}}}
+   {:$map
+    {:input "$start",
+     :as "index",
+     :in
+     {:percentile "$$index.percentile",
+      :start "$$index.start._id.max"}}}],
+  :end
+  [[{:$group
+     {:_id
+      {:$multiply
+       [1000000
+        {:$ceil
+         {:$divide
+          ["$end" 1000000]}}]},
+      :count {:$sum 1}}}
+    {:$sort {"_id" -1}}]
+   "$end"
+   "$end"],
+  :chromosome
+  [[{:$sortByCount "$chromosome"}
+    {:$limit 11}]
+   "$chromosome"
+   "$chromosome"]}
+ {:start
+  [[{:$bucketAuto
+     {:groupBy "$start",
+      :buckets 100}}]
+   {:$map
+    {:input [1 5 70 85],
+     :as "index",
+     :in
+     {:percentile "$$index",
+      :start {:$arrayElemAt ["$start" "$$index"]}}}} {:$map {:input "$start", :as "index", :in {:percentile "$$index.percentile", :start "$$index.start._id.max"}}}], :end [[{:$group {:_id {:$multiply [1000000 {:$ceil {:$divide ["$end" 1000000]}}]}, :count {:$sum 1}}} {:$sort {"_id" -1}}] "$end" "$end"], :chromosome [[{:$sortByCount "$chromosome"} {:$limit 11}] "$chromosome" "$chromosome"]} {:start [[{:$bucketAuto {:groupBy "$start", :buckets 100}}] {:$map {:input [1 5 70 85], :as "index", :in {:percentile "$$index", :start {:$arrayElemAt ["$start" "$$index"]}}}} {:$map {:input "$start", :as "index", :in {:percentile "$$index.percentile", :start "$$index.start._id.max"}}}], :end [[{:$group {:_id {:$multiply [1000000 {:$ceil {:$divide ["$end" 1000000]}}]}, :count {:$sum 1}}} {:$sort {"_id" -1}}] "$end" "$end"], :chromosome [[{:$sortByCount "$chromosome"} {:$limit 11}] "$chromosome" "$chromosome"]} {:$project {:_id false}}]

@@ -252,8 +252,13 @@
     [outer
      [[{:$sortByCount dollar}
        {:$limit (or limit 10)}]
-      dollar
-      dollar]]))
+      {:$map
+       {:input dollar
+        :as "index"
+        :in
+        {:k "$$index._id"
+         :v "$$index.count"}}}
+      {:$arrayToObject dollar}]]))
 
 (defn render-percentile
   [outer percentiles]
@@ -463,59 +468,4 @@
 ;;     {:environments [(count env) (count compounds) (count cedges)]
 ;;      :features [(count fea) (count variants) (count vedges)]}))
 
-
-;; (def do-percentile
-;;   [{:$facet
-;;     {:start
-;;      [{:$bucketAuto
-;;        {:groupBy "$start"
-;;         :buckets 100}}]}}
-;;    {:$project
-;;     {:start
-;;      {:$map
-;;       {:input [1 5 10]
-;;        :as "index"
-;;        :in
-;;        {:percentile "$$index"
-;;         :start
-;;         {:$arrayElemAt ["$start", "$$index"]}}}}}}
-;;    {:$project
-;;     {:start
-;;      {:$map
-;;       {:input "$start"
-;;        :as "index"
-;;        :in
-;;        {:percentile "$$index.percentile"
-;;         :start "$$index.start._id.max"}}}}}])
-
-;; [{:$group {:_id {:$multiply [100000 {:$ceil {:$divide ["$end" 100000]}}]} :count {:$sum 1}}} {:$sort {"_id" -1}}]
-
-[[:$facet
-  {:start
-   [{:$bucketAuto
-     {:groupBy "$start",
-      :buckets 100}}],
-   :end
-   [{:$group
-     {:_id
-      {:$multiply
-       [1000000
-        {:$ceil
-         {:$divide ["$end" 1000000]}}]},
-      :count {:$sum 1}}}
-    {:$sort {"_id" -1}}],
-   :chromosome
-   [{:$sortByCount "$chromosome"}
-    {:$limit 11}]}]
- [:$project
-  {:start
-   {:$map
-    {:input "$start",
-     :as "index",
-     :in
-     {:percentile "$$index.percentile",
-      :start "$$index.start._id.max"}}},
-   :end "$end",
-   :chromosome "$chromosome"}]
- {:$project {:_id false}}]
 

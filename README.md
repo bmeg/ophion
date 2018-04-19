@@ -125,7 +125,9 @@ The `toUnique` and `fromUnique` operations work exactly the same as their non-un
 The *Edge and *Vertex traversals are for navigating to and from the edge records between vertexes. Here is an example of going step by step between Gene and Variant (starting on Gene):
 
     [["fromEdge", "variantIn"],
-     ... (currently on the edge) ...
+     ....
+     (currently on the edge)
+     ....
      ["fromVertex", "Variant"]]
 
 This might seem like just a more verbose way to get from Genes to Variants, but sometimes interesting information is stored on edges that you could filter on. And edges themselves may contain the information you are looking for, in which case you don't even need to continue the traversal.

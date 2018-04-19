@@ -278,19 +278,19 @@
 
 (defn render-histogram
   [outer interval]
-  (let [dollar (str "$" (name outer))])
-  [outer
-   [[{:$group
-      {:_id
-       {:$multiply
-        [interval
-         {:$ceil
-          {:$divide
-           [dollar interval]}}]}
-       :count {:$sum 1}}}
-     {:$sort {"_id" -1}}]
-    dollar
-    dollar]])
+  (let [dollar (str "$" (name outer))]
+    [outer
+     [[{:$group
+        {:_id
+         {:$multiply
+          [interval
+           {:$ceil
+            {:$divide
+             [dollar interval]}}]}
+         :count {:$sum 1}}}
+       {:$sort {"_id" -1}}]
+      dollar
+      dollar]]))
 
 (defn render-aggregate
   [[key query]]

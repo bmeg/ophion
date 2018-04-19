@@ -86,7 +86,7 @@ Each of these operations is explained in more detail below.
 
 The two main traversal operations are `from` and `to`. Because Ophion works with directed graphs, there is a distinction between traversing across an edge in either direction. Either requires two additional pieces of information, an edge label and the ultimate destination label.
 
-One upshot of this is that in order to craft traversals, you need to know the schema of the graph you are querying. The raw schema is defined in a `protograph` file (for BMEG the [protograph file is here](https://github.com/biostream/bmeg-etl/blob/master/bmeg.protograph.yaml)). This will show you all vertex labels and all edges they have to other labels.
+One upshot of this is that in order to craft traversals, you need to know the schema of the graph you are querying. The raw schema is defined in a [protograph](https://github.com/bmeg/protograph) file (for BMEG the [protograph file is here](https://github.com/biostream/bmeg-etl/blob/master/bmeg.protograph.yaml)). This will show you all vertex labels and all edges they have to other labels.
 
 If you want a visual representation then you can use the [BMEG website code](https://github.com/bmeg/bmeg) to generate a schema in cytoscape like the example above.
 

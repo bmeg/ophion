@@ -10,7 +10,7 @@ Ophion queries are an array of graph operations. Each element of this array is i
 
 The operations currently supported are:
 
-#### traversals
+### traversals
 
 Traversal operations help you navigate the graph:
 
@@ -23,14 +23,14 @@ Traversal operations help you navigate the graph:
 * fromUnique
 * toUnique
 
-#### control
+### control
 
 Mark and select work together to keep track of state during traversals:
 
 * mark
 * select
 
-#### filters
+### filters
 
 Filter operations help you cull or craft the results:
 
@@ -44,7 +44,7 @@ Filter operations help you cull or craft the results:
 * offset
 * sort
 
-#### aggregates
+### aggregates
 
 Aggregate operations assemble metrics from a set of results:
 

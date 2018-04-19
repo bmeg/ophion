@@ -4,7 +4,7 @@ Language for making graph queries from data
 
 ![OPHION](https://github.com/bmeg/ophion/blob/master/resources/public/img/ophion.png)
 
-## usage
+# usage
 
 Ophion queries are an array of graph operations. Each element of this array is itself an array, with the first element being the name of the operation and the rest of the elements parameters to this operation.
 
@@ -35,7 +35,7 @@ This is the actual json payload. You can deliver this through any http method yo
 
 If you notice, the starting vertex label is in the url, while the query is posted as json.
 
-## operations
+# operations
 
 The operations currently supported are:
 
@@ -82,7 +82,7 @@ Aggregate operations assemble metrics from a set of results:
 
 Each of these operations is explained in more detail below.
 
-## traversals
+# traversals
 
 The two main traversal operations are `from` and `to`. Because Ophion works with directed graphs, there is a distinction between traversing across an edge in either direction. Either requires two additional pieces of information, an edge label and the ultimate destination label.
 
@@ -134,7 +134,7 @@ This might seem like just a more verbose way to get from Genes to Variants, but 
 
 As you may have guessed, `to` and `from` are just shorthand for the sequence `toEdge/toVertex` or `fromEdge/fromVertex`.
 
-## state
+# state
 
 As you traverse through the graph sometimes you want to keep track of where you are. Also, often you care about what things are associated to what other things you were visiting previously. This is what `mark` and `select` are for.
 
@@ -154,4 +154,4 @@ This traversal starts at Individual, marks it, then traverses to Biosample, mark
     {"individual": "individual:TCGA-XE-ANJJ", "biosample": "biosample:tcga:TCGA-XE-ANJJ:tumor"}
     ....
 
-## filters
+# filters

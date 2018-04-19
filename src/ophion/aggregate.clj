@@ -342,6 +342,7 @@
    :count qount
    :sort psort
    :gather gather
+   :aggregate aggregate
    :groupCount group-count})
 
 (defn apply-step

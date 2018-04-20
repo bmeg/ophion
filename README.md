@@ -154,6 +154,14 @@ This traversal starts at Individual, marks it, then traverses to Biosample, mark
     {"individual": "individual:TCGA-XE-ANJJ", "biosample": "biosample:tcga:TCGA-XE-ANJJ:tumor"}
     ....
 
+### gather
+
+The `gather` operation let's you perform several traversals in the same query. Each key in the `gather` operation represents a traversal unto itself, and the results for those traversals will be returned under those keys:
+
+    ["gather": {"a": [....], "b": [....], "z": [....]}]
+
+Each element in the dots is full a traversal.
+
 # filters
 
 Often you are making a query to find specific things, not just all vertexes or edges of one type. Filters allow you to craft what elements your traversal is concerned with.
@@ -214,5 +222,27 @@ The default ordering in the database is when the document was inserted (timestam
 
 A `1` stands for ascending order. Use `-1` for descending.
 
-* match
-* values
+### values
+
+If you only need certain keys from your results, `values` is the way to go:
+
+    ["values", ["gender", "disease_code"]] // filter out a lot of keys
+
+# aggregates
+
+Once you have all of your results, often you want some kind of aggregate metric to get a sense of what you are working with. 
+
+### count
+
+This is the simplest aggregate. Just find out how many things you have. Extremely useful for all of its simplicity:
+
+    ["count"] // returns a number!
+
+### groupCount
+
+The slightly more sophisticated older brother of `count`, this returns the counts for various values found in a given field:
+
+    ["groupCount", "gender"] // probably not just two
+
+### aggregate
+

@@ -240,9 +240,65 @@ This is the simplest aggregate. Just find out how many things you have. Extremel
 
 ### groupCount
 
-The slightly more sophisticated older brother of `count`, this returns the counts for various values found in a given field:
+The slightly more sophisticated older brother of `count`, `groupCount` returns the counts for various values found in a given field:
 
     ["groupCount", "gender"] // probably not just two
 
 ### aggregate
 
+The `aggregate` operation can perform several aggregations at once, one for each key provided. There are three types of aggregations that can be performed, two of which are specific to numerical or ordered values.
+
+#### terms
+
+The non-numeric aggregation is called `terms`, and will return the top n values for a given field.
+
+    ["aggregate" {"disease_code": {"terms": 10}}]
+
+This will return a series of results with two keys, one of the field provided, and the other a `count` detailing the number of records with that value.
+
+    {"disease_code":
+     [{"disease_code":"BRCA","count":1097},
+      {"disease_code":null,"count":959},
+      {"disease_code":"UCEC","count":548},
+      {"disease_code":"KIRC","count":537},
+      {"disease_code":"HNSC","count":528},
+      {"disease_code":"LUAD","count":522},
+      {"disease_code":"THCA","count":507},
+      {"disease_code":"LUSC","count":504},
+      {"disease_code":"PRAD","count":500},
+      {"disease_code":"COAD","count":459}]}
+
+If you provide multiple aggregations the results will be under the keys specified.
+
+#### percentile
+
+If you are working with numeric data, you can get some sense of the range of values by sampling the values at specific percentages of the whole set. These percentiles are with respect to number of records, not the value, so if you ask for the 5th percentile of a field you will get the value that if you divide up the records into 20 equal sorted parts and take the lowest part, is the highest value for that field in that part.
+
+It works like this (say we are querying Genes):
+
+    ["aggregate": {"start": {"percentile": [5, 10, 80, 90]}}]
+
+This returns the values at the 5th, 10th, 80th and 90th percentiles in a similar fashion to the `terms` aggregation:
+
+    {"start":
+     [{"percentile":5,"start":5856674},
+      {"percentile":10,"start":11845709},
+      {"percentile":80,"start":125747664},
+      {"percentile":90,"start":155018520}]}
+
+#### histogram
+
+This aggregate works much like the other ones, but instead of a "top n" or percentile approach, you provide an interval and the `histogram` aggregation divides up the records into bins with a width of the interval given, and tells you how many records are in each bin.
+
+    ["aggregate": {"end": {"histogram": 50000000}}]
+
+This one returns counts as well:
+
+    {"end":
+     [{"end":5.0E7,"count":9311},
+      {"end":1.0E8,"count":5757},
+      {"end":1.5E8,"count":3973},
+      {"end":2.0E8,"count":1650},
+      {"end":2.5E8,"count":716}]}
+
+In this case the results are telling us that higher ending positions in Genes are increasingly rare, which could or could not be interesting.

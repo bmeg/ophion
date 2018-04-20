@@ -364,7 +364,9 @@
   (let [step-key (keyword (first step))
         about (rest step)
         traverse (get steps step-key)]
-    (apply traverse about)))
+    (if traverse
+      (apply traverse about)
+      (log/error "no operation named" step-key))))
 
 (defn translate
   ([query] (translate {} query))

@@ -210,7 +210,9 @@ This will return only the first 10. When combined with `offset` and `order` you 
 
 The default ordering in the database is when the document was inserted (timestamp). If you want them to come back in a different order you can use the `order` operation:
 
-    ["order", {}]
+    ["order", {"disease_code", 1}]
+
+A `1` stands for ascending order. Use `-1` for descending.
 
 * match
 * values

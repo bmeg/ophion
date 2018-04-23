@@ -49,6 +49,21 @@
    :headers {"content-type" "application/json"}
    :body (json/generate-string schema)})
 
+(defn count-all-handler
+  [db protograph request]
+  (let [labels (keys (:vertexes protograph))]
+    {:status 200
+     :headers {"content-type" "application/json"}
+     :body (json/generate-string (mongo/counts db))}))
+
+(defn count-label-handler
+  [db request]
+  (let [label (get-in request [:params :label])
+        number (mongo/number db label)]
+    {:status 200
+     :headers {"content-type" "application/json"}
+     :body (json/generate-string {label number})}))
+
 (defn aggregate-query-handler
   [mongo protograph request]
   (let [query (mapv identity (read-json (:body request)))
@@ -64,6 +79,18 @@
   (fn [request]
     (log/info "--> fetch schema")
     (#'fetch-schema-handler schema request)))
+
+(defn count-all
+  [db protograph]
+  (fn [request]
+    (log/info "--> count all")
+    (#'count-all-handler db protograph request)))
+
+(defn count-label
+  [db]
+  (fn [request]
+    (log/info "--> count label" (get-in request [:params :label]))
+    (#'count-label-handler db request)))
 
 (defn aggregate-query
   [mongo protograph]
@@ -81,6 +108,8 @@
   [graph protograph]
   [["/" :home #'home]
    ["/schema/protograph" :schema (fetch-schema protograph)]
+   ["/count" :count-all (count-all graph protograph)
+    [["/:label" :count-label (count-label graph)]]]
    ["/query/:label" :aggregate-query (aggregate-query graph protograph)]])
 
 (def parse-args

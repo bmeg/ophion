@@ -54,10 +54,11 @@ Traversal operations help you navigate the graph:
 
 ### state
 
-Mark and select work together to keep track of state during traversals:
+Mark and select work together to keep track of state during traversals, whereas gather does multiple queries at once:
 
 * mark
 * select
+* gather
 
 ### filters
 
@@ -76,7 +77,6 @@ Filter operations help you cull or craft the results:
 Aggregate operations assemble metrics from a set of results:
 
 * count
-* gather
 * aggregate
 * groupCount
 
